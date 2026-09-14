@@ -29,6 +29,9 @@ var _temas_bekleme := 0.0
 var _atis_bekleme := 0.0
 var menzil := 0.0          # 0 = temas dusmani, >0 = bu mesafeyi korur ve ates eder
 var _parlama := 0.0
+var _itme := Vector2.ZERO
+var _dogus := 0.0
+var _adim := 0.0
 
 @onready var _gorsel: Sprite2D = $Gorsel
 @onready var _carpisma: CollisionShape2D = $Carpisma
@@ -76,6 +79,7 @@ func kur(tur: int, guc: float) -> void:
 
 func _ready() -> void:
     add_to_group("dusman")
+    _dogus = 1.0
     _gorsel.texture = DOKULAR[_tur]
     var s := CircleShape2D.new()   # her ornek kendi seklini tasisin
     s.radius = _yaricap
@@ -86,10 +90,29 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
     _temas_bekleme = maxf(_temas_bekleme - delta, 0.0)
+
+    # Dogus: yoktan bitmesin, buyuyerek gelsin
+    if _dogus > 0.0:
+        _dogus = maxf(_dogus - delta * 4.5, 0.0)
+        var b := 1.0 - _dogus
+        _gorsel.scale = Vector2(b * (1.0 + _dogus * 0.4), b)
+        _gorsel.modulate.a = (0.65 if _tur == 4 else 1.0) * b
+
+    # Vurus itmesi
+    if _itme.length_squared() > 1.0:
+        _itme = _itme.move_toward(Vector2.ZERO, 900.0 * delta)
     if _parlama > 0.0:
         _parlama -= delta
         if _parlama <= 0.0:
             _gorsel.modulate = Color(1, 1, 1, 0.65) if _tur == 4 else Color(1, 1, 1)
+    if _dogus <= 0.0:
+        # Yurume salinimi: hizlandikca daha cok sekiyor
+        var h := velocity.length() / maxf(hiz, 1.0)
+        _adim += delta * (5.0 + h * 5.0)
+        var e := 1.0 + sin(_adim) * minf(h, 1.0) * 0.09
+        _gorsel.scale = _gorsel.scale.lerp(Vector2(2.0 - e, e), 12.0 * delta)
+        _gorsel.position.y = -abs(sin(_adim)) * minf(h, 1.0) * 1.4
+        _gorsel.rotation = sin(_adim * 0.5) * minf(h, 1.0) * 0.08
 
     if not is_instance_valid(_hedef):
         _hedef = get_tree().get_first_node_in_group("oyuncu")
@@ -111,13 +134,13 @@ func _physics_process(delta: float) -> void:
             git = -yon
         elif uzak < menzil:
             git = Vector2.ZERO
-        velocity = velocity.move_toward(git * hiz, 600.0 * delta)
+        velocity = velocity.move_toward(git * hiz + _itme, 600.0 * delta)
         _atis_bekleme -= delta
         if uzak < menzil * 1.35 and _atis_bekleme <= 0.0:
             _atis_bekleme = 1.6
             _ates_et(yon)
     else:
-        velocity = velocity.move_toward(yon * hiz, 600.0 * delta)
+        velocity = velocity.move_toward(yon * hiz + _itme, 600.0 * delta)
     move_and_slide()
     _gorsel.flip_h = yon.x < 0.0
 
@@ -133,10 +156,18 @@ func _ates_et(yon: Vector2) -> void:
     m.hiz = 115.0
     get_parent().add_child(m)
 
-func hasar_al(miktar: float) -> void:
+func hasar_al(miktar: float, itme: Vector2 = Vector2.ZERO) -> void:
     can -= miktar
     _parlama = 0.09
     _gorsel.modulate = Color(3, 3, 3)
+    _gorsel.scale = Vector2(1.35, 0.72)          # vurus ezilmesi
+    _itme += itme
+    Hiss.patlama(get_parent(), global_position, Color(0.75, 0.95, 1.0),
+        4, 70.0, 1.3, 0.2)
     if can <= 0.0:
         olduruldu.emit(global_position, xp_degeri)
+        # Kul patlamasi -- olum gorulsun
+        Hiss.patlama(get_parent(), global_position, Color(0.72, 0.86, 0.95),
+            14 + int(xp_degeri) * 6, 130.0, 2.0, 0.5)
+        Hiss.sars(0.8 + float(xp_degeri) * 0.3)
         queue_free()

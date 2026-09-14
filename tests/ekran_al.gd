@@ -14,7 +14,9 @@ func _initialize() -> void:
 func _process(_delta: float) -> bool:
     _kare += 1
     # Isi çubuğu ve mermiler görünsün diye ateş ettir
-    if _kare > 90 and _kare < 200 and _kare % 7 == 0:
+    if _kare == 80:
+        _ana.oyuncu.silah_ver(1)          # SACMA -- cok mermi gorunsun
+    if _kare > 90 and _kare < 200 and _kare % 9 == 0:
         _ana.oyuncu._ates_et(Vector2.RIGHT.rotated(randf() * TAU))
     if _kare == 210:
         # Kor atisi gorunsun: isiyi esigin ustune getir, sonra at
@@ -26,8 +28,15 @@ func _process(_delta: float) -> bool:
         o._kor_bekleme = 0.0
         while o.isi.oran() < 0.75 and not o.isi.kilitli:
             o.isi.ates_et()
+    if _kare == 248:
+        # Bir dusmani oldur -- olum patlamasi ve kul zerreleri gorunsun
+        var liste := get_nodes_in_group("dusman")
+        if liste.size() > 0:
+            liste[0].hasar_al(9999.0, Vector2.RIGHT * 90.0)
     if _kare == 252:
         _ana.oyuncu._kor_at(Vector2.RIGHT)
+    if _kare == 256:
+        _ana.oyuncu._ates_et(Vector2.RIGHT.rotated(-0.5))
     if _kare == 235:
         # Bes turu de yan yana koy ki hepsi tek karede gorunsun
         for t in 6:

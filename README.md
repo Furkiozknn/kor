@@ -35,7 +35,21 @@ kenarında oynamayı ödüllendirmek.
 | Sol tık (basılı) | ateş — fareye nişan alır |
 | Sağ tık | **kor atışı** — biriken ısıyı delici bir akkor mermiye çevirir |
 | `Boşluk` | dalış (ısıyı boşaltır, dokunulmazlık verir) |
+| `Q` / `1-4` | silah değiştir (birden fazla açıksa) |
 | `R` | öldükten sonra yeniden başla |
+
+## Silahlar
+
+Dördü de **aynı ısı sistemini** kullanır; fark, ısıyı ne hızda biriktirdikleri.
+Silah seçmek aslında "kaç saniyede kilitlenmeyi göze alıyorum" sorusunun cevabı.
+Başlangıçta sadece tabanca açık, diğerleri kart olarak çıkar.
+
+| Silah | Karakteri | Kilide kalan |
+|---|---|---|
+| **Kor Tabancası** | dengeli, her işi görür | ~1.6 sn |
+| **Saçma** | 6 saçma, kısa menzil, yıkıcı — sürünün içine girmeni ister | ~1.9 sn |
+| **Işın** | en yüksek hasar, parmağını kaldırmayı öğreten silah | ~1.2 sn |
+| **Çekiç** | yavaş, delici, sırayı süpürür | ~2.5 sn |
 
 ## Koşu döngüsü
 
@@ -94,10 +108,20 @@ godot --script res://tests/ekran_al.gd                # gerçek render'ı PNG'ye
 | `scripts/kup.gd` | XP küpü + mıknatıs |
 | `scripts/ana.gd` | arena kurulumu, dalga doğurma, XP/seviye, kart ekranı, HUD |
 
+## Oyun hissi
+
+`scripts/hiss.gd` (autoload `Hiss`) tek bir varlık dosyası kullanmadan,
+hepsi kodla: kamera sarsıntısı, ağır darbelerde vuruş donması, parçacık
+patlamaları, dalış hayaletleri, yarıçapsal parlama dokuları ve toplamalı
+karışım. Ateş ederken geri tepme, namlu alevi ve kamera sarsıntısı var;
+vurulan düşman eziliyor ve geri itiliyor; ölünce kül patlıyor. Düşmanlar
+yoktan bitmiyor, büyüyerek geliyor.
+
 ## Görsel kimlik
 
 Sıcak ve soğuk. Oyuncu tek sıcak şey: karanlık dökümhanede ateş eden,
-altında kor halkası taşıyan bir figür. Bütün düşmanlar tek "kül fraksiyonu"
+altında ısıyla büyüyen bir kor parlaması taşıyan figür. Mangallar zemine
+sıcak ışık havuzları döküyor, kenarları vinyet karartıyor. Bütün düşmanlar tek "kül fraksiyonu"
 paletinde — gri-camgöbeği, soğuk. Isın yükseldikçe halkan büyür ve
 beyazlaşır; ısı göstergesine bakmadan da nerede olduğunu görürsün.
 
@@ -111,6 +135,7 @@ beyazlaşır; ısı göstergesine bakmadan da nerede olduğunu görürsün.
 
 ## Durum
 
-Oynanabilir dikey dilim. Tek arena, iki ateş modu, on iki kart, altı düşman türü.
+Oynanabilir dikey dilim. Tek arena, dört silah + kor atışı, on iki kart
+ve üç silah kartı, altı düşman türü.
 
-Sırada: yürüme animasyonu ve 8 yönlü sprite, ses.
+Sırada: ses (ayrı oturumda), 8 yönlü sprite ve yürüme animasyonu, patron.

@@ -7,6 +7,10 @@ config/description="Kor - top-down roguelite. Ates isi biriktirir, dalis bosalti
 run/main_scene="res://scenes/level.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
+[autoload]
+
+Hiss="*res://scripts/hiss.gd"
+
 [display]
 
 window/size/viewport_width=640

@@ -14,6 +14,8 @@ const TURLER := {
 var can := 0.0
 var _tur := "fici"
 var _parlama := 0.0
+var _hale: Sprite2D
+var _zerre := 0.0
 
 @onready var _gorsel: Sprite2D = $Gorsel
 @onready var _carpisma: CollisionShape2D = $Carpisma
@@ -29,8 +31,26 @@ func _ready() -> void:
     var s := CircleShape2D.new()
     s.radius = t["yaricap"]
     _carpisma.shape = s
+    if _tur == "mangal":
+        # Mangal arenaya sicak bir isik havuzu dokuyor -- duz zemini kirar
+        _hale = Sprite2D.new()
+        _hale.texture = Hiss.parlama_dokusu(
+            Color(1.0, 0.55, 0.18, 0.32), Color(0.9, 0.25, 0.05, 0.0), 96)
+        _hale.material = Hiss.ekleme_materyali()
+        _hale.z_index = -1
+        _hale.scale = Vector2.ONE * 1.1
+        add_child(_hale)
 
 func _process(delta: float) -> void:
+    if _hale != null:
+        var n := 1.05 + sin(Time.get_ticks_msec() / 220.0 + position.x) * 0.10
+        _hale.scale = Vector2(n, n)
+        _hale.modulate.a = 0.85 + sin(Time.get_ticks_msec() / 130.0 + position.y) * 0.15
+        _zerre -= delta
+        if _zerre <= 0.0:
+            _zerre = randf_range(0.25, 0.6)
+            Hiss.patlama(get_parent(), global_position + Vector2(randf_range(-4, 4), -2),
+                Color(1.0, 0.6, 0.2), 1, 22.0, 1.0, 0.9)
     if _parlama > 0.0:
         _parlama -= delta
         if _parlama <= 0.0:
@@ -42,7 +62,11 @@ func hasar_al(miktar: float) -> void:
         return
     can -= miktar
     _parlama = 0.09
+    Hiss.patlama(get_parent(), global_position, Color(0.9, 0.7, 0.4), 3, 60.0, 1.2, 0.2)
     _gorsel.modulate = Color(3, 3, 3)
     if can <= 0.0:
         kirildi.emit(global_position)
+        Hiss.patlama(get_parent(), global_position, Color(0.85, 0.62, 0.35),
+            20, 140.0, 2.2, 0.55)
+        Hiss.sars(1.6)
         queue_free()

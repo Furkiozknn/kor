@@ -10,9 +10,12 @@ collision_layer = 8
 collision_mask = 5
 script = ExtResource("1_kod")
 
+[node name="Parlama" type="Sprite2D" parent="."]
+z_index = -1
+
 [node name="Gorsel" type="Polygon2D" parent="."]
-color = Color(1, 0.85, 0.45, 1)
-polygon = PackedVector2Array(-3, -2, 3, -2, 3, 2, -3, 2)
+color = Color(1, 0.88, 0.5, 1)
+polygon = PackedVector2Array(-5, 0, -1, -2, 4, 0, -1, 2)
 
 [node name="Carpisma" type="CollisionShape2D" parent="."]
 shape = SubResource("1_govde")

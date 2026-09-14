@@ -6,6 +6,8 @@ extends SceneTree
 const SURE := 8.0
 const KARE_TAVANI := 20000   # assert patlarsa sonsuz donguye girmeyelim
 
+const Silahlar := preload("res://scripts/silahlar.gd")
+
 var _ana: Node2D
 var _kare := 0
 var _hasar_sayaci := 0
@@ -107,6 +109,24 @@ func _process(_delta: float) -> bool:
     assert(oyuncu.isi.deger < isi_once, "kor atisi isiyi harcamali")
     assert(not oyuncu.kor_atabilir(), "kor atisindan hemen sonra tekrar atilamaz")
 
+    # Silahlar: baslangicta tek silah, kart acinca gecis calismali
+    assert(oyuncu.acik_silahlar.size() == 1, "baslangicta tek silah olmali")
+    var ilk_silah: int = oyuncu.silah_indeksi
+    oyuncu.silah_gec(true)
+    assert(oyuncu.silah_indeksi == ilk_silah, "tek silahla gecis olmamali")
+    oyuncu.silah_ver(3)
+    assert(oyuncu.acik_silahlar.size() == 2, "silah acilmadi")
+    assert(oyuncu.silah_indeksi == 3, "yeni silah eline gecmeli")
+    oyuncu.silah_gec(true)
+    assert(oyuncu.silah_indeksi != 3, "iki silah varken gecis calismali")
+    # Her silahin isi profili farkli olmali -- yoksa secim anlamsiz
+    var profiller := {}
+    for sl in Silahlar.LISTE:
+        var oran: float = float(sl["isi"]) / float(sl["aralik"])   # saniyedeki isi
+        profiller[round(oran)] = true
+        assert(sl["hasar"] > 0.0 and sl["aralik"] > 0.0, "silah tablosu bozuk: " + str(sl["ad"]))
+    assert(profiller.size() == Silahlar.LISTE.size(), "iki silah ayni isi profilinde")
+
     # Seviye kartlari: XP dolunca açılmalı, seçince oyun devam etmeli
     _ana._xp_topla(_ana.xp_hedef)
     assert(_ana.seviye == 2, "XP dolunca seviye atlamali")
@@ -138,6 +158,7 @@ func _kup_asamasi() -> bool:
     return _kare - _kup_karesi >= 240
 
 func _oyuncu_ozeti(o) -> Array:
-    return [o.isi.tavan, o.isi.soguma_hizi, o.isi.atis_basina, o.hiz, o.atis_araligi,
-        o.mermi_hasari, o.mermi_sayisi, o.maks_can, o.asiri_isi_carpani, o.dalis_patlamasi,
-        o.miknatis, o.kor_carpani, o.kor_maliyet]
+    return [o.isi.tavan, o.isi.soguma_hizi, o.isi_carpani, o.hiz, o.atis_hizi_carpani,
+        o.mermi_hasari, o.ek_mermi, o.ek_yayilma, o.maks_can, o.asiri_isi_carpani,
+        o.dalis_patlamasi, o.miknatis, o.kor_carpani, o.kor_maliyet,
+        o.acik_silahlar.size(), o.silah_indeksi]

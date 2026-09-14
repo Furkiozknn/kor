@@ -16,10 +16,11 @@ var _gecikme_kalan: float = 0.0
 func ates_edebilir() -> bool:
     return not kilitli
 
-func ates_et() -> void:
+## miktar > 0 verilirse o kadar isinir (silaha gore), yoksa atis_basina.
+func ates_et(miktar: float = 0.0) -> void:
     if kilitli:
         return
-    deger += atis_basina
+    deger += miktar if miktar > 0.0 else atis_basina
     _gecikme_kalan = soguma_gecikmesi
     if deger >= tavan:
         deger = tavan

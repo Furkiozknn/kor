@@ -4,6 +4,7 @@ extends Node2D
 const DusmanSahne := preload("res://scenes/dusman.tscn")
 const KupSahne := preload("res://scenes/kup.tscn")
 const YapiSahne := preload("res://scenes/yapi.tscn")
+const Silahlar := preload("res://scripts/silahlar.gd")
 
 const SUTUN := 40
 const SATIR := 22
@@ -12,7 +13,7 @@ const KARO := 16
 const ALAN := Rect2(40, 40, 560, 256)
 
 const ZEMIN_SADE := Vector2i(0, 0)
-const YAPI_TURLERI := ["fici", "sandik", "fici_yigin", "orsa", "mangal"]
+const YAPI_TURLERI := ["fici", "sandik", "fici_yigin", "orsa", "mangal", "mangal"]
 
 @onready var oyuncu: CharacterBody2D = $Oyuncu
 @onready var _karolar: TileMapLayer = $TileMapLayer
@@ -30,16 +31,22 @@ var _lbl_ust: Label
 var _lbl_can: Label
 var _isi_cubuk: ColorRect
 var _isi_yazi: Label
+var _lbl_silah: Label
 var _kart_katman: CanvasLayer
 var _bekleyen_kart := 0
 
 func _ready() -> void:
     _arena_kur()
+    _lekeler()
     _yapilari_dog()
     _hud_kur()
     oyuncu.oldu.connect(_oyun_bitti)
     oyuncu.can_degisti.connect(func(c, m): _lbl_can.text = "CAN  " + "*".repeat(max(c, 0)) + "-".repeat(max(m - c, 0)))
     oyuncu.can_degisti.emit(oyuncu.can, oyuncu.maks_can)
+    oyuncu.silah_degisti.connect(func(ad, _i):
+        var ek := "   [Q]" if oyuncu.acik_silahlar.size() > 1 else ""
+        _lbl_silah.text = "◤ " + str(ad) + ek)
+    oyuncu.silah_degisti.emit(oyuncu.silah(), oyuncu.silah_indeksi)
 
 func _process(delta: float) -> void:
     if bitti:
@@ -85,6 +92,24 @@ func _arena_kur() -> void:
             else:
                 atlas = Vector2i(1 + randi() % 3, 0)          # catlakli zemin
             _karolar.set_cell(Vector2i(x, y), 0, atlas)
+
+## Zemine is/kurum lekeleri serp -- duz kahverengi bir deniz kalmasin.
+func _lekeler() -> void:
+    var katman := Node2D.new()
+    katman.z_index = -4
+    add_child(katman)
+    for n in 46:
+        var leke := Polygon2D.new()
+        var r := randf_range(5.0, 17.0)
+        var noktalar := PackedVector2Array()
+        for a in 8:
+            var ac := TAU * a / 8.0
+            var yc := r * randf_range(0.55, 1.0)
+            noktalar.append(Vector2(cos(ac) * yc, sin(ac) * yc * 0.55))
+        leke.polygon = noktalar
+        leke.color = Color(0.05, 0.03, 0.02, randf_range(0.10, 0.26))
+        leke.position = Vector2(randf_range(24, 616), randf_range(24, 330))
+        katman.add_child(leke)
 
 ## Siperler: ates hattini keser, suruyu yonlendirir. Fici/sandik kirilabilir.
 func _yapilari_dog() -> void:
@@ -168,21 +193,21 @@ func _xp_topla(kazanc: int) -> void:
 # --- Kartlar ----------------------------------------------------------------
 
 func _kart_havuzu() -> Array:
-    return [
+    var liste := [
         {"ad": "GENİŞ KAZAN", "aciklama": "Isı tavanı +25", "ikon": "kazan",
             "uygula": func(o): o.isi.tavan += 25.0},
         {"ad": "SOĞUK HAT", "aciklama": "Soğuma hızı +%35", "ikon": "soguk",
             "uygula": func(o): o.isi.soguma_hizi *= 1.35},
-        {"ad": "HIZLI TETİK", "aciklama": "Atış hızı +%20, ısı +%15", "ikon": "tetik", "uygula": func(o):
-            o.atis_araligi *= 0.8
-            o.isi.atis_basina *= 1.15},
-        {"ad": "AĞIR MERMİ", "aciklama": "Hasar +%40, ısı +%20", "ikon": "agir", "uygula": func(o):
+        {"ad": "HIZLI TETİK", "aciklama": "Atış hızı +%20, ısı +%12", "ikon": "tetik", "uygula": func(o):
+            o.atis_hizi_carpani *= 1.2
+            o.isi_carpani *= 1.12},
+        {"ad": "AĞIR MERMİ", "aciklama": "Hasar +%40, ısı +%18", "ikon": "agir", "uygula": func(o):
             o.mermi_hasari *= 1.4
-            o.isi.atis_basina *= 1.2},
-        {"ad": "ÇATAL NAMLU", "aciklama": "+1 mermi, ısı +%30", "ikon": "catal", "uygula": func(o):
-            o.mermi_sayisi += 1
-            o.yayilma += 0.06
-            o.isi.atis_basina *= 1.3},
+            o.isi_carpani *= 1.18},
+        {"ad": "ÇATAL NAMLU", "aciklama": "+1 mermi, ısı +%25", "ikon": "catal", "uygula": func(o):
+            o.ek_mermi += 1
+            o.ek_yayilma += 0.06
+            o.isi_carpani *= 1.25},
         {"ad": "KOR PATLAMASI", "aciklama": "Dalış bitince çevreye hasar", "ikon": "kor",
             "uygula": func(o): o.dalis_patlamasi += 3.0},
         {"ad": "KIZGIN ÇELİK", "aciklama": "Isı %70 üstündeyken hasar +%50", "ikon": "celik",
@@ -200,6 +225,17 @@ func _kart_havuzu() -> Array:
         {"ad": "YAĞLI ÇİZME", "aciklama": "Hareket hızı +%12", "ikon": "cizme",
             "uygula": func(o): o.hiz *= 1.12},
     ]
+    # Sahip olunmayan silahlar kart olarak cikar -- alinca Q ile gecilir
+    for i in range(1, Silahlar.LISTE.size()):
+        if i in oyuncu.acik_silahlar:
+            continue
+        var sl: Dictionary = Silahlar.LISTE[i]
+        liste.append({
+            "ad": "SİLAH: " + str(sl["ad"]), "aciklama": str(sl["not"]),
+            "ikon": str(sl["ikon"]), "silah": i,
+            "uygula": func(o): o.silah_ver(i),
+        })
+    return liste
 
 func _kartlari_ac() -> void:
     var havuz := _kart_havuzu()
@@ -252,6 +288,7 @@ func _kart_secildi(uygula: Callable) -> void:
 # --- HUD --------------------------------------------------------------------
 
 func _hud_kur() -> void:
+    _vinyet_kur()
     _hud = CanvasLayer.new()
     add_child(_hud)
 
@@ -282,10 +319,27 @@ func _hud_kur() -> void:
     _isi_yazi = _yazi(9)
     _isi_yazi.position = Vector2(134, 33)
 
+    _lbl_silah = _yazi(10)
+    _lbl_silah.position = Vector2(10, 48)
+    _lbl_silah.modulate = Color(1.0, 0.82, 0.45)
+
     var ipucu := _yazi(9)
     ipucu.position = Vector2(10, 330)
     ipucu.modulate = Color(1, 1, 1, 0.55)
     ipucu.text = "WASD   ·   SOL TIK ateş   ·   SAĞ TIK kor atışı (ısıyı hasara çevirir)   ·   BOŞLUK dalış"
+
+## Kenarlari karartan vinyet -- arenayi bir dokumhane cukuru gibi gosterir.
+func _vinyet_kur() -> void:
+    var k := CanvasLayer.new()
+    k.layer = -1
+    add_child(k)
+    var t := TextureRect.new()
+    t.texture = Hiss.parlama_dokusu(Color(0, 0, 0, 0), Color(0.03, 0.01, 0.0, 0.75), 128)
+    t.set_anchors_preset(Control.PRESET_FULL_RECT)
+    t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+    t.stretch_mode = TextureRect.STRETCH_SCALE
+    t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    k.add_child(t)
 
 ## HUD yazilari: 640x360 tabanda okunur boyut
 func _yazi(boy: int) -> Label:

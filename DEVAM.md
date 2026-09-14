@@ -49,6 +49,9 @@ diye basitleştirmek oyunu düzleştirir. Aynı şekilde kor atışı ısıyı
 - [ ] yürüme animasyonu / 8 yönlü sprite (PixelLab `create_character`,
       20-40 generation — kotanın çoğunu yer, Furki'nin onayı gerekir)
 - [x] menzilli düşman (cadı)
+- [x] dört silah + Q ile geçiş, silah kartları
+- [x] oyun hissi katmanı (scripts/hiss.gd): sarsıntı, donma, itme, parçacık
+- [x] görsel: vinyet, mangal ışık havuzları, zemin lekeleri, mermi haleleri
 
 ## 5. Kota ve varlık kuralı
 
