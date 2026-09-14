@@ -55,7 +55,13 @@ func _process(delta: float) -> void:
 
     var i = oyuncu.isi
     _isi_cubuk.size.x = 120.0 * i.oran()
-    _isi_cubuk.color = Color(1.0, 0.75, 0.2) if i.kilitli else Color(0.35, 0.7, 1.0).lerp(Color(1.0, 0.3, 0.1), i.oran())
+    if i.kilitli:
+        _isi_cubuk.color = Color(1.0, 0.75, 0.2)
+    elif i.oran() > 0.85:
+        # Kilit oncesi uyari -- oyuncu tavana yaklastigini hissetmeli
+        _isi_cubuk.color = Color(1, 1, 1) if int(Time.get_ticks_msec() / 70) % 2 == 0 else Color(1.0, 0.25, 0.05)
+    else:
+        _isi_cubuk.color = Color(0.35, 0.7, 1.0).lerp(Color(1.0, 0.3, 0.1), i.oran())
     if i.kilitli:
         _isi_yazi.text = "KİLİTLİ"
     elif oyuncu.kor_atabilir():
