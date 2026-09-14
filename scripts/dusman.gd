@@ -12,12 +12,12 @@ const DOKULAR := {
     3: preload("res://assets/sprites/dusman_iskelet.png"),
     4: preload("res://assets/sprites/dusman_hayalet.png"),
     5: preload("res://assets/sprites/dusman_cadi.png"),
-    6: preload("res://assets/sprites/dusman_iskelet.png"),
+    6: preload("res://assets/sprites/dusman_kosucu.png"),
 }
 
 const MermiSahne := preload("res://scenes/dusman_mermisi.tscn")
 
-const TUR_ADI := {0: "kul", 1: "imp", 2: "curuf", 3: "iskelet", 4: "hayalet", 5: "cadi"}
+const TUR_ADI := {0: "kul", 1: "imp", 2: "curuf", 3: "iskelet", 4: "hayalet", 5: "cadi", 6: "kosucu"}
 const ANIM_KOK := "res://assets/sprites/anim"
 
 ## Tur basina SpriteFrames -- 60 dusman ayni anda dogarken her biri yeniden

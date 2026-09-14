@@ -134,6 +134,9 @@ func _process(_delta: float) -> bool:
     # KALICI KAYIT + FIRIN KADEMESI
     var kyt = root.get_node_or_null("Kayit")
     assert(kyt != null, "Kayit autoload'u yok")
+    # ONEMLI: kayit KALICI. Onceki calistirmadan kalan kademe testi
+    # yanilttigi icin olcumden once acikca sifirlaniyor.
+    kyt.kademe_yaz(0)
     var curuf_once: int = kyt.curuf()
     var kazanc: int = kyt.kosu_bitti(120.0, 50)
     assert(kazanc > 0, "kosu sonu curuf vermedi")
