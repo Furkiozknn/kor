@@ -37,5 +37,24 @@ func _initialize() -> void:
     i.guncelle(0.5)
     assert(i.deger < d, "gecikme bitince sogumali")
 
+    # harca(): isiyi hasara cevirme -- kilitliyken calismamali
+    var j = Isi.new()
+    for n in 5:
+        j.ates_et()
+    var once: float = j.deger
+    var pay: float = j.harca(1.0)
+    assert(pay > 0.0, "harca bir sey dondurmeli")
+    assert(j.deger < once, "harca isiyi dusurmeli")
+    assert(is_equal_approx(j.deger, 0.0), "tam maliyet isiyi sifirlar")
+    for n in 5:
+        j.ates_et()
+    var yari_once: float = j.deger
+    j.harca(0.5)
+    assert(is_equal_approx(j.deger, yari_once * 0.5), "yarim maliyet yariyi birakir")
+    for n in 12:
+        j.ates_et()
+    assert(j.kilitli)
+    assert(is_equal_approx(j.harca(1.0), 0.0), "kilitliyken harcanamaz")
+
     print("test_isi: TAMAM")
     quit(0)

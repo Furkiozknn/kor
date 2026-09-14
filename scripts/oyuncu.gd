@@ -11,6 +11,8 @@ const DALIS_SURE := 0.22
 const DALIS_HIZ := 430.0
 const DALIS_BEKLEME := 0.65
 const VURULMA_DOKUNULMAZLIK := 0.6
+const KOR_ESIK := 0.35       # bu isinin altinda kor atisi yapilamaz
+const KOR_BEKLEME := 0.5
 
 @export var hiz := 115.0
 @export var ivme := 1200.0
@@ -28,11 +30,14 @@ var yayilma := 0.10
 var asiri_isi_carpani := 1.0   # isi > %70 iken gecerli
 var dalis_patlamasi := 0.0     # dalis bitince cevreye hasar
 var miknatis := 38.0           # XP kupu cekim menzili
+var kor_carpani := 1.0         # kart: kor atisi hasari
+var kor_maliyet := 1.0         # kart: 1.0 = biriken isinin tamamini harcar
 
 var _atis_sayaci := 0.0
 var _dalis_kalan := 0.0
 var _dalis_bekleme := 0.0
 var _dokunulmaz := 0.0
+var _kor_bekleme := 0.0
 
 @onready var _gorsel: Sprite2D = $Gorsel
 @onready var _halka: Polygon2D = $Halka
@@ -50,6 +55,7 @@ func _physics_process(delta: float) -> void:
     _dokunulmaz = maxf(_dokunulmaz - delta, 0.0)
     _dalis_bekleme = maxf(_dalis_bekleme - delta, 0.0)
     _atis_sayaci = maxf(_atis_sayaci - delta, 0.0)
+    _kor_bekleme = maxf(_kor_bekleme - delta, 0.0)
 
     var nisan := (get_global_mouse_position() - global_position).normalized()
     if nisan == Vector2.ZERO:
@@ -75,7 +81,9 @@ func _physics_process(delta: float) -> void:
         velocity = velocity.move_toward(Vector2.ZERO, surtunme * delta)
     move_and_slide()
 
-    if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and isi.ates_edebilir() and _atis_sayaci <= 0.0:
+    if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and kor_atabilir():
+        _kor_at(nisan)
+    elif Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and isi.ates_edebilir() and _atis_sayaci <= 0.0:
         _ates_et(nisan)
     _renk_guncelle()
 
@@ -113,6 +121,28 @@ func _ates_et(nisan: Vector2) -> void:
         get_parent().add_child(m)
 
 ## Isi karakterin altindaki kor halkasinda okunur: sonuk -> beyaz sicak.
+func kor_atabilir() -> bool:
+    return _kor_bekleme <= 0.0 and not isi.kilitli and isi.oran() >= KOR_ESIK
+
+## Kor atisi: biriken isiyi tek delici mermiye cevirir ve isiyi harcar.
+## Dalis isiyi bosa harcar, bu onu hasara cevirir -- ayni kaynagin iki cikisi.
+func _kor_at(nisan: Vector2) -> Area2D:
+    var harcanan := isi.harca(kor_maliyet)
+    if harcanan <= 0.0:
+        return null
+    _kor_bekleme = KOR_BEKLEME
+    _atis_sayaci = maxf(_atis_sayaci, 0.18)
+    var m := MermiSahne.instantiate()
+    m.global_position = global_position + nisan * 12.0
+    m.yon = nisan
+    m.hasar = mermi_hasari * (2.0 + 7.0 * harcanan) * kor_carpani
+    m.delici = true
+    m.hiz = 200.0
+    m.scale = Vector2.ONE * (1.5 + 2.2 * harcanan)
+    m.modulate = Color(1.7, 1.25, 0.6)   # normal mermiden daha akkor
+    get_parent().add_child(m)
+    return m
+
 func _renk_guncelle() -> void:
     var t := isi.oran()
     var c := Color(0.45, 0.18, 0.05).lerp(Color(1.0, 0.95, 0.55), t)

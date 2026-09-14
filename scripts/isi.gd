@@ -35,6 +35,16 @@ func bosalt() -> bool:
     _gecikme_kalan = 0.0
     return true
 
+## Isiyi hasara cevirmek icin harca. Donen deger: harcanan oran (0..1).
+## Kilitliyken calismaz -- asiri isinma her seyi kapatir.
+func harca(pay: float) -> float:
+    if kilitli or deger <= 0.0:
+        return 0.0
+    var oncesi := oran()
+    deger -= deger * clampf(pay, 0.0, 1.0)
+    _gecikme_kalan = soguma_gecikmesi
+    return oncesi - oran()
+
 func guncelle(delta: float) -> void:
     if kilitli:
         _kilit_kalan -= delta

@@ -56,7 +56,12 @@ func _process(delta: float) -> void:
     var i = oyuncu.isi
     _isi_cubuk.size.x = 120.0 * i.oran()
     _isi_cubuk.color = Color(1.0, 0.75, 0.2) if i.kilitli else Color(0.35, 0.7, 1.0).lerp(Color(1.0, 0.3, 0.1), i.oran())
-    _isi_yazi.text = "KİLİTLİ" if i.kilitli else "ISI"
+    if i.kilitli:
+        _isi_yazi.text = "KİLİTLİ"
+    elif oyuncu.kor_atabilir():
+        _isi_yazi.text = "KOR HAZIR"
+    else:
+        _isi_yazi.text = "ISI"
     _lbl_ust.text = "%02d:%02d   SEVİYE %d   XP %d/%d   ÖLDÜRME %d" % [
         int(gecen) / 60, int(gecen) % 60, seviye, xp, xp_hedef, oldurulen]
 
@@ -180,6 +185,10 @@ func _kart_havuzu() -> Array:
             o.can_degisti.emit(o.can, o.maks_can)},
         {"ad": "MIKNATIS", "aciklama": "XP toplama menzili +%60", "ikon": "miknatis",
             "uygula": func(o): o.miknatis *= 1.6},
+        {"ad": "ÖRS DARBESİ", "aciklama": "Kor atışı hasarı +%60", "ikon": "ors",
+            "uygula": func(o): o.kor_carpani += 0.6},
+        {"ad": "YARIM BOŞALTMA", "aciklama": "Kor atışı ısının yarısını bırakır", "ikon": "soguk",
+            "uygula": func(o): o.kor_maliyet = maxf(o.kor_maliyet * 0.5, 0.25)},
         {"ad": "YAĞLI ÇİZME", "aciklama": "Hareket hızı +%12", "ikon": "cizme",
             "uygula": func(o): o.hiz *= 1.12},
     ]
@@ -255,13 +264,20 @@ func _hud_kur() -> void:
     _isi_cubuk.size = Vector2(0, 8)
     _hud.add_child(_isi_cubuk)
 
+    # Kor atisi esigi: bu cizgiyi gecince sag tik aktif
+    var esik := ColorRect.new()
+    esik.position = Vector2(10 + 120.0 * oyuncu.KOR_ESIK, 34)
+    esik.size = Vector2(1, 12)
+    esik.color = Color(1, 0.85, 0.4, 0.8)
+    _hud.add_child(esik)
+
     _isi_yazi = _yazi(9)
     _isi_yazi.position = Vector2(134, 33)
 
     var ipucu := _yazi(9)
     ipucu.position = Vector2(10, 330)
     ipucu.modulate = Color(1, 1, 1, 0.55)
-    ipucu.text = "WASD hareket   ·   SOL TIK ateş   ·   BOŞLUK dalış (ısıyı boşaltır)"
+    ipucu.text = "WASD   ·   SOL TIK ateş   ·   SAĞ TIK kor atışı (ısıyı hasara çevirir)   ·   BOŞLUK dalış"
 
 ## HUD yazilari: 640x360 tabanda okunur boyut
 func _yazi(boy: int) -> Label:

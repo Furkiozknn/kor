@@ -17,6 +17,12 @@ yükleme: sürünün içine zamanında dalarsan ısın sıfırlanır, geç kalı
 sürünün ortasında kilitli kalırsın. Oyunun bütün gerilimi şu tek soruda:
 *bir mermi daha mı, yoksa şimdi mi dalayım?*
 
+Ve ısı sadece tehdit değil, aynı zamanda **kaynak**: sağ tıkla kor atışı
+yaparsan biriken ısı hasara dönüşür (ne kadar sıcaksan o kadar sert, düşman
+delip geçer) ama ısın sıfırlanır. Aynı kaynağın iki çıkışı var — dalış onu
+boşa harcar ve seni kurtarır, kor atışı onu hasara çevirir ama seni orada
+bırakır. Isı göstergesindeki sarı çizgi kor atışı eşiği.
+
 Kartlar bu ikilemi büker — ısı tavanını büyütmek, soğumayı hızlandırmak,
 ya da tam tersi: ısı yüksekken hasar veren "kızgın çelik" ile kilidin
 kenarında oynamayı ödüllendirmek.
@@ -27,6 +33,7 @@ kenarında oynamayı ödüllendirmek.
 |---|---|
 | `WASD` / yön tuşları | hareket |
 | Sol tık (basılı) | ateş — fareye nişan alır |
+| Sağ tık | **kor atışı** — biriken ısıyı delici bir akkor mermiye çevirir |
 | `Boşluk` | dalış (ısıyı boşaltır, dokunulmazlık verir) |
 | `R` | öldükten sonra yeniden başla |
 
@@ -101,6 +108,6 @@ beyazlaşır; ısı göstergesine bakmadan da nerede olduğunu görürsün.
 
 ## Durum
 
-Oynanabilir dikey dilim. Tek arena, tek silah, on kart, beş düşman türü.
+Oynanabilir dikey dilim. Tek arena, iki ateş modu, on iki kart, beş düşman türü.
 
-Sırada: yürüme animasyonu ve 8 yönlü sprite, ikinci silah, ses.
+Sırada: yürüme animasyonu ve 8 yönlü sprite, ses, menzilli düşman türü.

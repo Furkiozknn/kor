@@ -70,6 +70,22 @@ func _process(_delta: float) -> bool:
             assert(yeni.collision_mask == 0, "hayalet duvardan gecmeli")
         yeni.queue_free()
 
+    # Kor atisi: esik altinda calismamali
+    oyuncu.isi.bosalt()
+    oyuncu._kor_bekleme = 0.0
+    assert(not oyuncu.kor_atabilir(), "esik altinda kor atisi olmamali")
+    # Esigin ustune isit, sonra at
+    while oyuncu.isi.oran() < 0.6 and not oyuncu.isi.kilitli:
+        oyuncu.isi.ates_et()
+    assert(oyuncu.kor_atabilir(), "esik ustunde kor atisi hazir olmali")
+    var isi_once: float = oyuncu.isi.deger
+    var m: Node = oyuncu._kor_at(Vector2.RIGHT)
+    assert(m != null, "kor atisi mermi uretmedi")
+    assert(m.delici, "kor atisi delici olmali")
+    assert(m.hasar > oyuncu.mermi_hasari, "kor atisi normal mermiden guclu olmali")
+    assert(oyuncu.isi.deger < isi_once, "kor atisi isiyi harcamali")
+    assert(not oyuncu.kor_atabilir(), "kor atisindan hemen sonra tekrar atilamaz")
+
     # Seviye kartlari: XP dolunca açılmalı, seçince oyun devam etmeli
     _ana._xp_topla(_ana.xp_hedef)
     assert(_ana.seviye == 2, "XP dolunca seviye atlamali")
@@ -102,4 +118,5 @@ func _kup_asamasi() -> bool:
 
 func _oyuncu_ozeti(o) -> Array:
     return [o.isi.tavan, o.isi.soguma_hizi, o.isi.atis_basina, o.hiz, o.atis_araligi,
-        o.mermi_hasari, o.mermi_sayisi, o.maks_can, o.asiri_isi_carpani, o.dalis_patlamasi, o.miknatis]
+        o.mermi_hasari, o.mermi_sayisi, o.maks_can, o.asiri_isi_carpani, o.dalis_patlamasi,
+        o.miknatis, o.kor_carpani, o.kor_maliyet]
