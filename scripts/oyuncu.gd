@@ -57,6 +57,17 @@ var _hayalet_sayaci := 0.0
 var _adim := 0.0
 var _kor_zerre := 0.0
 var _silah_gecis := 0.0
+# --- Bot kancasi -------------------------------------------------------
+# Denge olcum takimi oyuncuyu buradan suruyor. Insan girdisiyle ayni yollari
+# kullaniyor (ayni _ates_et, ayni _kor_at, ayni isi kurallari) ki olculen sey
+# gercek oyun olsun, paralel bir simulasyon olmasin.
+var bot_aktif := false
+var bot_hareket := Vector2.ZERO
+var bot_nisan := Vector2.RIGHT
+var bot_ates := false
+var bot_dalis := false
+var bot_kor := false
+
 var _yonlu_mu := false
 var _yuruyus_var := false
 var _onceki_kilit := false
@@ -150,7 +161,11 @@ func _physics_process(delta: float) -> void:
     _namlu_parlama = maxf(_namlu_parlama - delta * 7.0, 0.0)
     _silah_gecis = maxf(_silah_gecis - delta, 0.0)
 
-    var nisan := (get_global_mouse_position() - global_position).normalized()
+    var nisan: Vector2
+    if bot_aktif:
+        nisan = bot_nisan.normalized()
+    else:
+        nisan = (get_global_mouse_position() - global_position).normalized()
     if nisan == Vector2.ZERO:
         nisan = Vector2.RIGHT
 
@@ -166,20 +181,20 @@ func _physics_process(delta: float) -> void:
         _gorunum_guncelle(delta, nisan)
         return
 
-    if Input.is_key_pressed(KEY_SPACE) and _dalis_bekleme <= 0.0:
+    if _dalis_istegi() and _dalis_bekleme <= 0.0:
         _dalis_basla(nisan)
         return
 
-    var yon := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+    var yon := _hareket_istegi()
     if yon != Vector2.ZERO:
         velocity = velocity.move_toward(yon * hiz, ivme * delta)
     else:
         velocity = velocity.move_toward(Vector2.ZERO, surtunme * delta)
     move_and_slide()
 
-    if Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) and kor_atabilir():
+    if _kor_istegi() and kor_atabilir():
         _kor_at(nisan)
-    elif Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and isi.ates_edebilir() and _atis_sayaci <= 0.0:
+    elif _ates_istegi() and isi.ates_edebilir() and _atis_sayaci <= 0.0:
         _ates_et(nisan)
     _gorunum_guncelle(delta, nisan)
 
@@ -214,8 +229,20 @@ func _isi_sesleri() -> void:
         SesYonetici.cal("isi_uyari")
     _onceki_uyari = uyari
 
+func _hareket_istegi() -> Vector2:
+    return bot_hareket if bot_aktif else Input.get_vector("move_left", "move_right", "move_up", "move_down")
+
+func _dalis_istegi() -> bool:
+    return bot_dalis if bot_aktif else Input.is_key_pressed(KEY_SPACE)
+
+func _ates_istegi() -> bool:
+    return bot_ates if bot_aktif else Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+
+func _kor_istegi() -> bool:
+    return bot_kor if bot_aktif else Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+
 func _dalis_basla(nisan: Vector2) -> void:
-    var yon := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+    var yon := _hareket_istegi()
     if yon == Vector2.ZERO:
         yon = nisan
     isi.bosalt()   # kilitliyken calismaz -- asiri isinma cezasi budur
@@ -367,6 +394,9 @@ func _gorunum_guncelle(delta: float, nisan: Vector2) -> void:
 
 func hasar_al(miktar: float) -> void:
     if _dokunulmaz > 0.0 or dalisityor() or can <= 0:
+        return
+    if get_meta("olumsuz", false):      # gelistirici katmani, F3
+        _dokunulmaz = VURULMA_DOKUNULMAZLIK
         return
     can -= int(ceilf(miktar))
     _dokunulmaz = VURULMA_DOKUNULMAZLIK

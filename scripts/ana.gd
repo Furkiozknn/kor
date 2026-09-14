@@ -7,6 +7,7 @@ const YapiSahne := preload("res://scenes/yapi.tscn")
 const Silahlar := preload("res://scripts/silahlar.gd")
 const YAZI_TIPI := preload("res://assets/fonts/PublicPixel.ttf")
 const KaranlikSahne := preload("res://scripts/karanlik.gd")
+const GelistiriciSahne := preload("res://scripts/gelistirici.gd")
 
 const SUTUN := 40
 const SATIR := 22
@@ -15,6 +16,19 @@ const KARO := 16
 const ALAN := Rect2(40, 40, 560, 256)
 
 const ZEMIN_SADE := Vector2i(0, 0)
+## Dalga tasarimi. Olculdu: eski egri (1.30 - gecen*0.012, taban 0.16) 95.
+## saniyede saniyede 6,25 dusmana cikiyordu; bot saniyede ~1,5 olduruyor,
+## yani olum matematiksel olarak kacinilmazdi. Cozum tur standardi: spawn
+## hizini sinirsiz artirmak yerine CANLI DUSMAN TAVANI koy, zorlugu
+## bilesim ve guc ile buyut.
+const SPAWN_BAS := 1.45        # sn
+const SPAWN_AZALMA := 0.0055   # sn / oyun saniyesi
+const SPAWN_TABAN := 0.34      # sn -- saniyede ~3 dusman tavani
+const CANLI_TAVAN_BAS := 45
+const CANLI_TAVAN_ARTIS := 0.28   # saniyede, tavan buyur
+const GUC_BOLEN := 90.0           # dusman gucu: 1 + gecen/GUC_BOLEN
+const CANLI_TAVAN_UST := 170
+
 const YAPI_TURLERI := ["fici", "sandik", "fici_yigin", "orsa", "mangal", "mangal"]
 
 @onready var oyuncu: CharacterBody2D = $Oyuncu
@@ -27,6 +41,11 @@ var xp_hedef := 5
 var oldurulen := 0
 var bitti := false
 
+## Denge taramasi bunu disaridan degistiriyor (1.0 = normal tempo)
+var spawn_carpani := 1.0
+var guc_bolen := GUC_BOLEN
+var tavan_artis := CANLI_TAVAN_ARTIS
+
 var _spawn_sayaci := 0.0
 var _hud: CanvasLayer
 var _lbl_ust: Label
@@ -37,6 +56,10 @@ var _lbl_silah: Label
 var karanlik: CanvasLayer
 var _kart_katman: CanvasLayer
 var _bekleyen_kart := 0
+## Alinan kartlar: ad -> {"sayi": int, "ikon": String, "aciklama": String}
+var alinan_kartlar := {}
+var _build_kutu: HBoxContainer
+var _duraklat_katman: CanvasLayer
 
 func _ready() -> void:
     SesYonetici.yukle_klasorden()
@@ -46,6 +69,10 @@ func _ready() -> void:
     _yapilari_dog()
     _karanlik_kur()
     _hud_kur()
+    if OS.is_debug_build():
+        var g := GelistiriciSahne.new()
+        g.ana = self
+        add_child(g)
     oyuncu.oldu.connect(_oyun_bitti)
     oyuncu.can_degisti.connect(func(c, m): _lbl_can.text = "CAN  " + "*".repeat(max(c, 0)) + "-".repeat(max(m - c, 0)))
     oyuncu.can_degisti.emit(oyuncu.can, oyuncu.maks_can)
@@ -63,8 +90,9 @@ func _process(delta: float) -> void:
     gecen += delta
     _spawn_sayaci -= delta
     if _spawn_sayaci <= 0.0:
-        _spawn_sayaci = maxf(1.30 - gecen * 0.012, 0.16)
-        _dusman_dog()
+        _spawn_sayaci = maxf(SPAWN_BAS - gecen * SPAWN_AZALMA, SPAWN_TABAN) * spawn_carpani
+        if _canli_dusman() < canli_tavan():
+            _dusman_dog()
 
     var i = oyuncu.isi
     _isi_cubuk.size.x = 120.0 * i.oran()
@@ -145,9 +173,17 @@ func _yapilari_dog() -> void:
 
 # --- Dalgalar ---------------------------------------------------------------
 
+## Ayni anda yasayabilecek dusman sayisi. Zorluk buradan degil, dusmanin
+## gucunden ve turunden geliyor.
+func canli_tavan() -> int:
+    return mini(CANLI_TAVAN_BAS + int(gecen * tavan_artis), CANLI_TAVAN_UST)
+
+func _canli_dusman() -> int:
+    return get_tree().get_nodes_in_group("dusman").size()
+
 func _dusman_dog() -> void:
     var d := DusmanSahne.instantiate()
-    d.kur(_tur_sec(), 1.0 + gecen / 90.0)
+    d.kur(_tur_sec(), 1.0 + gecen / guc_bolen)
     d.global_position = _kenar_noktasi()
     d.olduruldu.connect(_dusman_oldu)
     add_child(d)
@@ -285,15 +321,23 @@ func _kartlari_ac() -> void:
         b.icon = load("res://assets/sprites/ikon_%s.png" % k["ikon"])
         b.expand_icon = false
         b.text = "  %s\n  %s" % [k["ad"], k["aciklama"]]
-        b.pressed.connect(_kart_secildi.bind(k["uygula"]))
+        b.pressed.connect(_kart_secildi.bind(k))
         kutu.add_child(b)
 
     get_tree().paused = true
     kutu.get_child(1).grab_focus()
 
-func _kart_secildi(uygula: Callable) -> void:
+func _kart_secildi(kart: Dictionary) -> void:
     SesYonetici.cal("kart_sec")
+    var uygula: Callable = kart["uygula"]
     uygula.call(oyuncu)
+    var ad: String = str(kart["ad"])
+    if alinan_kartlar.has(ad):
+        alinan_kartlar[ad]["sayi"] += 1
+    else:
+        alinan_kartlar[ad] = {"sayi": 1, "ikon": str(kart["ikon"]),
+            "aciklama": str(kart["aciklama"])}
+    _build_tazele()
     _bekleyen_kart -= 1
     _kart_katman.queue_free()
     _kart_katman = null
@@ -341,6 +385,13 @@ func _hud_kur() -> void:
     _lbl_silah.position = Vector2(10, 48)
     _lbl_silah.modulate = Color(1.0, 0.82, 0.45)
 
+    # Build seridi -- oyuncu ne aldigini GORSUN. VS'te bile var, bizde yoktu.
+    _build_kutu = HBoxContainer.new()
+    _build_kutu.position = Vector2(640 - 12, 6)
+    _build_kutu.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+    _build_kutu.add_theme_constant_override("separation", 3)
+    _hud.add_child(_build_kutu)
+
     var ipucu := _yazi(8)
     ipucu.position = Vector2(10, 330)
     ipucu.modulate = Color(1, 1, 1, 0.55)
@@ -361,6 +412,31 @@ func _vinyet_kur() -> void:
 
 ## HUD yazilari. PublicPixel 8x8 bir pixel font: boyut 8'in kati olmali,
 ## ara degerlerde piksel izgarasi bozulup bulaniyor.
+## Alinan kartlari sag ust seride ikon + sayac olarak goster.
+func _build_tazele() -> void:
+    if _build_kutu == null:
+        return
+    for c in _build_kutu.get_children():
+        c.queue_free()
+    for ad in alinan_kartlar:
+        var bilgi: Dictionary = alinan_kartlar[ad]
+        var kutu := VBoxContainer.new()
+        kutu.add_theme_constant_override("separation", 0)
+        var res := TextureRect.new()
+        res.texture = load("res://assets/sprites/ikon_%s.png" % bilgi["ikon"])
+        res.custom_minimum_size = Vector2(14, 14)
+        res.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        res.tooltip_text = "%s  %s" % [ad, bilgi["aciklama"]]
+        kutu.add_child(res)
+        if int(bilgi["sayi"]) > 1:
+            var sy := Label.new()
+            sy.add_theme_font_override("font", YAZI_TIPI)
+            sy.add_theme_font_size_override("font_size", 8)
+            sy.text = "x%d" % int(bilgi["sayi"])
+            sy.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+            kutu.add_child(sy)
+        _build_kutu.add_child(kutu)
+
 func _yazi(boy: int) -> Label:
     var l := Label.new()
     l.add_theme_font_override("font", YAZI_TIPI)
