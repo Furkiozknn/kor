@@ -14,7 +14,7 @@ uniform int isik_sayisi = 0;
 uniform vec3 isiklar[TAVAN];
 // her ışığın kenar yumuşaklığı: 0 = keskin daire, 1 = tamamen yumuşak
 uniform float yumusaklik : hint_range(0.05, 1.0) = 0.55;
-uniform float karanlik : hint_range(0.0, 1.0) = 0.93;
+uniform float karanlik : hint_range(0.0, 1.0) = 0.90;
 uniform vec3 golge_rengi : source_color = vec3(0.015, 0.015, 0.035);
 
 void fragment() {

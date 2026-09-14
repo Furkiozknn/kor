@@ -33,8 +33,8 @@ const KOR_BEKLEME := 0.5
 @export var surtunme := 1500.0
 
 var isi := Isi.new()
-var maks_can := 4
-var can := 4
+var maks_can := 6
+var can := 6
 
 # Silahlar -- baslangicta sadece ilki acik, kartlar digerlerini aciyor
 var silah_indeksi := 0

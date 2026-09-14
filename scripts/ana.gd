@@ -6,6 +6,7 @@ const KupSahne := preload("res://scenes/kup.tscn")
 const YapiSahne := preload("res://scenes/yapi.tscn")
 const Silahlar := preload("res://scripts/silahlar.gd")
 const YAZI_TIPI := preload("res://assets/fonts/PublicPixel.ttf")
+const Tema := preload("res://scripts/tema.gd")
 const KaranlikSahne := preload("res://scripts/karanlik.gd")
 const GelistiriciSahne := preload("res://scripts/gelistirici.gd")
 
@@ -21,12 +22,12 @@ const ZEMIN_SADE := Vector2i(0, 0)
 ## yani olum matematiksel olarak kacinilmazdi. Cozum tur standardi: spawn
 ## hizini sinirsiz artirmak yerine CANLI DUSMAN TAVANI koy, zorlugu
 ## bilesim ve guc ile buyut.
-const SPAWN_BAS := 1.45        # sn
-const SPAWN_AZALMA := 0.0055   # sn / oyun saniyesi
-const SPAWN_TABAN := 0.34      # sn -- saniyede ~3 dusman tavani
+const SPAWN_BAS := 2.30        # sn
+const SPAWN_AZALMA := 0.0035   # sn / oyun saniyesi
+const SPAWN_TABAN := 0.55      # sn
 const CANLI_TAVAN_BAS := 45
-const CANLI_TAVAN_ARTIS := 0.28   # saniyede, tavan buyur
-const GUC_BOLEN := 90.0           # dusman gucu: 1 + gecen/GUC_BOLEN
+const CANLI_TAVAN_ARTIS := 0.10   # saniyede, tavan buyur
+const GUC_BOLEN := 300.0          # dusman gucu: 1 + gecen/GUC_BOLEN
 const CANLI_TAVAN_UST := 170
 
 const YAPI_TURLERI := ["fici", "sandik", "fici_yigin", "orsa", "mangal", "mangal"]
@@ -108,18 +109,40 @@ func _panel_kur(baslik: String, satirlar: Array, alt: String) -> CanvasLayer:
     k.process_mode = Node.PROCESS_MODE_ALWAYS
     add_child(k)
     var fon := ColorRect.new()
-    fon.color = Color(0.01, 0.01, 0.03, 0.82)
+    fon.color = Color(0.01, 0.01, 0.03, 0.84)
     fon.set_anchors_preset(Control.PRESET_FULL_RECT)
     k.add_child(fon)
+
+    var sarmal := PanelContainer.new()
+    sarmal.theme = Tema.tema()
+    sarmal.position = Vector2(56, 52)
+    sarmal.custom_minimum_size = Vector2(528, 0)
+    sarmal.add_theme_stylebox_override("panel",
+        Tema.kutu(Tema.GOVDE, Tema.KENAR_KOR, 1, Tema.BOSLUK_L))
+    k.add_child(sarmal)
+
     var kutu := VBoxContainer.new()
-    kutu.position = Vector2(56, 52)
-    kutu.add_theme_constant_override("separation", 5)
-    k.add_child(kutu)
-    kutu.add_child(_panel_yazi(baslik, 16, Color(1, 1, 1)))
+    kutu.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    sarmal.add_child(kutu)
+    kutu.add_child(Tema.baslik(baslik))
+    var ayrac := ColorRect.new()
+    ayrac.color = Tema.KENAR
+    ayrac.custom_minimum_size = Vector2(0, 1)
+    kutu.add_child(ayrac)
     for satir in satirlar:
-        kutu.add_child(_panel_yazi(str(satir), 8, Color(1, 1, 1)))
-    kutu.add_child(_panel_yazi("", 8, Color(1, 1, 1)))
-    kutu.add_child(_panel_yazi(alt, 8, Color(1.0, 0.82, 0.45)))
+        var m := str(satir)
+        if m == "":
+            var b := Control.new()
+            b.custom_minimum_size = Vector2(0, Tema.BOSLUK_S)
+            kutu.add_child(b)
+        elif m == m.to_upper() and m.length() < 20:
+            kutu.add_child(Tema.vurgu(m))
+        else:
+            kutu.add_child(Tema.govde(m))
+    var b2 := Control.new()
+    b2.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
+    kutu.add_child(b2)
+    kutu.add_child(Tema.vurgu(alt))
     return k
 
 func _panel_yazi(metin: String, boy: int, renk: Color) -> Label:
@@ -372,35 +395,70 @@ func _kartlari_ac() -> void:
     add_child(_kart_katman)
 
     var fon := ColorRect.new()
-    fon.color = Color(0, 0, 0, 0.72)
+    fon.color = Color(0.01, 0.01, 0.03, 0.80)
     fon.set_anchors_preset(Control.PRESET_FULL_RECT)
     _kart_katman.add_child(fon)
 
-    var kutu := VBoxContainer.new()
-    kutu.position = Vector2(60, 84)
-    kutu.custom_minimum_size = Vector2(520, 0)
-    kutu.add_theme_constant_override("separation", 8)
-    _kart_katman.add_child(kutu)
+    var sarmal := PanelContainer.new()
+    sarmal.theme = Tema.tema()
+    sarmal.position = Vector2(64, 74)
+    sarmal.custom_minimum_size = Vector2(512, 0)
+    sarmal.add_theme_stylebox_override("panel",
+        Tema.kutu(Tema.GOVDE, Tema.KENAR_KOR, 1, Tema.BOSLUK_L))
+    _kart_katman.add_child(sarmal)
 
-    var baslik := Label.new()
-    baslik.add_theme_font_override("font", YAZI_TIPI)
-    baslik.add_theme_font_size_override("font_size", 16)
-    baslik.text = "SEVİYE %d  —  bir kart seç" % seviye
-    kutu.add_child(baslik)
+    var kutu := VBoxContainer.new()
+    kutu.add_theme_constant_override("separation", Tema.BOSLUK_M)
+    sarmal.add_child(kutu)
+
+    var ust := HBoxContainer.new()
+    ust.add_theme_constant_override("separation", Tema.BOSLUK_M)
+    ust.add_child(Tema.baslik("SEVİYE %d" % seviye))
+    var bosluk := Control.new()
+    bosluk.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    ust.add_child(bosluk)
+    var alt_bilgi := Tema.sonuk("bir kart seç")
+    alt_bilgi.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+    ust.add_child(alt_bilgi)
+    kutu.add_child(ust)
 
     for k in secilen:
-        var b := Button.new()
-        b.add_theme_font_override("font", YAZI_TIPI)
-        b.add_theme_font_size_override("font_size", 8)
-        b.custom_minimum_size = Vector2(520, 44)
-        b.icon = load("res://assets/sprites/ikon_%s.png" % k["ikon"])
-        b.expand_icon = false
-        b.text = "  %s\n  %s" % [k["ad"], k["aciklama"]]
-        b.pressed.connect(_kart_secildi.bind(k))
-        kutu.add_child(b)
+        kutu.add_child(_kart_dugmesi(k))
 
     get_tree().paused = true
-    kutu.get_child(1).grab_focus()
+    (kutu.get_child(1) as Button).grab_focus()
+
+## Tek kart. Ikon solda sabit sutunda, ad ve aciklama sola hizali --
+## uc kart alt alta gelince gozle taranabilir olsun diye.
+func _kart_dugmesi(k: Dictionary) -> Button:
+    var b := Button.new()
+    b.custom_minimum_size = Vector2(0, 40)
+    b.focus_mode = Control.FOCUS_ALL
+    b.pressed.connect(_kart_secildi.bind(k))
+
+    var satir := HBoxContainer.new()
+    satir.add_theme_constant_override("separation", Tema.BOSLUK_M)
+    satir.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    satir.set_anchors_preset(Control.PRESET_FULL_RECT)
+    satir.offset_left = Tema.BOSLUK_M
+    satir.offset_right = -Tema.BOSLUK_M
+
+    var ikon := TextureRect.new()
+    ikon.texture = load("res://assets/sprites/ikon_%s.png" % k["ikon"])
+    ikon.custom_minimum_size = Vector2(20, 20)
+    ikon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+    ikon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+    satir.add_child(ikon)
+
+    var metin := VBoxContainer.new()
+    metin.add_theme_constant_override("separation", 2)
+    metin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+    metin.add_child(Tema.vurgu(str(k["ad"])))
+    metin.add_child(Tema.sonuk(str(k["aciklama"])))
+    satir.add_child(metin)
+
+    b.add_child(satir)
+    return b
 
 func _kart_secildi(kart: Dictionary) -> void:
     SesYonetici.cal("kart_sec")
@@ -435,23 +493,12 @@ func _hud_kur() -> void:
     _lbl_can = _yazi(8)
     _lbl_can.position = Vector2(10, 18)
 
-    var arka := ColorRect.new()
-    arka.position = Vector2(10, 36)
-    arka.size = Vector2(120, 8)
-    arka.color = Color(0.12, 0.12, 0.16)
-    _hud.add_child(arka)
-
-    _isi_cubuk = ColorRect.new()
-    _isi_cubuk.position = Vector2(10, 36)
-    _isi_cubuk.size = Vector2(0, 8)
-    _hud.add_child(_isi_cubuk)
-
-    # Kor atisi esigi: bu cizgiyi gecince sag tik aktif
-    var esik := ColorRect.new()
-    esik.position = Vector2(10 + 120.0 * oyuncu.KOR_ESIK, 34)
-    esik.size = Vector2(1, 12)
-    esik.color = Color(1, 0.85, 0.4, 0.8)
-    _hud.add_child(esik)
+    # Isi cubugu: cerceveli, kor atisi esigi centikli -- tema.gd'den
+    var c := Tema.cubuk(120, 8, oyuncu.KOR_ESIK)
+    var kok: Control = c["kok"]
+    kok.position = Vector2(10, 36)
+    _hud.add_child(kok)
+    _isi_cubuk = c["dolgu"]
 
     _isi_yazi = _yazi(8)
     _isi_yazi.position = Vector2(134, 33)
@@ -521,6 +568,14 @@ func _yazi(boy: int) -> Label:
 
 func _oyun_bitti() -> void:
     bitti = true
+    # Acik modal kalmasin: olum her seyin ustunde
+    for katman in [_kart_katman, _duraklat_katman]:
+        if katman != null and is_instance_valid(katman):
+            katman.queue_free()
+    _kart_katman = null
+    _duraklat_katman = null
+    _bekleyen_kart = 0
+    get_tree().paused = false
     SesYonetici.muzik_dur()
     SesYonetici.cal("asiri_isinma")
     _panel_kur("SÖNDÜN", _ozet_satirlari(true), "R ile yeniden başla")

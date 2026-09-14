@@ -4,7 +4,7 @@ extends RefCounted
 
 var tavan: float = 100.0
 var atis_basina: float = 9.0
-var soguma_hizi: float = 30.0
+var soguma_hizi: float = 24.0
 var soguma_gecikmesi: float = 0.45
 var kilit_suresi: float = 2.0
 

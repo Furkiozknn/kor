@@ -206,10 +206,10 @@ func _process(_delta: float) -> bool:
     assert(_ana.seviye == 2, "XP dolunca seviye atlamali")
     assert(_ana._kart_katman != null, "seviye kartlari acilmadi")
     assert(paused, "kart ekrani oyunu duraklatmali")
-    var kutu: Node = _ana._kart_katman.get_child(1)
-    assert(kutu.get_child_count() == 4, "1 baslik + 3 kart olmali")
+    var dugmeler := _dugmeleri_bul(_ana._kart_katman)
+    assert(dugmeler.size() == 3, "3 kart secenegi olmali, %d bulundu" % dugmeler.size())
     var once := _oyuncu_ozeti(oyuncu)
-    kutu.get_child(1).pressed.emit()
+    (dugmeler[0] as Button).pressed.emit()
     assert(not paused, "kart secilince duraklatma kalkmali")
     assert(_oyuncu_ozeti(oyuncu) != once, "secilen kart oyuncuya uygulanmadi")
 
@@ -230,6 +230,15 @@ func _kup_asamasi() -> bool:
         return true
     assert(_kare - _kup_karesi < 240, "XP kupu miknatisla toplanmadi")
     return _kare - _kup_karesi >= 240
+
+## Arayuz agaci degisince test kirilmasin: dugmeleri derinlemesine ara.
+func _dugmeleri_bul(kok: Node) -> Array:
+    var b: Array = []
+    for c in kok.get_children():
+        if c is Button:
+            b.append(c)
+        b.append_array(_dugmeleri_bul(c))
+    return b
 
 func _oyuncu_ozeti(o) -> Array:
     return [o.isi.tavan, o.isi.soguma_hizi, o.isi_carpani, o.hiz, o.atis_hizi_carpani,

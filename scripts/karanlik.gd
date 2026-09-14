@@ -13,8 +13,8 @@ extends CanvasLayer
 
 const TAVAN := 24                 # shader'daki dizi boyu ile aynı olmalı
 
-@export var taban_yaricap := 34.0     # ısı sıfırken görüş
-@export var tavan_yaricap := 215.0    # ısı tavandayken görüş
+@export var taban_yaricap := 40.0     # ısı sıfırken görüş
+@export var tavan_yaricap := 300.0    # ısı tavandayken görüş
 @export var kilit_yaricap := 26.0     # silah kilitliyken -- kör noktası
 
 var oyuncu: Node2D
