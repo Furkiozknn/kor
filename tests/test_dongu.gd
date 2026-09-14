@@ -115,6 +115,22 @@ func _process(_delta: float) -> bool:
         oyuncu.global_position = eski_yer2
     oyuncu.isi.deger = 0.0
 
+    # GERCEK MERMI YOLU. Onceden test dusmanlari elle hasar_al ile
+    # olduruyordu; mermi.body_entered zinciri (fizik akisi icinde XP kupu
+    # dogurma) hic calismiyordu ve orada gercek bir hata vardi. Artik
+    # gercek carpisma geri cagirmasi tetikleniyor.
+    var kurban = _ana.DusmanSahne.instantiate()
+    kurban.kur(0, 1.0)
+    _ana.add_child(kurban)
+    kurban.global_position = oyuncu.global_position + Vector2(50, 0)
+    var mermi = load("res://scenes/mermi.tscn").instantiate()
+    mermi.hasar = 9999.0
+    mermi.yon = Vector2.RIGHT
+    _ana.add_child(mermi)
+    var xp_once2: int = _ana.xp
+    mermi._carpti(kurban)            # body_entered'in cagirdigi yol
+    assert(kurban.is_queued_for_deletion(), "mermi dusmani olduremedi")
+
     # PATRON: can torbasi degil, mekanigin sinavi olmali.
     # Sicakken savunmasiz, soguksa neredeyse dokunulmaz ve kendini onarir.
     var pt = _ana.PatronSahne.instantiate()

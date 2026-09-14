@@ -368,12 +368,19 @@ func _dusman_oldu(poz: Vector2, kazanc: int) -> void:
     oldurulen += 1
     _kup_dus(poz, kazanc)
 
+## XP kupu. DIKKAT: bu fonksiyon fizik sorgusu akarken cagrilabiliyor
+## (mermi.body_entered -> dusman.hasar_al -> olduruldu -> burasi). Kupun
+## Area2D'si o sirada agaca girerse Godot izleme durumunu reddediyor:
+## "Can't change this state while flushing queries". Kup yine gorunuyor ama
+## alani ilk karelerde izlemiyor -- kalabalikta "ustunden gectim almadi"
+## seklinde ortaya cikar. Bu yuzden agaca ekleme ERTELENIYOR; konum, xp ve
+## sinyal baglantisi eklemeden ONCE ayarlandigi icin bir sey kaybolmuyor.
 func _kup_dus(poz: Vector2, kazanc: int) -> void:
     var k := KupSahne.instantiate()
     k.global_position = poz
     k.xp = kazanc
     k.toplandi.connect(_xp_topla)
-    add_child(k)
+    add_child.call_deferred(k)
 
 func _xp_topla(kazanc: int) -> void:
     xp += kazanc
