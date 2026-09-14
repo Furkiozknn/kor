@@ -55,6 +55,8 @@ var _kor_zerre := 0.0
 var _silah_gecis := 0.0
 var _yonlu_mu := false
 var _yuruyus_var := false
+var _onceki_kilit := false
+var _onceki_uyari := false
 
 @onready var _gorsel: AnimatedSprite2D = $Gorsel
 @onready var _parlama: Sprite2D = $Parlama
@@ -135,6 +137,7 @@ func _unhandled_key_input(olay: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
     isi.guncelle(delta)
+    _isi_sesleri()
     _dokunulmaz = maxf(_dokunulmaz - delta, 0.0)
     _dalis_bekleme = maxf(_dalis_bekleme - delta, 0.0)
     _atis_sayaci = maxf(_atis_sayaci - delta, 0.0)
@@ -175,6 +178,16 @@ func _physics_process(delta: float) -> void:
         _ates_et(nisan)
     _gorunum_guncelle(delta, nisan)
 
+## Isi esiklerini GECERKEN ses cal -- her karede degil, sadece gecis aninda.
+func _isi_sesleri() -> void:
+    if isi.kilitli and not _onceki_kilit:
+        SesYonetici.cal("asiri_isinma")
+    _onceki_kilit = isi.kilitli
+    var uyari := not isi.kilitli and isi.oran() > 0.85
+    if uyari and not _onceki_uyari:
+        SesYonetici.cal("isi_uyari")
+    _onceki_uyari = uyari
+
 func _dalis_basla(nisan: Vector2) -> void:
     var yon := Input.get_vector("move_left", "move_right", "move_up", "move_down")
     if yon == Vector2.ZERO:
@@ -185,6 +198,7 @@ func _dalis_basla(nisan: Vector2) -> void:
     _hayalet_sayaci = 0.0
     velocity = yon.normalized() * DALIS_HIZ
     Hiss.sars(1.2)
+    SesYonetici.cal("dalis")
 
 func _dalis_bitti() -> void:
     velocity *= 0.25
@@ -224,6 +238,7 @@ func _ates_et(nisan: Vector2) -> void:
     velocity -= nisan * float(s["geri_tepme"])          # geri tepme
     _namlu_parlama = 1.0
     Hiss.sars(float(s["sarsinti"]))
+    SesYonetici.cal("ates")
 
 func kor_atabilir() -> bool:
     return _kor_bekleme <= 0.0 and not isi.kilitli and isi.oran() >= KOR_ESIK
@@ -249,6 +264,7 @@ func _kor_at(nisan: Vector2) -> Area2D:
 
     velocity -= nisan * 150.0 * harcanan
     _namlu_parlama = 1.6
+    SesYonetici.cal("kor_atisi")
     Hiss.sars(2.0 + 4.0 * harcanan)
     Hiss.dondur(0.045)
     Hiss.patlama(get_parent(), global_position + nisan * 14.0,

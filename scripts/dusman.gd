@@ -186,6 +186,7 @@ func _ates_et(yon: Vector2) -> void:
     m.hasar = 1.0
     m.hiz = 115.0
     get_parent().add_child(m)
+    SesYonetici.cal("cadi_atisi")
 
 func hasar_al(miktar: float, itme: Vector2 = Vector2.ZERO) -> void:
     can -= miktar
@@ -193,10 +194,12 @@ func hasar_al(miktar: float, itme: Vector2 = Vector2.ZERO) -> void:
     _gorsel.modulate = Color(3, 3, 3)
     _gorsel.scale = Vector2(1.35, 0.72)          # vurus ezilmesi
     _itme += itme
+    SesYonetici.cal("vurus")
     Hiss.patlama(get_parent(), global_position, Color(0.75, 0.95, 1.0),
         4, 70.0, 1.3, 0.2)
     if can <= 0.0:
         olduruldu.emit(global_position, xp_degeri)
+        SesYonetici.cal("dusman_olum")
         # Kul patlamasi -- olum gorulsun
         Hiss.patlama(get_parent(), global_position, Color(0.72, 0.86, 0.95),
             14 + int(xp_degeri) * 6, 130.0, 2.0, 0.5)

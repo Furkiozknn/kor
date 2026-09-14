@@ -10,6 +10,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Hiss="*res://scripts/hiss.gd"
+SesYonetici="*res://scripts/ses_yonetici.gd"
 
 [display]
 

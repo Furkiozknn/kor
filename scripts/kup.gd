@@ -45,6 +45,7 @@ func _al() -> void:
     if _alindi:
         return
     _alindi = true
+    SesYonetici.cal("kup")
     Hiss.patlama(get_parent(), global_position, Color(0.5, 1.0, 0.65), 6, 80.0, 1.3, 0.25)
     toplandi.emit(xp)
     queue_free()

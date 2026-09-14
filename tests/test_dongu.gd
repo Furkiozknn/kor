@@ -43,6 +43,22 @@ func _process(_delta: float) -> bool:
     assert(dusmanlar > 0, "dalga spawn'i calismiyor: hic dusman yok")
     assert(_hasar_sayaci > 0, "temas hasari islemiyor")
 
+    # Ses. NOT: autoload adi bu dosya derlenirken henuz tanimli degil
+    # (--script ile giren betik projeden once derleniyor), o yuzden
+    # tanimlayici yerine dugum uzerinden aliniyor.
+    var ses = root.get_node_or_null("SesYonetici")
+    assert(ses != null, "SesYonetici autoload'u yuklenmemis")
+    var ses_sayisi: int = ses.yukle_klasorden()
+    assert(ses_sayisi >= 12, "ses dosyalari eksik: %d" % ses_sayisi)
+    for ad in ses.AYAR.keys():
+        assert(ses._sesler.has(ad), "AYAR'da olup dosyasi olmayan ses: " + str(ad))
+    assert(ses.cal("vurus"), "cal() ses calamadi")
+    # Bekleme suresi: ayni sesi arka arkaya isteyince ikincisi dusmeli
+    var dusen_once: int = ses.dusen_sayisi()
+    for n in 20:
+        ses.cal("vurus")
+    assert(ses.dusen_sayisi() > dusen_once, "bekleme suresi calismiyor")
+
     # Arena: her hucre doldu mu
     var hucre: int = _ana._karolar.get_used_cells().size()
     assert(hucre == _ana.SUTUN * _ana.SATIR, "arena karolari eksik: %d" % hucre)

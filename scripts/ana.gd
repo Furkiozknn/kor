@@ -37,6 +37,8 @@ var _kart_katman: CanvasLayer
 var _bekleyen_kart := 0
 
 func _ready() -> void:
+    SesYonetici.yukle_klasorden()
+    SesYonetici.muzik_cal()
     _arena_kur()
     _lekeler()
     _yapilari_dog()
@@ -187,6 +189,7 @@ func _xp_topla(kazanc: int) -> void:
         seviye += 1
         xp_hedef = int(xp_hedef * 1.45) + 2
         _bekleyen_kart += 1
+        SesYonetici.cal("seviye")
     # Ayni karede iki seviye gelirse kart kaybolmasin: sirayla acilirlar
     if _bekleyen_kart > 0 and _kart_katman == null:
         _kartlari_ac()
@@ -279,6 +282,7 @@ func _kartlari_ac() -> void:
     kutu.get_child(1).grab_focus()
 
 func _kart_secildi(uygula: Callable) -> void:
+    SesYonetici.cal("kart_sec")
     uygula.call(oyuncu)
     _bekleyen_kart -= 1
     _kart_katman.queue_free()
@@ -355,6 +359,8 @@ func _yazi(boy: int) -> Label:
 
 func _oyun_bitti() -> void:
     bitti = true
+    SesYonetici.muzik_dur()
+    SesYonetici.cal("asiri_isinma")
     var l := _yazi(16)
     l.position = Vector2(180, 150)
     l.text = "SÖNDÜN\n%d öldürme · %02d:%02d · seviye %d\nR ile yeniden" % [

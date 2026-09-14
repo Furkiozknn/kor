@@ -39,11 +39,18 @@ Görsel bir şey değiştirdiysen ekrana **bak**, tahmin etme:
 godot --script res://tests/ekran_al.gd     # D:\Claude Projeleri\gecici\kor-ekran.png
 ```
 
-## 3. İLK İŞ: `_gelen/` kutusunu boşalt
+## 3. `_gelen/` kutusu — 3/5 bağlandı
 
-Yan araştırma oturumu ses, font ve zemin paletini hazırlayıp
-`_gelen/` altına bıraktı. **Hiçbiri projeye bağlanmadı.** Tam talimat
-`_gelen/OKU.md` içinde; özeti:
+Yan araştırma oturumu hazırladı, ben bağladım. Durum:
+
+- [x] **zemin paleti** — bağlandı, `modulate` 0.50'ye ayarlandı
+- [x] **font** — bağlandı, boyutlar 8'in katına çekildi, yerleşim düzeltildi
+- [x] **ses** — 12 dosya + `SesYonetici` autoload, bütün olaylar bağlı
+- [ ] `arac/palet-uygula.mjs` — dışarıdan gelen görseli palete oturtmak için,
+      şimdilik gerek olmadı
+- [ ] `addons/godot_mcp` — kopyalandı, **etkinleştirilmedi** (bkz. bölüm 1)
+
+Tam talimat `_gelen/OKU.md`. Eski özet:
 
 1. **Zemin paleti** (tek satır, en yüksek etkili değişiklik). Ölçüm: arenanın
    zemini oyuncunun ısı rampasıyla aynı sıcak renk ailesinden, bu yüzden
@@ -94,7 +101,12 @@ Ayrıntı: `D:\Claude Projeleri\raporlar\2026-09-14-kor-teknik-bulgular.md`
 - [x] oyun hissi katmanı (`scripts/hiss.gd`): sarsıntı, donma, itme, parçacık
 - [x] görsel: vinyet, mangal ışık havuzları, zemin lekeleri, mermi haleleri
 - [x] 8 yönlü oyuncu + yürüyüş animasyonu, altı düşmanın yürüyüş döngüsü
-- [ ] **`_gelen/` kutusunu boşalt** (zemin paleti → font → ses)
+- [x] `_gelen/` kutusu: zemin paleti, pixel font, ses
+- [ ] **eksik iki ses**: oyuncu hasar alınca ve oyun bitince — peer'dan
+      istendi. Şu an hasar sessiz (sarsıntı + donma + kırmızı parçacık var,
+      ama ses yok); oyun bitişinde `asiri_isinma` geçici olarak kullanılıyor.
+- [ ] font: büyük Türkçe harfler küçük yükseklikte — peer daha iyi bir
+      CC0 pixel fontu arıyor, gelirse `_gelen/font2/` altında olacak
 - [ ] patron — çekirdek mekaniği sınayan bir tasarım
 - [ ] dalga temposu dengesi
 
