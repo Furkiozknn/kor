@@ -16,6 +16,7 @@ var _patron_modu := "--patron" in OS.get_cmdline_user_args()
 ## Performans olcumu: gercek pencerede, karanlik shader'i + kalabalik sürü
 ## + parcaciklar birlikte. Headless bunu olcemez cunku cizim atlanir.
 var _perf_modu := "--perf" in OS.get_cmdline_user_args()
+var _zafer_modu := "--zafer" in OS.get_cmdline_user_args()
 var _perf_ornek: Array = []
 var _son_usec: int = 0
 
@@ -28,6 +29,25 @@ func _initialize() -> void:
     root.add_child(_ana)
 
 func _process(_delta: float) -> bool:
+    if _zafer_modu:
+        _kare += 1
+        if _kare == 60:
+            for n in 5:
+                _ana._xp_topla(_ana.xp_hedef)
+                var kk = _ana.get("_kart_katman")
+                if kk != null and is_instance_valid(kk):
+                    for d in _dugme_ara(kk):
+                        d.pressed.emit()
+                        break
+            _ana.oldurulen = 742
+            _ana.gecen = 721.0
+        if _kare < 130:
+            return false
+        RenderingServer.force_draw()
+        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-zafer.png")
+        print("zafer: kor-zafer.png  (kazandi=%s)" % str(_ana.kazandi))
+        return true
+
     if _perf_modu:
         _kare += 1
         if _kare == 5:
@@ -186,3 +206,11 @@ func _process(_delta: float) -> bool:
         CIKTI, img.get_width(), img.get_height(),
         get_nodes_in_group("dusman").size(), _ana.oyuncu.isi.deger])
     return true
+
+func _dugme_ara(kok: Node) -> Array:
+    var b: Array = []
+    for c in kok.get_children():
+        if c is Button and c.has_meta("kart_secim"):
+            b.append(c)
+        b.append_array(_dugme_ara(c))
+    return b

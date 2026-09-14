@@ -218,8 +218,8 @@ func _process(_delta: float) -> bool:
         m.hasar_al(9999.0)
         assert(not m.is_queued_for_deletion(), "orsa/mangal kirilmamali")
 
-    # Bes dusman turu da kurulabiliyor mu; hayalet duvar tanimamali
-    for t in 5:
+    # Yedi dusman turu de kurulabiliyor mu (0..6); ozel davranislari dogru mu
+    for t in 7:
         var yeni = _ana.DusmanSahne.instantiate()
         yeni.kur(t, 1.0)
         _ana.add_child(yeni)
@@ -231,6 +231,8 @@ func _process(_delta: float) -> bool:
             assert(yeni.collision_mask == 0, "hayalet duvardan gecmeli")
         if t == 5:
             assert(yeni.menzil > 0.0, "cadi menzilli olmali")
+        if t == 6:
+            assert(yeni.kosucu, "kosucu telegrafli hucum yapmali")
         yeni.queue_free()
 
     # Cadinin mermisi oyuncuya hasar vermeli (ayri carpisma katmani)

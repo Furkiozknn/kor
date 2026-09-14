@@ -151,14 +151,20 @@ func _panel_kur(baslik: String, satirlar: Array, alt: String) -> CanvasLayer:
             b.custom_minimum_size = Vector2(0, Tema.BOSLUK_S)
             kutu.add_child(b)
         elif m == m.to_upper() and m.length() < 20:
-            kutu.add_child(Tema.vurgu(m))
+            kutu.add_child(_panel_satiri(Tema.vurgu(m)))
         else:
-            kutu.add_child(Tema.govde(m))
+            kutu.add_child(_panel_satiri(Tema.govde(m)))
     var b2 := Control.new()
     b2.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
     kutu.add_child(b2)
     kutu.add_child(Tema.vurgu(alt))
     return k
+
+## Panel satiri: uzun kart aciklamalari paneli tasmasin diye sarilir.
+func _panel_satiri(l: Label) -> Label:
+    l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    l.custom_minimum_size = Vector2(504, 0)
+    return l
 
 func _panel_yazi(metin: String, boy: int, renk: Color) -> Label:
     var l := Label.new()

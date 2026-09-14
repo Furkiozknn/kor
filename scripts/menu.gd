@@ -26,6 +26,7 @@ var _mat: ShaderMaterial
 var _nefes := 0.0
 var _oyuncu: AnimatedSprite2D
 var _kademe_yazi: Label
+var _ses_yazi: Label
 
 func _ready() -> void:
     _zemin_kur()
@@ -33,7 +34,10 @@ func _ready() -> void:
     _oyuncu_kur()
     _arayuz_kur()
     SesYonetici.yukle_klasorden()
-    SesYonetici.muzik_cal("res://assets/ses/muzik_dokumhane.ogg", -18.0)
+    SesYonetici.ayarlari_uygula()
+    SesYonetici.muzik_cal()
+    if bool(Kayit.ayar("tam_ekran", false)):
+        DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 func _zemin_kur() -> void:
     var karolar := TileMapLayer.new()
@@ -144,6 +148,27 @@ func _arayuz_kur() -> void:
     kad.add_child(_kademe_yazi)
     kutu.add_child(kad)
 
+    # Ses ayarlari -- kalici. Ayri bir ayarlar ekrani acmak yerine menude,
+    # cunku tek ihtiyac bu ve fazladan adim UX borcudur.
+    var ses := HBoxContainer.new()
+    ses.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    ses.add_child(Tema.sonuk("SES"))
+    for bilgi in [["müzik", "ses_muzik", -14.0], ["efekt", "ses_efekt", -6.0]]:
+        ses.add_child(Tema.sonuk(str(bilgi[0])))
+        var eksi := Button.new()
+        eksi.text = "-"
+        eksi.custom_minimum_size = Vector2(20, 20)
+        eksi.pressed.connect(_ses_degis.bind(str(bilgi[1]), -4.0, float(bilgi[2])))
+        ses.add_child(eksi)
+        var arti := Button.new()
+        arti.text = "+"
+        arti.custom_minimum_size = Vector2(20, 20)
+        arti.pressed.connect(_ses_degis.bind(str(bilgi[1]), 4.0, float(bilgi[2])))
+        ses.add_child(arti)
+    _ses_yazi = Tema.sonuk("")
+    ses.add_child(_ses_yazi)
+    kutu.add_child(ses)
+
     var bosluk3 := Control.new()
     bosluk3.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
     kutu.add_child(bosluk3)
@@ -155,8 +180,9 @@ func _arayuz_kur() -> void:
     kutu.add_child(basla)
     basla.grab_focus()
     _kademe_tazele()
+    _ses_tazele()
 
-    var alt := Tema.sonuk("WASD hareket · SOL TIK ateş · SAĞ TIK kor atışı · BOŞLUK dalış · Q silah")
+    var alt := Tema.sonuk("WASD hareket · SOL TIK ateş · SAĞ TIK kor atışı · BOŞLUK dalış · Q silah · F11 tam ekran")
     alt.position = Vector2(48, 322)
     alt.modulate = Color(1, 1, 1, 0.55)
     k.add_child(alt)
@@ -171,6 +197,19 @@ func _kademe_tazele() -> void:
         return
     var k: int = clampi(Kayit.kademe(), 0, KADEMELER.size() - 1)
     _kademe_yazi.text = "  %s   (cüruf x%.2f)" % [KADEMELER[k], Kayit.kademe_carpani()]
+
+func _ses_degis(anahtar: String, delta_db: float, varsayilan: float) -> void:
+    var d: float = clampf(float(Kayit.ayar(anahtar, varsayilan)) + delta_db, -40.0, 6.0)
+    Kayit.ayar_yaz(anahtar, d)
+    SesYonetici.ayarlari_uygula()
+    SesYonetici.cal("kup")
+    _ses_tazele()
+
+func _ses_tazele() -> void:
+    if _ses_yazi == null:
+        return
+    _ses_yazi.text = "  müzik %+.0f dB   efekt %+.0f dB" % [
+        float(Kayit.ayar("ses_muzik", -14.0)), float(Kayit.ayar("ses_efekt", -6.0))]
 
 func _process(delta: float) -> void:
     # Nefes: ısının inip çıkışını menüde de görüyorsun. Mekaniği anlatmadan
@@ -195,8 +234,16 @@ func _unhandled_key_input(olay: InputEvent) -> void:
     var k := (olay as InputEventKey).keycode
     if k == KEY_ENTER or k == KEY_KP_ENTER or k == KEY_SPACE:
         _basla()
+    elif k == KEY_F11:
+        _tam_ekran_degis()
     elif k == KEY_ESCAPE:
         get_tree().quit()
+
+func _tam_ekran_degis() -> void:
+    var tam: bool = not bool(Kayit.ayar("tam_ekran", false))
+    Kayit.ayar_yaz("tam_ekran", tam)
+    DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if tam
+        else DisplayServer.WINDOW_MODE_WINDOWED)
 
 func _basla() -> void:
     SesYonetici.cal("kart_sec")

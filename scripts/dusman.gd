@@ -12,6 +12,7 @@ const DOKULAR := {
     3: preload("res://assets/sprites/dusman_iskelet.png"),
     4: preload("res://assets/sprites/dusman_hayalet.png"),
     5: preload("res://assets/sprites/dusman_cadi.png"),
+    6: preload("res://assets/sprites/dusman_iskelet.png"),
 }
 
 const MermiSahne := preload("res://scenes/dusman_mermisi.tscn")
@@ -55,6 +56,12 @@ var _hedef: Node2D
 var _temas_bekleme := 0.0
 var _atis_bekleme := 0.0
 var menzil := 0.0          # 0 = temas dusmani, >0 = bu mesafeyi korur ve ates eder
+# Kosucu: once durup isinir (telegraf), sonra saldirir. Karanlikta bu
+# telegrafin parlamasi tek uyarin -- gorusun dar oldugunda gec fark edersin.
+var kosucu := false
+var _sarj_durum := 0       # 0 bekle, 1 telegraf, 2 hucum
+var _sarj_sayaci := 0.0
+var _sarj_yon := Vector2.ZERO
 var _parlama := 0.0
 var _itme := Vector2.ZERO
 var _dogus := 0.0
@@ -93,6 +100,14 @@ func kur(tur: int, guc: float) -> void:
             _yaricap = 5.0
             temas_mesafe = 10.0
             xp_degeri = 2
+        6:  # kosucu: telegraf + hucum
+            hiz = 30.0
+            can = 5.0 * guc
+            xp_degeri = 3
+            _yaricap = 6.0
+            temas_mesafe = 12.0
+            temas_hasari = 1
+            kosucu = true
         5:  # cadi: mesafesini korur, mermi atar
             hiz = 46.0
             can = 4.0 * guc
@@ -175,6 +190,9 @@ func _physics_process(delta: float) -> void:
     # rahatsiz edince NavigationAgent2D'ye gec.
     var fark := _hedef.global_position - global_position
     var yon := fark.normalized()
+    if kosucu:
+        _kosucu_isle(delta, fark, yon)
+        return
     if menzil > 0.0:
         # Cadi: cok yaklasirsa geri ceker, menzildeyse durup ates eder
         var uzak := fark.length()
@@ -195,6 +213,43 @@ func _physics_process(delta: float) -> void:
     _gorsel.speed_scale = clampf(0.5 + velocity.length() / maxf(hiz, 1.0), 0.4, 1.8)
 
     if _temas_bekleme <= 0.0 and global_position.distance_to(_hedef.global_position) < temas_mesafe:
+        _temas_bekleme = 0.5
+        _hedef.hasar_al(temas_hasari)
+
+## Kosucu davranisi. Uc asama: yaklas -> DUR VE ISIN (telegraf) -> hucum.
+## Telegraf karanlikta kirmizi bir parlama; gorusun genisse erken gorur ve
+## kacarsin, darsa ustune gelene kadar fark etmezsin. Isi = gorus mekanigini
+## dogrudan sinayan tek dusman bu.
+func _kosucu_isle(delta: float, fark: Vector2, yon: Vector2) -> void:
+    _sarj_sayaci -= delta
+    match _sarj_durum:
+        0:
+            velocity = velocity.move_toward(yon * hiz, 300.0 * delta)
+            if fark.length() < 150.0 and _sarj_sayaci <= 0.0:
+                _sarj_durum = 1
+                _sarj_sayaci = 0.9
+                _sarj_yon = yon
+        1:
+            velocity = velocity.move_toward(Vector2.ZERO, 900.0 * delta)
+            _sarj_yon = _sarj_yon.lerp(yon, 2.0 * delta).normalized()
+            if _cekirdek != null:
+                var p := 1.0 - (_sarj_sayaci / 0.9)
+                _cekirdek.modulate = Color(1.0, 0.35, 0.2, 0.5 + 0.5 * p)
+                _cekirdek.scale = Vector2.ONE * (_yaricap / 16.0) * (1.0 + p * 1.6)
+            if _sarj_sayaci <= 0.0:
+                _sarj_durum = 2
+                _sarj_sayaci = 0.55
+                velocity = _sarj_yon * 275.0
+                Hiss.patlama(get_parent(), global_position, Color(1.0, 0.4, 0.2), 8, 90.0, 1.4, 0.3)
+        2:
+            if _sarj_sayaci <= 0.0:
+                _sarj_durum = 0
+                _sarj_sayaci = 1.4
+                if _cekirdek != null:
+                    _cekirdek.modulate = Color(1, 1, 1, 0.5)
+    move_and_slide()
+    _gorsel.flip_h = yon.x < 0.0
+    if _temas_bekleme <= 0.0 and fark.length() < temas_mesafe:
         _temas_bekleme = 0.5
         _hedef.hasar_al(temas_hasari)
 
