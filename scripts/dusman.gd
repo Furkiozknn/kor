@@ -1,5 +1,6 @@
 extends CharacterBody2D
-## Sürüyü oluşturan düşman. Tek sahne, üç tür: 0 kül, 1 imp (hızlı), 2 cüruf (iri).
+## Sürüyü oluşturan düşman. Tek sahne, beş tür:
+## 0 kül, 1 imp (hızlı), 2 cüruf (iri), 3 iskelet (sert), 4 hayalet (duvar tanımaz).
 
 signal olduruldu(pozisyon: Vector2, xp: int)
 
@@ -7,6 +8,8 @@ const DOKULAR := {
     0: preload("res://assets/sprites/dusman_kul.png"),
     1: preload("res://assets/sprites/dusman_imp.png"),
     2: preload("res://assets/sprites/dusman_curuf.png"),
+    3: preload("res://assets/sprites/dusman_iskelet.png"),
+    4: preload("res://assets/sprites/dusman_hayalet.png"),
 }
 
 var hiz := 42.0
@@ -40,6 +43,18 @@ func kur(tur: int, guc: float) -> void:
             xp_degeri = 3
             _yaricap = 11.0
             temas_mesafe = 16.0
+        3:  # iskelet: dengeli ama sert
+            hiz = 52.0
+            can = 6.0 * guc
+            xp_degeri = 2
+            _yaricap = 6.0
+            temas_mesafe = 11.0
+        4:  # hayalet: duvar ve siper tanimaz, zayif
+            hiz = 62.0
+            can = 3.0 * guc
+            _yaricap = 5.0
+            temas_mesafe = 10.0
+            xp_degeri = 2
         _:  # kul: standart
             hiz = 44.0
             can = 3.0 * guc
@@ -52,13 +67,16 @@ func _ready() -> void:
     var s := CircleShape2D.new()   # her ornek kendi seklini tasisin
     s.radius = _yaricap
     _carpisma.shape = s
+    if _tur == 4:
+        collision_mask = 0            # duvardan ve siperden gecer
+        _gorsel.modulate = Color(1, 1, 1, 0.65)
 
 func _physics_process(delta: float) -> void:
     _temas_bekleme = maxf(_temas_bekleme - delta, 0.0)
     if _parlama > 0.0:
         _parlama -= delta
         if _parlama <= 0.0:
-            _gorsel.modulate = Color(1, 1, 1)
+            _gorsel.modulate = Color(1, 1, 1, 0.65) if _tur == 4 else Color(1, 1, 1)
 
     if not is_instance_valid(_hedef):
         _hedef = get_tree().get_first_node_in_group("oyuncu")
@@ -67,6 +85,9 @@ func _physics_process(delta: float) -> void:
             move_and_slide()
             return
 
+    # ponytail: yol bulma yok, duz hedefe yurur -- siperin arkasinda takilir.
+    # Sure gectikce siperler kirildigi icin simdilik yeterli; tikanma his olarak
+    # rahatsiz edince NavigationAgent2D'ye gec.
     var yon := (_hedef.global_position - global_position).normalized()
     velocity = velocity.move_toward(yon * hiz, 600.0 * delta)
     move_and_slide()

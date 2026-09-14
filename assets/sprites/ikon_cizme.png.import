@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d0gwmhh4j5l3d"
-path="res://.godot/imported/tileset.png-b50fc1806457686cf91872f682d34a54.ctex"
+uid="uid://c3a3k3y0ca4n"
+path="res://.godot/imported/ikon_cizme.png-ff4632bc97b4401435c74ad0f8ed3329.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/tileset.png"
-dest_files=["res://.godot/imported/tileset.png-b50fc1806457686cf91872f682d34a54.ctex"]
+source_file="res://assets/sprites/ikon_cizme.png"
+dest_files=["res://.godot/imported/ikon_cizme.png-ff4632bc97b4401435c74ad0f8ed3329.ctex"]
 
 [params]
 

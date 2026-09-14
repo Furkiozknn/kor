@@ -41,6 +41,35 @@ func _process(_delta: float) -> bool:
     assert(dusmanlar > 0, "dalga spawn'i calismiyor: hic dusman yok")
     assert(_hasar_sayaci > 0, "temas hasari islemiyor")
 
+    # Arena: her hucre doldu mu
+    var hucre: int = _ana._karolar.get_used_cells().size()
+    assert(hucre == _ana.SUTUN * _ana.SATIR, "arena karolari eksik: %d" % hucre)
+
+    # Siperler: dogdular mi, kirilabilir olan kiriliyor mu, kalici olan durmali mi
+    var yapilar: Array = get_nodes_in_group("yapi")
+    assert(yapilar.size() > 0, "arena siperleri dogmadi")
+    var kirilir: Array = yapilar.filter(func(y): return y.can > 0.0)
+    var kalici: Array = yapilar.filter(func(y): return y.can <= 0.0)
+    assert(kirilir.size() > 0, "hic kirilabilir siper yok")
+    var k: Node = kirilir[0]
+    k.hasar_al(9999.0)
+    assert(k.is_queued_for_deletion(), "kirilabilir siper hasarla yok olmali")
+    if kalici.size() > 0:
+        var m: Node = kalici[0]
+        m.hasar_al(9999.0)
+        assert(not m.is_queued_for_deletion(), "orsa/mangal kirilmamali")
+
+    # Bes dusman turu da kurulabiliyor mu; hayalet duvar tanimamali
+    for t in 5:
+        var yeni = _ana.DusmanSahne.instantiate()
+        yeni.kur(t, 1.0)
+        _ana.add_child(yeni)
+        assert(yeni.get_node("Gorsel").texture != null, "tur %d dokusuz" % t)
+        assert(yeni.can > 0.0, "tur %d cansiz" % t)
+        if t == 4:
+            assert(yeni.collision_mask == 0, "hayalet duvardan gecmeli")
+        yeni.queue_free()
+
     # Seviye kartlari: XP dolunca açılmalı, seçince oyun devam etmeli
     _ana._xp_topla(_ana.xp_hedef)
     assert(_ana.seviye == 2, "XP dolunca seviye atlamali")

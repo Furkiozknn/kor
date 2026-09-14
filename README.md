@@ -33,9 +33,28 @@ kenarında oynamayı ödüllendirmek.
 ## Koşu döngüsü
 
 Düşman öl → XP küpü düşer → mıknatıs menzilinde sana akar → seviye →
-3 karttan biri. Süre geçtikçe dalgalar sıklaşır ve düşmanlar sertleşir.
-Üç düşman türü: **kül** (standart), **imp** (hızlı, zayıf),
-**cüruf** (iri, yavaş, sert — 3 XP).
+3 karttan biri. Süre geçtikçe dalgalar sıklaşır, düşmanlar sertleşir ve
+yeni türler devreye girer.
+
+### Düşmanlar
+
+| Tür | Ne yapar | Ne zaman |
+|---|---|---|
+| **kül** | standart takip | baştan |
+| **imp** | hızlı, zayıf | 15. saniye |
+| **iskelet** | dengeli ama sert, 2 XP | 30. saniye |
+| **cüruf** | iri, yavaş, 2 hasar, 3 XP | 45. saniye |
+| **hayalet** | **duvar ve siper tanımaz**, hızlı, 2 XP | 60. saniye |
+
+Hayalet oyunun siper mantığını bozmak için var: bir köşeye yerleşip
+sürüyü fıçıların arkasında tutmak 60. saniyeden sonra işe yaramaz.
+
+### Arena ve siperler
+
+Arena her koşuda yeniden kuruluyor: 40×22 karo zemin, çevresi çarpışmalı
+duvar, içine 14 siper serpiliyor. **Fıçı, sandık ve fıçı yığını kırılabilir**
+— ateş hattını sen açarsın, kırınca XP düşer. **Örs ve mangal kalıcı**:
+mermiyi de sürüyü de durdurur, ama kırılmaz.
 
 ## Çalıştırma
 
@@ -48,7 +67,8 @@ Testler (ikisi de headless, saniyeler sürer):
 
 ```
 godot --headless --script res://tests/test_isi.gd     # ısı/kilit/dalış kuralları
-godot --headless --script res://tests/test_dongu.gd   # spawn -> hasar -> küp -> XP -> kart
+godot --headless --script res://tests/test_dongu.gd   # arena, siper, 5 tür,
+                                                      # spawn -> hasar -> küp -> XP -> kart
 godot --script res://tests/ekran_al.gd                # gerçek render'ı PNG'ye yazar
 ```
 
@@ -58,22 +78,29 @@ godot --script res://tests/ekran_al.gd                # gerçek render'ı PNG'ye
 |---|---|
 | `scripts/isi.gd` | çekirdek mekanik, saf mantık — oyundan bağımsız test edilir |
 | `scripts/oyuncu.gd` | hareket, nişan, ateş, dalış, hasar |
-| `scripts/dusman.gd` | takip + temas hasarı, üç tür tek sahnede |
+| `scripts/dusman.gd` | takip + temas hasarı, beş tür tek sahnede |
+| `scripts/yapi.gd` | arena siperleri, kırılabilir ve kalıcı |
 | `scripts/mermi.gd` | mermi uçuşu ve çarpışma |
 | `scripts/kup.gd` | XP küpü + mıknatıs |
-| `scripts/ana.gd` | dalga spawn'ı, XP/seviye, kart ekranı, HUD, ölüm |
-| `assets/sprites/` | PixelLab ile üretilen pixel art |
-
-## Durum
-
-Oynanabilir dikey dilim. Tek arena, tek silah, dokuz kart.
-
-Sırada: yürüme animasyonu ve 8 yönlü sprite, zemin karolarının dökümhane
-kimliğine çekilmesi, ikinci silah, ses.
+| `scripts/ana.gd` | arena kurulumu, dalga doğurma, XP/seviye, kart ekranı, HUD |
 
 ## Görsel kimlik
 
 Sıcak ve soğuk. Oyuncu tek sıcak şey: karanlık dökümhanede ateş eden,
-altında kor halkası taşıyan bir figür. Düşmanlar kül grisi, çekirdekleri
-soğuk camgöbeği. Isın yükseldikçe halkan büyür ve beyazlaşır — ısı
-göstergesine bakmadan da nerede olduğunu görürsün.
+altında kor halkası taşıyan bir figür. Bütün düşmanlar tek "kül fraksiyonu"
+paletinde — gri-camgöbeği, soğuk. Isın yükseldikçe halkan büyür ve
+beyazlaşır; ısı göstergesine bakmadan da nerede olduğunu görürsün.
+
+## Varlıklar
+
+- **Oyuncu ve üç düşman** — PixelLab ile üretildi (`create_image_pixen`),
+  sonra tek palete çekildi. Ham hâlleri `assets/sprites/_ham/` altında.
+- **Zemin, duvar, siperler, kart ikonları, iskelet ve hayalet** —
+  [Kenney](https://kenney.nl) *Tiny Dungeon* (CC0), paleti oyunun
+  fraksiyonuna uyacak şekilde değiştirildi.
+
+## Durum
+
+Oynanabilir dikey dilim. Tek arena, tek silah, on kart, beş düşman türü.
+
+Sırada: yürüme animasyonu ve 8 yönlü sprite, ikinci silah, ses.
