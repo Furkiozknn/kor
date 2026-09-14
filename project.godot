@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 
 Hiss="*res://scripts/hiss.gd"
 SesYonetici="*res://scripts/ses_yonetici.gd"
+Kayit="*res://scripts/kayit.gd"
 MCPGameBridge="res://addons/godot_mcp/game_bridge/mcp_game_bridge.gd"
 
 [display]

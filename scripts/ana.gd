@@ -39,6 +39,8 @@ var xp_hedef := 5
 var oldurulen := 0
 var bitti := false
 var kazandi := false
+var firin_kademesi := 0
+var kazanilan_curuf := 0
 var evre_adi := ""
 
 ## Denge taramasi bunu disaridan degistiriyor (1.0 = normal tempo)
@@ -75,6 +77,7 @@ var _ipucu: Label
 var _duraklat_katman: CanvasLayer
 
 func _ready() -> void:
+    _firin_kademesi_uygula()
     SesYonetici.yukle_klasorden()
     SesYonetici.muzik_cal()
     _arena_kur()
@@ -181,6 +184,9 @@ func _ozet_satirlari(olum: bool) -> Array:
             var b: Dictionary = alinan_kartlar[ad]
             var sayi: int = int(b["sayi"])
             s.append("  %s%s   %s" % [ad, (" x%d" % sayi) if sayi > 1 else "", b["aciklama"]])
+    s.append("")
+    s.append("CÜRÜF  +%d   (toplam %d)%s" % [kazanilan_curuf, Kayit.curuf(),
+        "   ·   fırın kademesi %d" % firin_kademesi if firin_kademesi > 0 else ""])
     if olum:
         s.append("")
         s.append("dakikada %.1f oldurme    seviye basina %.0f sn" % [
@@ -236,6 +242,20 @@ func _process(delta: float) -> void:
         if _ipucu.modulate.a <= 0.0:
             _ipucu.queue_free()
             _ipucu = null
+
+## FIRIN KADEMESI -- gonullu zorluk. Hades'in Pact'i gibi ama Kor'un kendi
+## diliyle: zorlugu artirmanin yolu firini daha cok yakmak. Her degistirici
+## ISI EKONOMISINE dokunuyor, baska sisteme degil. Kalici gelisim GUC degil
+## SECENEK veriyor; isi baskisini azaltan hicbir sey kalici degil.
+func _firin_kademesi_uygula() -> void:
+    var k: int = Kayit.kademe()
+    firin_kademesi = k
+    if k >= 1:
+        oyuncu.isi_carpani *= 1.25          # korük: isi %25 hizli birikir
+    if k >= 2:
+        oyuncu.isi.kilit_suresi = 3.0       # sikisan valf: kilit 2 -> 3 sn
+    if k >= 3:
+        guc_carpani *= 1.15                 # dokumhane uyanir
 
 ## Isi = gorus. Oyunun ayrisma noktasi; ayrinti karanlik.gd icinde.
 func _karanlik_kur() -> void:
@@ -739,6 +759,7 @@ func _build_tazele() -> void:
 func _kosu_kazanildi() -> void:
     kazandi = true
     bitti = true
+    kazanilan_curuf = Kayit.kosu_bitti(gecen, oldurulen)
     SesYonetici.muzik_dur()
     SesYonetici.cal("seviye")
     for d in get_tree().get_nodes_in_group("dusman"):
@@ -748,6 +769,7 @@ func _kosu_kazanildi() -> void:
 
 func _oyun_bitti() -> void:
     bitti = true
+    kazanilan_curuf = Kayit.kosu_bitti(gecen, oldurulen)
     # Acik modal kalmasin: olum her seyin ustunde
     for katman in [_kart_katman, _duraklat_katman]:
         if katman != null and is_instance_valid(katman):

@@ -131,6 +131,22 @@ func _process(_delta: float) -> bool:
     mermi._carpti(kurban)            # body_entered'in cagirdigi yol
     assert(kurban.is_queued_for_deletion(), "mermi dusmani olduremedi")
 
+    # KALICI KAYIT + FIRIN KADEMESI
+    var kyt = root.get_node_or_null("Kayit")
+    assert(kyt != null, "Kayit autoload'u yok")
+    var curuf_once: int = kyt.curuf()
+    var kazanc: int = kyt.kosu_bitti(120.0, 50)
+    assert(kazanc > 0, "kosu sonu curuf vermedi")
+    assert(kyt.curuf() == curuf_once + kazanc, "curuf eklenmedi")
+    # Kademe carpani kazanci buyutmeli
+    kyt.kademe_yaz(2)
+    var k2: int = kyt.kosu_bitti(120.0, 50)
+    assert(k2 > kazanc, "firin kademesi curuf kazancini buyutmeli")
+    assert(kyt.kademe_carpani() > 1.0, "kademe carpani 1'den buyuk olmali")
+    kyt.kademe_yaz(0)
+    # Kalici gelisim GUC vermemeli: kademe sadece zorlugu artirir
+    assert(not kyt.acik("kalici_hasar"), "kalici guc yukseltmesi olmamali")
+
     # FIRINA AT: yakilan kart kosu boyunca bir daha gelmemeli
     var havuz_once: int = _ana._kart_havuzu().size()
     var kurban_kart: Dictionary = _ana._kart_havuzu()[0]

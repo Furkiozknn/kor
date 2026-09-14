@@ -12,10 +12,20 @@ extends Node2D
 const Tema := preload("res://scripts/tema.gd")
 const OYUN := "res://scenes/level.tscn"
 
+## Firin kademeleri. Her biri isi ekonomisine dokunuyor; hicbiri oyuncuya
+## kalici GUC vermiyor -- sadece daha zor bir firin ve daha cok curuf.
+const KADEMELER := [
+    "kapalı",
+    "körük — ısı %25 hızlı birikir",
+    "sıkışan valf — kilit 3 saniye",
+    "dökümhane uyanık — düşmanlar %15 güçlü",
+]
+
 var _isik: Array[Vector3] = []
 var _mat: ShaderMaterial
 var _nefes := 0.0
 var _oyuncu: AnimatedSprite2D
+var _kademe_yazi: Label
 
 func _ready() -> void:
     _zemin_kur()
@@ -109,8 +119,34 @@ func _arayuz_kur() -> void:
         kutu.add_child(Tema.govde(satir))
 
     var bosluk2 := Control.new()
-    bosluk2.custom_minimum_size = Vector2(0, Tema.BOSLUK_L)
+    bosluk2.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
     kutu.add_child(bosluk2)
+
+    # Kalici durum: curuf ve rekor
+    var rekor: float = float(Kayit._veri.get("en_iyi_sure", 0.0))
+    var durum := "CÜRÜF %d" % Kayit.curuf()
+    if rekor > 0.0:
+        durum += "     en iyi %02d:%02d" % [int(rekor) / 60, int(rekor) % 60]
+    kutu.add_child(Tema.vurgu(durum))
+
+    # FIRIN KADEMESI -- gonullu zorluk, Kor'un kendi diliyle. Her kademe
+    # isi ekonomisine dokunuyor ve curuf kazancini carpiyor.
+    var kad := HBoxContainer.new()
+    kad.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    kad.add_child(Tema.sonuk("FIRIN"))
+    for n in KADEMELER.size():
+        var d := Button.new()
+        d.text = str(n)
+        d.custom_minimum_size = Vector2(26, 22)
+        d.pressed.connect(_kademe_sec.bind(n))
+        kad.add_child(d)
+    _kademe_yazi = Tema.sonuk("")
+    kad.add_child(_kademe_yazi)
+    kutu.add_child(kad)
+
+    var bosluk3 := Control.new()
+    bosluk3.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
+    kutu.add_child(bosluk3)
 
     var basla := Button.new()
     basla.text = "  BAŞLA      [Enter]"
@@ -118,11 +154,23 @@ func _arayuz_kur() -> void:
     basla.pressed.connect(_basla)
     kutu.add_child(basla)
     basla.grab_focus()
+    _kademe_tazele()
 
     var alt := Tema.sonuk("WASD hareket · SOL TIK ateş · SAĞ TIK kor atışı · BOŞLUK dalış · Q silah")
     alt.position = Vector2(48, 322)
     alt.modulate = Color(1, 1, 1, 0.55)
     k.add_child(alt)
+
+func _kademe_sec(k: int) -> void:
+    Kayit.kademe_yaz(k)
+    SesYonetici.cal("kart_sec")
+    _kademe_tazele()
+
+func _kademe_tazele() -> void:
+    if _kademe_yazi == null:
+        return
+    var k: int = clampi(Kayit.kademe(), 0, KADEMELER.size() - 1)
+    _kademe_yazi.text = "  %s   (cüruf x%.2f)" % [KADEMELER[k], Kayit.kademe_carpani()]
 
 func _process(delta: float) -> void:
     # Nefes: ısının inip çıkışını menüde de görüyorsun. Mekaniği anlatmadan
