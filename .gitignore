@@ -1,0 +1,21 @@
+# Godot 4+ Ã¶zel
+.godot/
+/android/
+
+# Disari aktarilan yapilar
+build/
+builds/
+*.exe
+*.pck
+*.zip
+*.apk
+*.aab
+
+# Isletim sistemi
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Editor
+.vscode/
+*.tmp

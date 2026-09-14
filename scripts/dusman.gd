@@ -1,0 +1,85 @@
+extends CharacterBody2D
+## Sürüyü oluşturan düşman. Tek sahne, üç tür: 0 kül, 1 imp (hızlı), 2 cüruf (iri).
+
+signal olduruldu(pozisyon: Vector2, xp: int)
+
+const DOKULAR := {
+    0: preload("res://assets/sprites/dusman_kul.png"),
+    1: preload("res://assets/sprites/dusman_imp.png"),
+    2: preload("res://assets/sprites/dusman_curuf.png"),
+}
+
+var hiz := 42.0
+var can := 3.0
+var temas_hasari := 1
+var temas_mesafe := 11.0
+var xp_degeri := 1
+
+var _tur := 0
+var _yaricap := 7.0
+var _hedef: Node2D
+var _temas_bekleme := 0.0
+var _parlama := 0.0
+
+@onready var _gorsel: Sprite2D = $Gorsel
+@onready var _carpisma: CollisionShape2D = $Carpisma
+
+## Dogmadan once cagrilir: tur ve zorluk carpani.
+func kur(tur: int, guc: float) -> void:
+    _tur = tur
+    match tur:
+        1:  # imp: hizli, zayif
+            hiz = 80.0
+            can = 2.0 * guc
+            _yaricap = 5.0
+            temas_mesafe = 9.0
+        2:  # curuf: iri, yavas, sert
+            hiz = 26.0
+            can = 11.0 * guc
+            temas_hasari = 2
+            xp_degeri = 3
+            _yaricap = 11.0
+            temas_mesafe = 16.0
+        _:  # kul: standart
+            hiz = 44.0
+            can = 3.0 * guc
+            _yaricap = 7.0
+            temas_mesafe = 12.0
+
+func _ready() -> void:
+    add_to_group("dusman")
+    _gorsel.texture = DOKULAR[_tur]
+    var s := CircleShape2D.new()   # her ornek kendi seklini tasisin
+    s.radius = _yaricap
+    _carpisma.shape = s
+
+func _physics_process(delta: float) -> void:
+    _temas_bekleme = maxf(_temas_bekleme - delta, 0.0)
+    if _parlama > 0.0:
+        _parlama -= delta
+        if _parlama <= 0.0:
+            _gorsel.modulate = Color(1, 1, 1)
+
+    if not is_instance_valid(_hedef):
+        _hedef = get_tree().get_first_node_in_group("oyuncu")
+        if not is_instance_valid(_hedef):
+            velocity = Vector2.ZERO
+            move_and_slide()
+            return
+
+    var yon := (_hedef.global_position - global_position).normalized()
+    velocity = velocity.move_toward(yon * hiz, 600.0 * delta)
+    move_and_slide()
+    _gorsel.flip_h = yon.x < 0.0
+
+    if _temas_bekleme <= 0.0 and global_position.distance_to(_hedef.global_position) < temas_mesafe:
+        _temas_bekleme = 0.5
+        _hedef.hasar_al(temas_hasari)
+
+func hasar_al(miktar: float) -> void:
+    can -= miktar
+    _parlama = 0.09
+    _gorsel.modulate = Color(3, 3, 3)
+    if can <= 0.0:
+        olduruldu.emit(global_position, xp_degeri)
+        queue_free()
