@@ -3,6 +3,10 @@ extends SceneTree
 ## godot --script res://tests/ekran_al.gd   (headless DEĞİL)
 
 const CIKTI := "D:/Claude Projeleri/gecici/kor-ekran.png"
+const CIKTI_KART := "D:/Claude Projeleri/gecici/kor-kart.png"
+
+## `godot --script res://tests/ekran_al.gd -- --kart` ile kart ekranini cek
+var _kart_modu := "--kart" in OS.get_cmdline_user_args()
 
 var _ana: Node2D
 var _kare := 0
@@ -48,6 +52,13 @@ func _process(_delta: float) -> bool:
             d.kur(t, 1.0)
             d.global_position = _ana.oyuncu.global_position + Vector2(-85 + t * 34, -54)
             _ana.add_child(d)
+    if _kart_modu and _kare == 120:
+        _ana._xp_topla(_ana.xp_hedef)      # seviye kartlarini ac
+    if _kart_modu and _kare == 150:
+        RenderingServer.force_draw()
+        root.get_texture().get_image().save_png(CIKTI_KART)
+        print("kart ekrani: %s" % CIKTI_KART)
+        return true
     if _kare < 260:
         return false
     RenderingServer.force_draw()

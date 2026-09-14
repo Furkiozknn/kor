@@ -5,6 +5,7 @@ const DusmanSahne := preload("res://scenes/dusman.tscn")
 const KupSahne := preload("res://scenes/kup.tscn")
 const YapiSahne := preload("res://scenes/yapi.tscn")
 const Silahlar := preload("res://scripts/silahlar.gd")
+const YAZI_TIPI := preload("res://assets/fonts/PublicPixel.ttf")
 
 const SUTUN := 40
 const SATIR := 22
@@ -252,20 +253,22 @@ func _kartlari_ac() -> void:
     _kart_katman.add_child(fon)
 
     var kutu := VBoxContainer.new()
-    kutu.position = Vector2(140, 90)
-    kutu.custom_minimum_size = Vector2(360, 0)
+    kutu.position = Vector2(60, 84)
+    kutu.custom_minimum_size = Vector2(520, 0)
     kutu.add_theme_constant_override("separation", 8)
     _kart_katman.add_child(kutu)
 
     var baslik := Label.new()
-    baslik.add_theme_font_size_override("font_size", 12)
+    baslik.add_theme_font_override("font", YAZI_TIPI)
+    baslik.add_theme_font_size_override("font_size", 16)
     baslik.text = "SEVİYE %d  —  bir kart seç" % seviye
     kutu.add_child(baslik)
 
     for k in secilen:
         var b := Button.new()
-        b.add_theme_font_size_override("font_size", 10)
-        b.custom_minimum_size = Vector2(360, 40)
+        b.add_theme_font_override("font", YAZI_TIPI)
+        b.add_theme_font_size_override("font_size", 8)
+        b.custom_minimum_size = Vector2(520, 44)
         b.icon = load("res://assets/sprites/ikon_%s.png" % k["ikon"])
         b.expand_icon = false
         b.text = "  %s\n  %s" % [k["ad"], k["aciklama"]]
@@ -292,10 +295,10 @@ func _hud_kur() -> void:
     _hud = CanvasLayer.new()
     add_child(_hud)
 
-    _lbl_ust = _yazi(10)
+    _lbl_ust = _yazi(8)
     _lbl_ust.position = Vector2(10, 4)
 
-    _lbl_can = _yazi(10)
+    _lbl_can = _yazi(8)
     _lbl_can.position = Vector2(10, 18)
 
     var arka := ColorRect.new()
@@ -316,17 +319,17 @@ func _hud_kur() -> void:
     esik.color = Color(1, 0.85, 0.4, 0.8)
     _hud.add_child(esik)
 
-    _isi_yazi = _yazi(9)
+    _isi_yazi = _yazi(8)
     _isi_yazi.position = Vector2(134, 33)
 
-    _lbl_silah = _yazi(10)
+    _lbl_silah = _yazi(8)
     _lbl_silah.position = Vector2(10, 48)
     _lbl_silah.modulate = Color(1.0, 0.82, 0.45)
 
-    var ipucu := _yazi(9)
+    var ipucu := _yazi(8)
     ipucu.position = Vector2(10, 330)
     ipucu.modulate = Color(1, 1, 1, 0.55)
-    ipucu.text = "WASD   ·   SOL TIK ateş   ·   SAĞ TIK kor atışı (ısıyı hasara çevirir)   ·   BOŞLUK dalış"
+    ipucu.text = "WASD  SOL TIK ateş  SAĞ TIK kor  BOŞLUK dalış  Q silah"
 
 ## Kenarlari karartan vinyet -- arenayi bir dokumhane cukuru gibi gosterir.
 func _vinyet_kur() -> void:
@@ -341,17 +344,19 @@ func _vinyet_kur() -> void:
     t.mouse_filter = Control.MOUSE_FILTER_IGNORE
     k.add_child(t)
 
-## HUD yazilari: 640x360 tabanda okunur boyut
+## HUD yazilari. PublicPixel 8x8 bir pixel font: boyut 8'in kati olmali,
+## ara degerlerde piksel izgarasi bozulup bulaniyor.
 func _yazi(boy: int) -> Label:
     var l := Label.new()
+    l.add_theme_font_override("font", YAZI_TIPI)
     l.add_theme_font_size_override("font_size", boy)
     _hud.add_child(l)
     return l
 
 func _oyun_bitti() -> void:
     bitti = true
-    var l := _yazi(14)
-    l.position = Vector2(230, 150)
+    var l := _yazi(16)
+    l.position = Vector2(180, 150)
     l.text = "SÖNDÜN\n%d öldürme · %02d:%02d · seviye %d\nR ile yeniden" % [
         oldurulen, int(gecen) / 60, int(gecen) % 60, seviye]
     for d in get_tree().get_nodes_in_group("dusman"):
