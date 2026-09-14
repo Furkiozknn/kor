@@ -46,8 +46,8 @@ diye basitleştirmek oyunu düzleştirir. Aynı şekilde kor atışı ısıyı
 - [x] arena, siperler, 5 düşman türü, XP küpü + mıknatıs, ikonlu kartlar
 - [x] kor atışı (sağ tık): biriken ısıyı hasara çevirir
 - [ ] ses — **başka bir oturumda**, `assets/ses/` + `scripts/ses.gd`
-- [ ] yürüme animasyonu / 8 yönlü sprite (PixelLab `create_character`,
-      20-40 generation — kotanın çoğunu yer, Furki'nin onayı gerekir)
+- [x] 8 yönlü oyuncu + yürüyüş animasyonu (15 generation harcandı, 21 kaldı)
+- [x] altı düşmanın kendi yürüyüş döngüsü
 - [x] menzilli düşman (cadı)
 - [x] dört silah + Q ile geçiş, silah kartları
 - [x] oyun hissi katmanı (scripts/hiss.gd): sarsıntı, donma, itme, parçacık
@@ -55,9 +55,13 @@ diye basitleştirmek oyunu düzleştirir. Aynı şekilde kor atışı ısıyı
 
 ## 5. Kota ve varlık kuralı
 
-- PixelLab: **36/40 generation kaldı.** Üretmeden önce `get_balance`.
-  Pahalı olan `create_character` / tileset (20-40). Ucuz olan
-  `create_image_pixen` (1 gen/görsel).
+- PixelLab: **21/40 generation kaldı.** Üretmeden önce `get_balance`.
+  Gerçek fiyatlar (hafızadaki eski 20-40 rakamı YANLIŞ):
+  `create_character` mode=v3 + referans görsel = **1 gen** (8 yön),
+  `animate_character` mode=template = **yön başına 1 gen**,
+  `animate_image` (küçük sprite, 8 kare) = **1 gen**,
+  `create_image_pixen` = 1 gen. Pahalı olan sadece mode="pro" (20-40).
+  Aynı anda en fazla **8 iş** kuyrukta olabiliyor; fazlası reddediliyor.
 - Bedava yol: `D:\Claude Projeleri\araclar\kenney\` (CC0). Zemin, duvar,
   siper, kart ikonu, iskelet ve hayalet oradan geldi.
 - Yeni düşman sprite'ı eklersen **kül fraksiyonu paletine** çek

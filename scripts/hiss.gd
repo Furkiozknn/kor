@@ -67,14 +67,24 @@ func patlama(ebeveyn: Node, poz: Vector2, renk: Color, adet: int, hiz: float,
     p.finished.connect(p.queue_free)
 
 ## Dalış izi: sprite'ın solup kaybolan kopyası.
-func hayalet(kaynak: Sprite2D, renk: Color = Color(1, 0.6, 0.25, 0.55)) -> void:
-    if not is_instance_valid(kaynak) or kaynak.texture == null:
+## Hem Sprite2D hem AnimatedSprite2D kabul eder.
+func hayalet(kaynak: Node2D, renk: Color = Color(1, 0.6, 0.25, 0.55)) -> void:
+    if not is_instance_valid(kaynak):
+        return
+    var doku: Texture2D = null
+    if kaynak is Sprite2D:
+        doku = kaynak.texture
+    elif kaynak is AnimatedSprite2D and kaynak.sprite_frames != null:
+        var a: String = kaynak.animation
+        if kaynak.sprite_frames.has_animation(a) and kaynak.sprite_frames.get_frame_count(a) > 0:
+            doku = kaynak.sprite_frames.get_frame_texture(a, kaynak.frame)
+    if doku == null:
         return
     var ebeveyn := kaynak.get_parent().get_parent()
     if not is_instance_valid(ebeveyn):
         return
     var s := Sprite2D.new()
-    s.texture = kaynak.texture
+    s.texture = doku
     s.global_position = kaynak.global_position
     s.flip_h = kaynak.flip_h
     s.modulate = renk

@@ -18,6 +18,10 @@ func _process(_delta: float) -> bool:
         _ana.oyuncu.silah_ver(1)          # SACMA -- cok mermi gorunsun
     if _kare > 90 and _kare < 200 and _kare % 9 == 0:
         _ana.oyuncu._ates_et(Vector2.RIGHT.rotated(randf() * TAU))
+    if _kare == 180:
+        # Gercek girdi taklidi: yuruyus animasyonu calissin
+        Input.action_press("move_right")
+        Input.action_press("move_down")
     if _kare == 210:
         # Kor atisi gorunsun: isiyi esigin ustune getir, sonra at
         var o = _ana.oyuncu

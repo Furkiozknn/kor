@@ -125,10 +125,27 @@ sıcak ışık havuzları döküyor, kenarları vinyet karartıyor. Bütün dü�
 paletinde — gri-camgöbeği, soğuk. Isın yükseldikçe halkan büyür ve
 beyazlaşır; ısı göstergesine bakmadan da nerede olduğunu görürsün.
 
+## Animasyon
+
+Oyuncu **8 yöne dönüyor ve gerçek 8 kareli yürüyüş** oynatıyor; nişan aldığın
+yöne bakar, hızına göre adım temposu değişir, dururken duruş karesine döner.
+Altı düşman türünün her birinin kendi 8 kareli döngüsü var — kül sürüklenerek,
+imp seğirterek, iskelet katı adımlarla, hayalet süzülerek, cadı asasını
+kaldırarak, cüruf ağır ağır yalpalayarak.
+
+`SpriteFrames` kaynakları **kodda** kuruluyor (`scripts/yonlu.gd`), `.tres`
+olarak elle yazılmıyor — BOM'lu dosya yazıp Godot ayrıştırıcısını çökertme
+sınıfı hata böylece hiç doğmuyor. Düşman kareleri tür başına bir kez kurulup
+önbelleğe alınıyor, 60 düşman aynı anda doğsa bile yeniden kurulmuyor.
+
 ## Varlıklar
 
-- **Oyuncu ve üç düşman** — PixelLab ile üretildi (`create_image_pixen`),
-  sonra tek palete çekildi. Ham hâlleri `assets/sprites/_ham/` altında.
+- **Oyuncu** — PixelLab. Önce `create_image_pixen` ile tek kare, sonra
+  `create_character` v3 referans modu o kareyi 8 yöne döndürdü (1 generation),
+  `animate_character` şablon modu 8 yönün her birine yürüyüş verdi
+  (yön başına 1 generation). Kareler `assets/sprites/oyuncu/`.
+- **Düşman animasyonları** — `animate_image`, tür başına 1 generation,
+  `assets/sprites/anim/`. Ham tek kareler `assets/sprites/_ham/` altında.
 - **Zemin, duvar, siperler, kart ikonları, iskelet ve hayalet** —
   [Kenney](https://kenney.nl) *Tiny Dungeon* (CC0), paleti oyunun
   fraksiyonuna uyacak şekilde değiştirildi.

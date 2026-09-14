@@ -66,7 +66,9 @@ func _process(_delta: float) -> bool:
         var yeni = _ana.DusmanSahne.instantiate()
         yeni.kur(t, 1.0)
         _ana.add_child(yeni)
-        assert(yeni.get_node("Gorsel").texture != null, "tur %d dokusuz" % t)
+        var gs: AnimatedSprite2D = yeni.get_node("Gorsel")
+        assert(gs.sprite_frames != null, "tur %d karesiz" % t)
+        assert(gs.sprite_frames.get_frame_count("yuru") > 0, "tur %d bos animasyon" % t)
         assert(yeni.can > 0.0, "tur %d cansiz" % t)
         if t == 4:
             assert(yeni.collision_mask == 0, "hayalet duvardan gecmeli")

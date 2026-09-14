@@ -7,6 +7,6 @@ collision_layer = 4
 collision_mask = 5
 script = ExtResource("1_kod")
 
-[node name="Gorsel" type="Sprite2D" parent="."]
+[node name="Gorsel" type="AnimatedSprite2D" parent="."]
 
 [node name="Carpisma" type="CollisionShape2D" parent="."]

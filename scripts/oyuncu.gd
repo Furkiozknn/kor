@@ -5,6 +5,8 @@ extends CharacterBody2D
 const Isi := preload("res://scripts/isi.gd")
 const Silahlar := preload("res://scripts/silahlar.gd")
 const MermiSahne := preload("res://scenes/mermi.tscn")
+const Yonlu := preload("res://scripts/yonlu.gd")
+const TEK_DOKU := preload("res://assets/sprites/oyuncu.png")
 
 signal can_degisti(can: int, maks: int)
 signal silah_degisti(ad: String, indeks: int)
@@ -51,8 +53,10 @@ var _hayalet_sayaci := 0.0
 var _adim := 0.0
 var _kor_zerre := 0.0
 var _silah_gecis := 0.0
+var _yonlu_mu := false
+var _yuruyus_var := false
 
-@onready var _gorsel: Sprite2D = $Gorsel
+@onready var _gorsel: AnimatedSprite2D = $Gorsel
 @onready var _parlama: Sprite2D = $Parlama
 @onready var _namlu: Sprite2D = $Namlu
 @onready var _kamera: Camera2D = $Kamera
@@ -67,8 +71,29 @@ func _ready() -> void:
         Color(1.0, 0.96, 0.80, 1.0), Color(1.0, 0.55, 0.15, 0.0), 32)
     _namlu.material = Hiss.ekleme_materyali()
     _namlu.scale = Vector2.ZERO
+    _sprite_kur()
     can_degisti.emit(can, maks_can)
     silah_degisti.emit(silah(), silah_indeksi)
+
+## 8 yonlu kareler varsa onu kullan; yoksa tek karelik yedege dus.
+## Boylece varlik dosyalari gelmeden de oyun calisir.
+const SPRITE_KOK := "res://assets/sprites/oyuncu"
+
+func _sprite_kur() -> void:
+    var sf := Yonlu.kur(SPRITE_KOK, {"dur": 6.0, "yuru": 12.0})
+    if sf != null:
+        _yonlu_mu = true
+        _yuruyus_var = Yonlu.durum_var(SPRITE_KOK, "yuru")
+        _gorsel.sprite_frames = sf
+        _gorsel.animation = "dur_south"
+    else:
+        sf = SpriteFrames.new()
+        sf.remove_animation("default")
+        sf.add_animation("dur_south")
+        sf.add_frame("dur_south", TEK_DOKU)
+        _gorsel.sprite_frames = sf
+        _gorsel.animation = "dur_south"
+    _gorsel.play()
 
 func silah() -> String:
     return Silahlar.al(silah_indeksi)["ad"]
@@ -265,9 +290,27 @@ func _gorunum_guncelle(delta: float, nisan: Vector2) -> void:
         _gorsel.scale = Vector2(1.28, 0.78)
     else:
         _adim += delta * (6.0 + h * 0.07)
-        var s := 1.0 + sin(_adim) * minf(h / hiz, 1.0) * 0.10
+        # Gercek yuruyus kareleri varsa kod salinimi hafifler
+        var g := 0.03 if _yonlu_mu else 0.10
+        var s := 1.0 + sin(_adim) * minf(h / hiz, 1.0) * g
         _gorsel.scale = Vector2(2.0 - s, s)
-    _gorsel.position.y = -abs(sin(_adim)) * minf(h / hiz, 1.0) * 1.6
+    _gorsel.position.y = -abs(sin(_adim)) * minf(h / hiz, 1.0) * (0.5 if _yonlu_mu else 1.6)
+
+    # Yon: 8 yonlu kareler varsa yone gore animasyon, yoksa aynalama
+    if _yonlu_mu:
+        var hareketli := h > 6.0 or dalisityor()
+        var durum := "yuru" if (hareketli and _yuruyus_var) else "dur"
+        var ad := "%s_%s" % [durum, Yonlu.yon_adi(nisan)]
+        if _gorsel.animation != ad:
+            _gorsel.animation = ad
+        if durum == "yuru":
+            _gorsel.speed_scale = 1.8 if dalisityor() else clampf(0.55 + h / hiz, 0.4, 1.7)
+        else:
+            _gorsel.speed_scale = 1.0
+        if not _gorsel.is_playing():
+            _gorsel.play()
+    else:
+        _gorsel.flip_h = nisan.x < 0.0
 
     # Silah degisiminde kisa beyaz parlama
     if _silah_gecis > 0.0:
@@ -276,7 +319,6 @@ func _gorunum_guncelle(delta: float, nisan: Vector2) -> void:
         _gorsel.modulate = Color(2.4, 1.2, 1.2)
     else:
         _gorsel.modulate = Color(1, 1, 1)
-    _gorsel.flip_h = nisan.x < 0.0
 
 func hasar_al(miktar: float) -> void:
     if _dokunulmaz > 0.0 or dalisityor() or can <= 0:

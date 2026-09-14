@@ -16,6 +16,33 @@ const DOKULAR := {
 
 const MermiSahne := preload("res://scenes/dusman_mermisi.tscn")
 
+const TUR_ADI := {0: "kul", 1: "imp", 2: "curuf", 3: "iskelet", 4: "hayalet", 5: "cadi"}
+const ANIM_KOK := "res://assets/sprites/anim"
+
+## Tur basina SpriteFrames -- 60 dusman ayni anda dogarken her biri yeniden
+## kurmasin diye onbellekte tutuluyor.
+static var _kare_onbellegi := {}
+
+static func _kareler(tur: int, dokular: Dictionary) -> SpriteFrames:
+    if _kare_onbellegi.has(tur):
+        return _kare_onbellegi[tur]
+    var sf := SpriteFrames.new()
+    sf.remove_animation("default")
+    sf.add_animation("yuru")
+    sf.set_animation_speed("yuru", 10.0)
+    sf.set_animation_loop("yuru", true)
+    var i := 0
+    while true:
+        var yol := "%s/%s_%d.png" % [ANIM_KOK, TUR_ADI[tur], i]
+        if not ResourceLoader.exists(yol):
+            break
+        sf.add_frame("yuru", load(yol))
+        i += 1
+    if i == 0:
+        sf.add_frame("yuru", dokular[tur])   # animasyon yoksa tek kare
+    _kare_onbellegi[tur] = sf
+    return sf
+
 var hiz := 42.0
 var can := 3.0
 var temas_hasari := 1
@@ -33,7 +60,7 @@ var _itme := Vector2.ZERO
 var _dogus := 0.0
 var _adim := 0.0
 
-@onready var _gorsel: Sprite2D = $Gorsel
+@onready var _gorsel: AnimatedSprite2D = $Gorsel
 @onready var _carpisma: CollisionShape2D = $Carpisma
 
 ## Dogmadan once cagrilir: tur ve zorluk carpani.
@@ -80,7 +107,10 @@ func kur(tur: int, guc: float) -> void:
 func _ready() -> void:
     add_to_group("dusman")
     _dogus = 1.0
-    _gorsel.texture = DOKULAR[_tur]
+    _gorsel.sprite_frames = _kareler(_tur, DOKULAR)
+    _gorsel.animation = "yuru"
+    _gorsel.frame = randi() % maxi(_gorsel.sprite_frames.get_frame_count("yuru"), 1)
+    _gorsel.play()
     var s := CircleShape2D.new()   # her ornek kendi seklini tasisin
     s.radius = _yaricap
     _carpisma.shape = s
@@ -109,10 +139,10 @@ func _physics_process(delta: float) -> void:
         # Yurume salinimi: hizlandikca daha cok sekiyor
         var h := velocity.length() / maxf(hiz, 1.0)
         _adim += delta * (5.0 + h * 5.0)
-        var e := 1.0 + sin(_adim) * minf(h, 1.0) * 0.09
+        var e := 1.0 + sin(_adim) * minf(h, 1.0) * 0.035
         _gorsel.scale = _gorsel.scale.lerp(Vector2(2.0 - e, e), 12.0 * delta)
-        _gorsel.position.y = -abs(sin(_adim)) * minf(h, 1.0) * 1.4
-        _gorsel.rotation = sin(_adim * 0.5) * minf(h, 1.0) * 0.08
+        _gorsel.position.y = -abs(sin(_adim)) * minf(h, 1.0) * 0.7
+        _gorsel.rotation = sin(_adim * 0.5) * minf(h, 1.0) * 0.04
 
     if not is_instance_valid(_hedef):
         _hedef = get_tree().get_first_node_in_group("oyuncu")
@@ -143,6 +173,7 @@ func _physics_process(delta: float) -> void:
         velocity = velocity.move_toward(yon * hiz + _itme, 600.0 * delta)
     move_and_slide()
     _gorsel.flip_h = yon.x < 0.0
+    _gorsel.speed_scale = clampf(0.5 + velocity.length() / maxf(hiz, 1.0), 0.4, 1.8)
 
     if _temas_bekleme <= 0.0 and global_position.distance_to(_hedef.global_position) < temas_mesafe:
         _temas_bekleme = 0.5

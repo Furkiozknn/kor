@@ -14,8 +14,7 @@ script = ExtResource("1_kod")
 [node name="Parlama" type="Sprite2D" parent="."]
 z_index = -1
 
-[node name="Gorsel" type="Sprite2D" parent="."]
-texture = ExtResource("2_govde")
+[node name="Gorsel" type="AnimatedSprite2D" parent="."]
 
 [node name="Namlu" type="Sprite2D" parent="."]
 z_index = 1
