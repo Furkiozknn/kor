@@ -82,6 +82,8 @@ var _onceki_kilit := false
 var _onceki_uyari := false
 
 @onready var _gorsel: AnimatedSprite2D = $Gorsel
+var _cekirdek: Sprite2D
+
 @onready var _parlama: Sprite2D = $Parlama
 @onready var _namlu: Sprite2D = $Namlu
 @onready var _kamera: Camera2D = $Kamera
@@ -96,6 +98,16 @@ func _ready() -> void:
         Color(1.0, 0.96, 0.80, 1.0), Color(1.0, 0.55, 0.15, 0.0), 32)
     _namlu.material = Hiss.ekleme_materyali()
     _namlu.scale = Vector2.ZERO
+    # Gorsel denetim bulgusu: gri testinde oyuncu ekranin EN KARANLIK
+    # nesnesiydi. "Tek sicak sey sensin" yalnizca renk kanalinda kuruluydu;
+    # renk kanali kirilgan (kucuk ekran, GIF, renk korlugu). Bu cekirdek
+    # hiyerarsiyi PARLAKLIK kanalina tasiyor: sicak rampanin ust ucu.
+    _cekirdek = Sprite2D.new()
+    _cekirdek.texture = Hiss.parlama_dokusu(
+        Color(1.0, 0.98, 0.92, 1.0), Color(1.0, 0.70, 0.28, 0.0), 32)
+    _cekirdek.material = Hiss.ekleme_materyali()
+    _cekirdek.z_index = 1
+    add_child(_cekirdek)
     _sprite_kur()
     can_degisti.emit(can, maks_can)
     silah_degisti.emit(silah(), silah_indeksi)
@@ -375,6 +387,14 @@ func _gorunum_guncelle(delta: float, nisan: Vector2) -> void:
         renk = Color(1.0, 0.85, 0.35, 0.95 * carp)
     _parlama.modulate = renk
     _parlama.scale = Vector2.ONE * (0.52 + 0.40 * t + 0.03 * sin(Time.get_ticks_msec() / 90.0))
+
+    # Cekirdek: ekrandaki en yuksek parlaklik. Isi arttikca buyuyup beyazlasir.
+    var c_renk := Color(1.0, 0.72, 0.30).lerp(Color(1.0, 0.99, 0.94), t)
+    c_renk.a = 0.55 + 0.45 * t
+    if isi.kilitli:
+        c_renk = Color(1.0, 0.95, 0.75, 0.9 if int(Time.get_ticks_msec() / 80) % 2 == 0 else 0.3)
+    _cekirdek.modulate = c_renk
+    _cekirdek.scale = Vector2.ONE * (0.16 + 0.22 * t)
 
     # Isi yuksekken kordan zerre kalkar
     if t > 0.55:

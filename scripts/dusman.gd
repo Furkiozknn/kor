@@ -135,7 +135,12 @@ func _physics_process(delta: float) -> void:
 
     # Dogus: yoktan bitmesin, buyuyerek gelsin
     if _cekirdek != null:
-        _cekirdek.modulate.a = 0.55 + 0.45 * sin(Time.get_ticks_msec() / 320.0 + position.x)
+        # Renk korlugu denetimi: hue gidince camgobegi aksan sonukleşiyor.
+        # Nabzi ALFA'ya degil OLCEK'e koyuyoruz -- hareket hicbir gorme
+        # tipinde kaybolmaz.
+        var n := 0.82 + 0.34 * sin(Time.get_ticks_msec() / 420.0 + position.x)
+        _cekirdek.scale = Vector2.ONE * (_yaricap / 16.0) * n
+        _cekirdek.modulate.a = 0.42 + 0.22 * n
     if _dogus > 0.0:
         _dogus = maxf(_dogus - delta * 4.5, 0.0)
         var b := 1.0 - _dogus

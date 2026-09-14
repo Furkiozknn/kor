@@ -131,6 +131,29 @@ func _process(_delta: float) -> bool:
     mermi._carpti(kurban)            # body_entered'in cagirdigi yol
     assert(kurban.is_queued_for_deletion(), "mermi dusmani olduremedi")
 
+    # FIRINA AT: yakilan kart kosu boyunca bir daha gelmemeli
+    var havuz_once: int = _ana._kart_havuzu().size()
+    var kurban_kart: Dictionary = _ana._kart_havuzu()[0]
+    var hak_once: int = _ana.yakma_hakki
+    _ana._kart_yak(kurban_kart)
+    assert(_ana.yakma_hakki == hak_once - 1, "yakma hakki dusmedi")
+    var havuz_sonra: int = _ana._kart_havuzu().size()
+    assert(havuz_sonra == havuz_once - 1, "yakilan kart havuzdan cikmadi")
+    for k in _ana._kart_havuzu():
+        assert(str(k["ad"]) != str(kurban_kart["ad"]), "yakilan kart hala havuzda")
+    # Hak bitince yakma calismamali
+    _ana.yakma_hakki = 0
+    var havuz_h: int = _ana._kart_havuzu().size()
+    _ana._kart_yak(_ana._kart_havuzu()[0])
+    assert(_ana._kart_havuzu().size() == havuz_h, "hak bitince yakma olmamali")
+    _ana.yakma_hakki = 3
+
+    # GORUS KAYNAK: kartlar gorusu takas edebilmeli
+    var g_once: float = kl._oyuncu_yaricapi()
+    _ana._gorus_degistir(1.25, 0.0)
+    assert(kl._oyuncu_yaricapi() > g_once, "gorus karti menzili buyutmeli")
+    _ana._gorus_degistir(0.8, 0.0)
+
     # PATRON: can torbasi degil, mekanigin sinavi olmali.
     # Sicakken savunmasiz, soguksa neredeyse dokunulmaz ve kendini onarir.
     var pt = _ana.PatronSahne.instantiate()
@@ -281,7 +304,7 @@ func _kup_asamasi() -> bool:
 func _dugmeleri_bul(kok: Node) -> Array:
     var b: Array = []
     for c in kok.get_children():
-        if c is Button:
+        if c is Button and c.has_meta("kart_secim"):
             b.append(c)
         b.append_array(_dugmeleri_bul(c))
     return b

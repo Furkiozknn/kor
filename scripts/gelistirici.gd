@@ -83,9 +83,9 @@ func _tazele() -> void:
         get_tree().get_nodes_in_group("dusman").size(),
         get_tree().get_nodes_in_group("yapi").size(),
         _mermi_sayisi()])
-    s.append("spawn %.2f sn (x%.2f)   canli %d / tavan %d" % [
-        maxf(ana.SPAWN_BAS - ana.gecen * ana.SPAWN_AZALMA, ana.SPAWN_TABAN) * ana.spawn_carpani,
-        ana.spawn_carpani, get_tree().get_nodes_in_group("dusman").size(), ana.canli_tavan()])
+    s.append("evre '%s'   spawn %.2f sn   canli %d / tavan %d" % [
+        ana.evre_adi, ana.Dalgalar.spawn_araligi(ana.gecen) * ana.spawn_carpani,
+        get_tree().get_nodes_in_group("dusman").size(), ana.canli_tavan()])
     s.append("kart: " + (", ".join(PackedStringArray(ana.alinan_kartlar.keys())) if not ana.alinan_kartlar.is_empty() else "-"))
     s.append("")
     s.append(TUS_YARDIM)

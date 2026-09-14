@@ -135,7 +135,7 @@ func _process(delta: float) -> bool:
         if ayar_gorus > 0.0 and _karanlik != null:
             _karanlik.taban_yaricap = ayar_gorus
         if ayar_guc > 0.0:
-            _ana.guc_bolen = ayar_guc
+            _ana.guc_carpani = ayar_guc
         if ayar_tavan > 0.0:
             _ana.tavan_artis = ayar_tavan
         if ayar_hasar > 0.0:

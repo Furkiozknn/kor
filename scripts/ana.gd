@@ -6,6 +6,7 @@ const KupSahne := preload("res://scenes/kup.tscn")
 const YapiSahne := preload("res://scenes/yapi.tscn")
 const Silahlar := preload("res://scripts/silahlar.gd")
 const PatronSahne := preload("res://scenes/patron.tscn")
+const Dalgalar := preload("res://scripts/dalgalar.gd")
 const YAZI_TIPI := preload("res://assets/fonts/PublicPixel.ttf")
 const Tema := preload("res://scripts/tema.gd")
 const KaranlikSahne := preload("res://scripts/karanlik.gd")
@@ -23,15 +24,8 @@ const ZEMIN_SADE := Vector2i(0, 0)
 ## yani olum matematiksel olarak kacinilmazdi. Cozum tur standardi: spawn
 ## hizini sinirsiz artirmak yerine CANLI DUSMAN TAVANI koy, zorlugu
 ## bilesim ve guc ile buyut.
-const SPAWN_BAS := 2.30        # sn
-const SPAWN_AZALMA := 0.0035   # sn / oyun saniyesi
-const SPAWN_TABAN := 0.55      # sn
-const CANLI_TAVAN_BAS := 45
-const CANLI_TAVAN_ARTIS := 0.10   # saniyede, tavan buyur
-const GUC_BOLEN := 300.0          # dusman gucu: 1 + gecen/GUC_BOLEN
 ## Patron dogum anlari. Her patron sonrasi dalgalar sertlesir.
-const PATRON_ZAMANLARI := [150.0, 330.0, 540.0, 780.0]
-const CANLI_TAVAN_UST := 170
+
 
 const YAPI_TURLERI := ["fici", "sandik", "fici_yigin", "orsa", "mangal", "mangal"]
 
@@ -44,11 +38,13 @@ var xp := 0
 var xp_hedef := 5
 var oldurulen := 0
 var bitti := false
+var kazandi := false
+var evre_adi := ""
 
 ## Denge taramasi bunu disaridan degistiriyor (1.0 = normal tempo)
 var spawn_carpani := 1.0
-var guc_bolen := GUC_BOLEN
-var tavan_artis := CANLI_TAVAN_ARTIS
+var guc_carpani := 1.0
+var tavan_artis := 1.0
 var patron_sayisi := 0
 var _patron: Node2D = null
 var _patron_cubuk: ColorRect
@@ -65,6 +61,13 @@ var _kart_katman: CanvasLayer
 var _bekleyen_kart := 0
 ## Alinan kartlar: ad -> {"sayi": int, "ikon": String, "aciklama": String}
 var alinan_kartlar := {}
+## FIRINA AT: begenmedigin karti kosu boyunca havuzdan cikarir.
+## Rakip arastirmasindaki en yaygin sikayet "yapmak istedigim seyi hic
+## goremedim" -- VS'in Banish'i bunu yariım cozuyor (10 kullanim, ve
+## secenegi sadece o turda siliyor). Bizde kalici: yaktigin kart bir daha
+## gelmez, yani havuzu kendine gore daraltiyorsun.
+var yakilan_kartlar := {}
+var yakma_hakki := 3
 var _build_kutu: HBoxContainer
 var _can_kutu: HBoxContainer
 var _xp_cubuk: ColorRect
@@ -193,12 +196,20 @@ func _process(delta: float) -> void:
         return
 
     gecen += delta
-    if patron_sayisi < PATRON_ZAMANLARI.size() and gecen >= float(PATRON_ZAMANLARI[patron_sayisi]):
+    if gecen >= Dalgalar.KOSU_SURESI and not kazandi:
+        _kosu_kazanildi()
+        return
+    var yeni_evre: String = str(Dalgalar.evre(gecen)["ad"])
+    if yeni_evre != evre_adi:
+        evre_adi = yeni_evre
+        if evre_adi == evre_adi.to_upper():
+            _duyuru(evre_adi)
+    if patron_sayisi < Dalgalar.PATRON_ZAMANLARI.size() and gecen >= float(Dalgalar.PATRON_ZAMANLARI[patron_sayisi]):
         _patron_dog()
     _patron_cubuk_tazele()
     _spawn_sayaci -= delta
     if _spawn_sayaci <= 0.0:
-        _spawn_sayaci = maxf(SPAWN_BAS - gecen * SPAWN_AZALMA, SPAWN_TABAN) * spawn_carpani
+        _spawn_sayaci = Dalgalar.spawn_araligi(gecen) * spawn_carpani
         if _canli_dusman() < canli_tavan():
             _dusman_dog()
 
@@ -290,7 +301,7 @@ func _yapilari_dog() -> void:
 ## Ayni anda yasayabilecek dusman sayisi. Zorluk buradan degil, dusmanin
 ## gucunden ve turunden geliyor.
 func canli_tavan() -> int:
-    return mini(CANLI_TAVAN_BAS + int(gecen * tavan_artis), CANLI_TAVAN_UST)
+    return int(Dalgalar.canli_tavan(gecen) * tavan_artis)
 
 func _canli_dusman() -> int:
     return get_tree().get_nodes_in_group("dusman").size()
@@ -313,8 +324,8 @@ func _patron_dog() -> void:
 ## Patron olunce oyuncu odullendirilir ve dalgalar sertlesir.
 func _patron_yenildi() -> void:
     _patron = null
-    tavan_artis += 0.05
-    guc_bolen = maxf(guc_bolen * 0.82, 120.0)
+    tavan_artis *= 1.08
+    guc_carpani *= 1.10
     _duyuru("KÜL ANASI DÜŞTÜ")
     for n in 6:
         _kup_dus(oyuncu.global_position + Vector2(randf_range(-40, 40), randf_range(-40, 40)), 5)
@@ -331,25 +342,10 @@ func _duyuru(metin: String) -> void:
 
 func _dusman_dog() -> void:
     var d := DusmanSahne.instantiate()
-    d.kur(_tur_sec(), 1.0 + gecen / guc_bolen)
+    d.kur(Dalgalar.tur_sec(gecen), Dalgalar.guc(gecen) * guc_carpani)
     d.global_position = _kenar_noktasi()
     d.olduruldu.connect(_dusman_oldu)
     add_child(d)
-
-## Sure gectikce yeni turler devreye girer.
-func _tur_sec() -> int:
-    var r := randf()
-    if gecen > 75.0 and r < 0.10:
-        return 5    # cadi -- menzilli
-    if gecen > 60.0 and r < 0.12:
-        return 4    # hayalet -- duvar tanimaz
-    if gecen > 45.0 and r < 0.22:
-        return 2    # curuf -- iri
-    if gecen > 30.0 and r < 0.42:
-        return 3    # iskelet -- sert
-    if gecen > 15.0 and r < 0.62:
-        return 1    # imp -- hizli
-    return 0        # kul
 
 func _kenar_noktasi() -> Vector2:
     # Oyuncudan uzak bir kenar sec, tepesine dogmasin
@@ -432,6 +428,13 @@ func _kart_havuzu() -> Array:
             "uygula": func(o): o.yayilim_menzil = minf(o.yayilim_menzil * 1.25, 1.0)},
         {"ad": "YAĞLI ÇİZME", "aciklama": "Hareket hızı +%12", "ikon": "cizme",
             "uygula": func(o): o.hiz *= 1.12},
+        {"ad": "GENİŞ GÖZ", "aciklama": "Görüş menzili +%25", "ikon": "miknatis",
+            "uygula": func(_o): _gorus_degistir(1.25, 0.0)},
+        {"ad": "KARANLIK GÖZÜ", "aciklama": "Soğukken bile görürsün (taban +14 px)", "ikon": "soguk",
+            "uygula": func(_o): _gorus_degistir(1.0, 14.0)},
+        {"ad": "KÖR ÖFKE", "aciklama": "Görüş -%18 ama hasar +%35", "ikon": "celik", "uygula": func(o):
+            _gorus_degistir(0.82, 0.0)
+            o.mermi_hasari *= 1.35},
     ]
     # Sahip olunmayan silahlar kart olarak cikar -- alinca Q ile gecilir
     for i in range(1, Silahlar.LISTE.size()):
@@ -443,7 +446,19 @@ func _kart_havuzu() -> Array:
             "ikon": str(sl["ikon"]), "silah": i,
             "uygula": func(o): o.silah_ver(i),
         })
-    return liste
+    # Firina atilanlar bir daha gelmez
+    var kalan: Array = []
+    for k in liste:
+        if not yakilan_kartlar.has(str(k["ad"])):
+            kalan.append(k)
+    return kalan
+
+## Gorus artik bir kaynak: kartlar onu takas edebiliyor.
+func _gorus_degistir(carpan: float, taban_ek: float) -> void:
+    if karanlik == null:
+        return
+    karanlik.gorus_carpani *= carpan
+    karanlik.taban_yaricap += taban_ek
 
 func _kartlari_ac() -> void:
     var havuz := _kart_havuzu()
@@ -484,10 +499,41 @@ func _kartlari_ac() -> void:
     kutu.add_child(ust)
 
     for k in secilen:
-        kutu.add_child(_kart_dugmesi(k))
+        kutu.add_child(_kart_satiri(k))
+    if yakma_hakki > 0:
+        kutu.add_child(Tema.sonuk("sağdaki ateşe basarak bir kartı fırına atabilirsin — kalan %d" % yakma_hakki))
 
     get_tree().paused = true
-    (kutu.get_child(1) as Button).grab_focus()
+    # Kart satiri artik kapsayici (secim + firina at), dugmeyi derinlemesine bul
+    var ilk := _ilk_dugme(kutu)
+    if ilk != null:
+        ilk.grab_focus()
+
+func _ilk_dugme(kok: Node) -> Button:
+    for c in kok.get_children():
+        if c is Button:
+            return c
+        var alt := _ilk_dugme(c)
+        if alt != null:
+            return alt
+    return null
+
+## Kart satiri: secim dugmesi + (hak varsa) firina atma dugmesi.
+func _kart_satiri(k: Dictionary) -> Control:
+    var satir := HBoxContainer.new()
+    satir.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    var sec := _kart_dugmesi(k)
+    sec.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    satir.add_child(sec)
+    if yakma_hakki > 0:
+        var yak := Button.new()
+        yak.icon = load("res://assets/sprites/ikon_kor.png")
+        yak.expand_icon = false
+        yak.tooltip_text = "Bu kartı fırına at: koşu boyunca bir daha gelmez"
+        yak.custom_minimum_size = Vector2(34, 40)
+        yak.pressed.connect(_kart_yak.bind(k))
+        satir.add_child(yak)
+    return satir
 
 ## Tek kart. Ikon solda sabit sutunda, ad ve aciklama sola hizali --
 ## uc kart alt alta gelince gozle taranabilir olsun diye.
@@ -495,6 +541,7 @@ func _kart_dugmesi(k: Dictionary) -> Button:
     var b := Button.new()
     b.custom_minimum_size = Vector2(0, 40)
     b.focus_mode = Control.FOCUS_ALL
+    b.set_meta("kart_secim", true)      # test yakma dugmesiyle karistirmasin
     b.pressed.connect(_kart_secildi.bind(k))
 
     var satir := HBoxContainer.new()
@@ -515,11 +562,28 @@ func _kart_dugmesi(k: Dictionary) -> Button:
     metin.add_theme_constant_override("separation", 2)
     metin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
     metin.add_child(Tema.vurgu(str(k["ad"])))
-    metin.add_child(Tema.sonuk(str(k["aciklama"])))
+    var ac := Tema.sonuk(str(k["aciklama"]))
+    ac.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    ac.custom_minimum_size = Vector2(400, 0)
+    metin.add_child(ac)
     satir.add_child(metin)
 
     b.add_child(satir)
     return b
+
+## Karti kalici olarak havuzdan cikar ve ekrani yeniden dagit.
+func _kart_yak(kart: Dictionary) -> void:
+    if yakma_hakki <= 0:
+        return
+    yakma_hakki -= 1
+    yakilan_kartlar[str(kart["ad"])] = true
+    SesYonetici.cal("asiri_isinma")
+    # Ekran acik degilse (test/betik cagrisi) sadece havuzdan cikar
+    if _kart_katman == null or not is_instance_valid(_kart_katman):
+        return
+    _kart_katman.queue_free()
+    _kart_katman = null
+    _kartlari_ac()
 
 func _kart_secildi(kart: Dictionary) -> void:
     SesYonetici.cal("kart_sec")
@@ -670,6 +734,17 @@ func _build_tazele() -> void:
             sy.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
             kutu.add_child(sy)
         _build_kutu.add_child(kutu)
+
+## Koşu tamamlandı. Turde kazanma kosulu yoktu -- eklendi.
+func _kosu_kazanildi() -> void:
+    kazandi = true
+    bitti = true
+    SesYonetici.muzik_dur()
+    SesYonetici.cal("seviye")
+    for d in get_tree().get_nodes_in_group("dusman"):
+        d.queue_free()
+    Hiss.sars(4.0)
+    _panel_kur("DÖKÜMHANE SÖNDÜ", _ozet_satirlari(true), "R yeniden başla   ·   ESC menü")
 
 func _oyun_bitti() -> void:
     bitti = true
