@@ -8,7 +8,7 @@
 script = ExtResource("3_ana")
 
 [node name="TileMapLayer" type="TileMapLayer" parent="."]
-modulate = Color(0.33, 0.30, 0.38, 1)
+modulate = Color(0.50, 0.50, 0.58, 1)
 z_index = -5
 tile_set = ExtResource("2_karolar")
 
