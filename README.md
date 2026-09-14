@@ -87,6 +87,21 @@ Başlangıçta sadece tabanca açık, diğerleri kart olarak çıkar.
 | **Işın** | en yüksek hasar, parmağını kaldırmayı öğreten silah | ~1.2 sn |
 | **Çekiç** | yavaş, delici, sırayı süpürür | ~2.5 sn |
 
+## Patron: Kül Anası
+
+Patron can torbası değil, **çekirdek mekaniğin sınavı.** 2:30, 5:30, 9:00 ve
+13:00'te uyanıyor, her seferinde daha güçlü.
+
+- **Işık içer** — sen soğukken kendini onarır ve neredeyse görünmez olur;
+  aldığı hasar %15'e düşer. Onu öldürmek için **sıcak kalmak** zorundasın,
+  yani kilide yaklaşmak zorundasın. Isın %55'i geçince hasar %160'a çıkar.
+- **Soğuk dalga** — 13 saniyede bir ısını **bir anda söndürür**. Kör
+  kalırsın ve o karanlıkta üstüne gelir. Mangal coğrafyası burada hayat
+  kurtarıyor: seni yeniden ısıtacak tek şey o.
+
+Yani patron "daha çok vur"u değil, **ısı ekonomisini yönetmeyi** ödüllendiriyor.
+Düştüğünde XP yağdırır, ama dalgalar da sertleşir.
+
 ## Koşu döngüsü
 
 Düşman öl → XP küpü düşer → mıknatıs menzilinde sana akar → seviye →

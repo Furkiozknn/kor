@@ -106,8 +106,9 @@ static func cubuk(genislik: int, yukseklik: int, esik_orani: float) -> Dictionar
     dolgu.size = Vector2(0, yukseklik)
     kok.add_child(dolgu)
 
-    # Kor atışı eşiği: çubuğun üstünde küçük bir çentik
+    # Kor atışı eşiği: çubuğun üstünde küçük bir çentik (esik < 0 ise yok)
     var isaret := ColorRect.new()
+    isaret.visible = esik_orani >= 0.0
     isaret.color = KOR
     isaret.size = Vector2(1, yukseklik + 4)
     isaret.position = Vector2(genislik * esik_orani, -2)

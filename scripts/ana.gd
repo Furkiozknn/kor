@@ -5,6 +5,7 @@ const DusmanSahne := preload("res://scenes/dusman.tscn")
 const KupSahne := preload("res://scenes/kup.tscn")
 const YapiSahne := preload("res://scenes/yapi.tscn")
 const Silahlar := preload("res://scripts/silahlar.gd")
+const PatronSahne := preload("res://scenes/patron.tscn")
 const YAZI_TIPI := preload("res://assets/fonts/PublicPixel.ttf")
 const Tema := preload("res://scripts/tema.gd")
 const KaranlikSahne := preload("res://scripts/karanlik.gd")
@@ -28,6 +29,8 @@ const SPAWN_TABAN := 0.55      # sn
 const CANLI_TAVAN_BAS := 45
 const CANLI_TAVAN_ARTIS := 0.10   # saniyede, tavan buyur
 const GUC_BOLEN := 300.0          # dusman gucu: 1 + gecen/GUC_BOLEN
+## Patron dogum anlari. Her patron sonrasi dalgalar sertlesir.
+const PATRON_ZAMANLARI := [150.0, 330.0, 540.0, 780.0]
 const CANLI_TAVAN_UST := 170
 
 const YAPI_TURLERI := ["fici", "sandik", "fici_yigin", "orsa", "mangal", "mangal"]
@@ -46,6 +49,10 @@ var bitti := false
 var spawn_carpani := 1.0
 var guc_bolen := GUC_BOLEN
 var tavan_artis := CANLI_TAVAN_ARTIS
+var patron_sayisi := 0
+var _patron: Node2D = null
+var _patron_cubuk: ColorRect
+var _patron_kok: Control
 
 var _spawn_sayaci := 0.0
 var _hud: CanvasLayer
@@ -186,6 +193,9 @@ func _process(delta: float) -> void:
         return
 
     gecen += delta
+    if patron_sayisi < PATRON_ZAMANLARI.size() and gecen >= float(PATRON_ZAMANLARI[patron_sayisi]):
+        _patron_dog()
+    _patron_cubuk_tazele()
     _spawn_sayaci -= delta
     if _spawn_sayaci <= 0.0:
         _spawn_sayaci = maxf(SPAWN_BAS - gecen * SPAWN_AZALMA, SPAWN_TABAN) * spawn_carpani
@@ -284,6 +294,40 @@ func canli_tavan() -> int:
 
 func _canli_dusman() -> int:
     return get_tree().get_nodes_in_group("dusman").size()
+
+## Patron. Can torbasi degil, cekirdek mekanigin sinavi -- ayrinti
+## patron.gd icinde.
+func _patron_dog() -> void:
+    patron_sayisi += 1
+    var p := PatronSahne.instantiate()
+    p.kur(1.0 + float(patron_sayisi - 1) * 0.85)
+    p.global_position = _kenar_noktasi()
+    p.olduruldu.connect(_dusman_oldu)
+    p.patron_oldu.connect(_patron_yenildi)
+    add_child(p)
+    _patron = p
+    Hiss.sars(5.0)
+    SesYonetici.cal("seviye")
+    _duyuru("KÜL ANASI UYANDI")
+
+## Patron olunce oyuncu odullendirilir ve dalgalar sertlesir.
+func _patron_yenildi() -> void:
+    _patron = null
+    tavan_artis += 0.05
+    guc_bolen = maxf(guc_bolen * 0.82, 120.0)
+    _duyuru("KÜL ANASI DÜŞTÜ")
+    for n in 6:
+        _kup_dus(oyuncu.global_position + Vector2(randf_range(-40, 40), randf_range(-40, 40)), 5)
+
+## Ekranin ortasinda kisa duyuru.
+func _duyuru(metin: String) -> void:
+    var l := Tema.baslik(metin)
+    l.position = Vector2(320 - metin.length() * 8, 120)
+    _hud.add_child(l)
+    var t := l.create_tween()
+    t.tween_interval(1.6)
+    t.tween_property(l, "modulate:a", 0.0, 0.8)
+    t.tween_callback(l.queue_free)
 
 func _dusman_dog() -> void:
     var d := DusmanSahne.instantiate()
@@ -553,6 +597,15 @@ func _hud_kur() -> void:
     _lbl_silah = Tema.vurgu("")
     kok.add_child(_lbl_silah)
 
+    # Patron can cubugu: sadece patron sahnedeyken gorunur
+    var pc := Tema.cubuk(420, 6, -1.0)
+    _patron_kok = pc["kok"]
+    _patron_kok.position = Vector2(110, 318)
+    _patron_kok.visible = false
+    _hud.add_child(_patron_kok)
+    _patron_cubuk = pc["dolgu"]
+    _patron_cubuk.color = Color(0.55, 0.85, 1.0)
+
     # Build seridi -- oyuncu ne aldigini GORSUN. VS'te bile var, bizde yoktu.
     _build_kutu = HBoxContainer.new()
     _build_kutu.position = Vector2(640 - 12, 6)
@@ -565,6 +618,14 @@ func _hud_kur() -> void:
     _ipucu.position = Vector2(10, 332)
     _ipucu.modulate = Color(1, 1, 1, 0.5)
     _hud.add_child(_ipucu)
+
+func _patron_cubuk_tazele() -> void:
+    if _patron_kok == null:
+        return
+    var var_mi := _patron != null and is_instance_valid(_patron)
+    _patron_kok.visible = var_mi
+    if var_mi:
+        _patron_cubuk.size.x = 420.0 * _patron.can_orani()
 
 ## Can pulleri. Dolu = kor, bos = sonuk cerceve.
 func _can_tazele(mevcut: int, maks: int) -> void:

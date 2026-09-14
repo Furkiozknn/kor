@@ -12,6 +12,7 @@ var _gorus_modu := "--gorus" in OS.get_cmdline_user_args()
 ## Olum/duraklatma ozet panelini cek
 var _ozet_modu := "--ozet" in OS.get_cmdline_user_args()
 var _menu_modu := "--menu" in OS.get_cmdline_user_args()
+var _patron_modu := "--patron" in OS.get_cmdline_user_args()
 
 var _ana: Node2D
 var _kare := 0
@@ -22,6 +23,21 @@ func _initialize() -> void:
     root.add_child(_ana)
 
 func _process(_delta: float) -> bool:
+    if _patron_modu:
+        _kare += 1
+        if _kare == 60:
+            _ana.gecen = 149.0
+            _ana.oyuncu.isi.deger = _ana.oyuncu.isi.tavan * 0.75
+        if _kare > 60 and _kare < 200 and _kare % 8 == 0:
+            _ana.oyuncu.isi.deger = _ana.oyuncu.isi.tavan * 0.75
+            _ana.oyuncu._ates_et(Vector2.RIGHT.rotated(randf() * 0.6))
+        if _kare < 210:
+            return false
+        RenderingServer.force_draw()
+        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-patron.png")
+        print("patron: kor-patron.png")
+        return true
+
     if _menu_modu:
         _kare += 1
         if _kare < 120:

@@ -115,6 +115,36 @@ func _process(_delta: float) -> bool:
         oyuncu.global_position = eski_yer2
     oyuncu.isi.deger = 0.0
 
+    # PATRON: can torbasi degil, mekanigin sinavi olmali.
+    # Sicakken savunmasiz, soguksa neredeyse dokunulmaz ve kendini onarir.
+    var pt = _ana.PatronSahne.instantiate()
+    pt.kur(1.0)
+    _ana.add_child(pt)
+    pt.global_position = oyuncu.global_position + Vector2(60, 0)
+    pt._dogus = 0.0
+    pt._hedef = oyuncu
+    oyuncu.isi.deger = 0.0
+    var c0: float = pt.can
+    pt.hasar_al(100.0)
+    var soguk_hasar: float = c0 - pt.can
+    pt.can = c0
+    oyuncu.isi.deger = oyuncu.isi.tavan * 0.9
+    pt.hasar_al(100.0)
+    var sicak_hasar: float = c0 - pt.can
+    assert(sicak_hasar > soguk_hasar * 3.0,
+        "patron sicakken cok daha savunmasiz olmali: %.0f vs %.0f" % [sicak_hasar, soguk_hasar])
+    # Soguksa onarilmali
+    oyuncu.isi.deger = 0.0
+    pt.can = 100.0
+    pt._physics_process(1.0)
+    assert(pt.can > 100.0, "oyuncu soguksa patron onarilmali")
+    # Soguk dalga isiyi sifirlamali
+    oyuncu.isi.deger = oyuncu.isi.tavan * 0.8
+    pt._soguk_dalga()
+    assert(is_equal_approx(oyuncu.isi.deger, 0.0), "soguk dalga isiyi sondurmeli")
+    pt.queue_free()
+    oyuncu.isi.deger = 0.0
+
     # Arena: her hucre doldu mu
     var hucre: int = _ana._karolar.get_used_cells().size()
     assert(hucre == _ana.SUTUN * _ana.SATIR, "arena karolari eksik: %d" % hucre)
