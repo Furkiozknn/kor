@@ -60,6 +60,8 @@ var _itme := Vector2.ZERO
 var _dogus := 0.0
 var _adim := 0.0
 
+var _cekirdek: Sprite2D
+
 @onready var _gorsel: AnimatedSprite2D = $Gorsel
 @onready var _carpisma: CollisionShape2D = $Carpisma
 
@@ -111,6 +113,16 @@ func _ready() -> void:
     _gorsel.animation = "yuru"
     _gorsel.frame = randi() % maxi(_gorsel.sprite_frames.get_frame_count("yuru"), 1)
     _gorsel.play()
+    # Soguk cekirdek. Karanlikta detayi gormezsin ama SURUYU sezersin --
+    # turun "yuzlerce dusman" fantezisi karanlikta bogulmasin diye.
+    # Isiktan degil kendinden geliyor: kul faksiyonunun camgobegi cekirdegi.
+    _cekirdek = Sprite2D.new()
+    _cekirdek.texture = Hiss.parlama_dokusu(
+        Color(0.42, 0.86, 1.0, 0.34), Color(0.1, 0.4, 0.6, 0.0), 32)
+    _cekirdek.material = Hiss.ekleme_materyali()
+    _cekirdek.z_index = -1
+    _cekirdek.scale = Vector2.ONE * (_yaricap / 16.0)
+    add_child(_cekirdek)
     var s := CircleShape2D.new()   # her ornek kendi seklini tasisin
     s.radius = _yaricap
     _carpisma.shape = s
@@ -122,6 +134,8 @@ func _physics_process(delta: float) -> void:
     _temas_bekleme = maxf(_temas_bekleme - delta, 0.0)
 
     # Dogus: yoktan bitmesin, buyuyerek gelsin
+    if _cekirdek != null:
+        _cekirdek.modulate.a = 0.55 + 0.45 * sin(Time.get_ticks_msec() / 320.0 + position.x)
     if _dogus > 0.0:
         _dogus = maxf(_dogus - delta * 4.5, 0.0)
         var b := 1.0 - _dogus

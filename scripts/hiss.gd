@@ -11,6 +11,7 @@ var _donma := 0.0
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
+    _havuz_kur()
 
 ## Kamerayı sars. guc: piksel cinsinden tepe genlik (1 hafif, 6 sert).
 func sars(guc: float) -> void:
@@ -38,16 +39,34 @@ func _process(delta: float) -> void:
     elif kamera.offset != Vector2.ZERO:
         kamera.offset = kamera.offset.lerp(Vector2.ZERO, 0.35)
 
-## Tek atımlık parçacık patlaması. Kendini temizler.
+## Parçacık havuzu. Ölçüldü: her patlamada yeni düğüm ayırmak kare
+## süresinde sıçramaya yol açıyordu (%7 kare bütçe dışı). Havuz sabit
+## sayıda yayıcıyı döndürüyor; ayırma/serbest bırakma yok.
+const HAVUZ := 48
+var _havuz: Array[CPUParticles2D] = []
+var _sonraki := 0
+
+func _havuz_kur() -> void:
+    for i in HAVUZ:
+        var p := CPUParticles2D.new()
+        p.emitting = false
+        p.one_shot = true
+        p.explosiveness = 1.0
+        p.local_coords = false
+        p.direction = Vector2.ZERO
+        p.spread = 180.0
+        add_child(p)
+        _havuz.append(p)
+
+## Tek atımlık parçacık patlaması. Havuzdan gelir, kendini temizlemez.
 func patlama(ebeveyn: Node, poz: Vector2, renk: Color, adet: int, hiz: float,
         boy: float = 2.0, omur: float = 0.45) -> void:
-    if not is_instance_valid(ebeveyn):
+    if _havuz.is_empty():
         return
-    var p := CPUParticles2D.new()
+    var p := _havuz[_sonraki]
+    _sonraki = (_sonraki + 1) % HAVUZ
+    p.emitting = false
     p.global_position = poz
-    p.emitting = true
-    p.one_shot = true
-    p.explosiveness = 1.0
     p.amount = adet
     p.lifetime = omur
     p.direction = Vector2.ZERO
@@ -63,8 +82,8 @@ func patlama(ebeveyn: Node, poz: Vector2, renk: Color, adet: int, hiz: float,
     g.set_color(0, Color(renk.r, renk.g, renk.b, 1.0))
     g.set_color(1, Color(renk.r, renk.g, renk.b, 0.0))
     p.color_ramp = g
-    ebeveyn.add_child(p)
-    p.finished.connect(p.queue_free)
+    p.restart()
+    p.emitting = true
 
 ## Dalış izi: sprite'ın solup kaybolan kopyası.
 ## Hem Sprite2D hem AnimatedSprite2D kabul eder.

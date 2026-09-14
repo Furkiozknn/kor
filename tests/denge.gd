@@ -195,11 +195,8 @@ func _kart_sec() -> bool:
     var kk = _ana.get("_kart_katman")
     if kk == null or not is_instance_valid(kk):
         return false
-    var dugmeler: Array = []
-    for k in kk.get_children():
-        for c in k.get_children():
-            if c is Button:
-                dugmeler.append(c)
+    # Arayuz agaci degisince kirilmasin diye derinlemesine ara.
+    var dugmeler: Array = _dugme_ara(kk)
     if dugmeler.is_empty():
         return false
     var d: Button = dugmeler[randi() % dugmeler.size()]
@@ -207,6 +204,14 @@ func _kart_sec() -> bool:
 ")[0].strip_edges())
     d.pressed.emit()
     return true
+
+func _dugme_ara(kok: Node) -> Array:
+    var b: Array = []
+    for c in kok.get_children():
+        if c is Button:
+            b.append(c)
+        b.append_array(_dugme_ara(c))
+    return b
 
 ## --- Bot politikasi ---------------------------------------------------------
 ##

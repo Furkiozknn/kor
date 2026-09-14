@@ -13,6 +13,11 @@ var _gorus_modu := "--gorus" in OS.get_cmdline_user_args()
 var _ozet_modu := "--ozet" in OS.get_cmdline_user_args()
 var _menu_modu := "--menu" in OS.get_cmdline_user_args()
 var _patron_modu := "--patron" in OS.get_cmdline_user_args()
+## Performans olcumu: gercek pencerede, karanlik shader'i + kalabalik sürü
+## + parcaciklar birlikte. Headless bunu olcemez cunku cizim atlanir.
+var _perf_modu := "--perf" in OS.get_cmdline_user_args()
+var _perf_ornek: Array = []
+var _son_usec: int = 0
 
 var _ana: Node2D
 var _kare := 0
@@ -23,6 +28,49 @@ func _initialize() -> void:
     root.add_child(_ana)
 
 func _process(_delta: float) -> bool:
+    if _perf_modu:
+        _kare += 1
+        if _kare == 5:
+            # Vsync kare suresini 16.7 ms'ye sabitliyor; gercek yuku gormek
+            # icin kapat. Yoksa olculen sey basarim degil, senkron tavani.
+            DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+            Engine.max_fps = 0
+        if _kare == 40:
+            _ana.gecen = 300.0
+            for n in 140:
+                _ana._dusman_dog()
+            _ana._patron_dog()
+            _ana.oyuncu.silah_ver(1)
+            _ana.oyuncu.silah_ver(2)
+            _ana.oyuncu.silah_ver(3)
+        if _kare > 90:      # ilk kareler dogus maliyeti, kararli duruma bak
+            _ana.oyuncu.isi.deger = _ana.oyuncu.isi.tavan * 0.85
+            if _kare % 3 == 0:
+                _ana.oyuncu._ates_et(Vector2.RIGHT.rotated(randf() * TAU))
+            # Duvar saati: motor sayaclari vsync'e takilip yaniltiyor.
+            var simdi := Time.get_ticks_usec()
+            if _son_usec > 0:
+                _perf_ornek.append(float(simdi - _son_usec) / 1000.0)
+            _son_usec = simdi
+        if _kare < 340:
+            return false
+        _perf_ornek.sort()
+        var n2 := _perf_ornek.size()
+        var toplam := 0.0
+        for v in _perf_ornek:
+            toplam += v
+        var asan := 0
+        for v in _perf_ornek:
+            if v > 16.67:
+                asan += 1
+        print("PERF dusman=%d ornek=%d | betik+fizik ortanca %.2f ms | %%95 %.2f ms | en kotu %.2f ms | butce asan %%%.0f | FPS %.0f (vsync kapali)" % [
+            get_nodes_in_group("dusman").size(), n2,
+            _perf_ornek[n2 / 2], _perf_ornek[int(n2 * 0.95)], _perf_ornek[n2 - 1],
+            100.0 * asan / n2, Engine.get_frames_per_second()])
+        RenderingServer.force_draw()
+        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-perf.png")
+        return true
+
     if _patron_modu:
         _kare += 1
         if _kare == 60:

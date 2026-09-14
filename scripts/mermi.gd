@@ -9,7 +9,6 @@ var omur := 1.1
 var delici := false      # kor atisi ve cekic dusmani delip gecer
 
 var _kalan := 0.0
-var _iz := 0.0
 
 @onready var _gorsel: Polygon2D = $Gorsel
 @onready var _hale: Sprite2D = $Parlama
@@ -25,16 +24,30 @@ func _ready() -> void:
     _hale.material = Hiss.ekleme_materyali()
     _hale.scale = Vector2.ONE * 0.55
 
+    # Iz. ONEMLI: onceden her 35 ms'de bir YENI parcacik dugumu yaratiliyordu;
+    # 20 mermi = saniyede ~570 dugum ayirma. Olculdu: kare suresi p95 72 ms'ye
+    # firliyordu. Artik mermi basina TEK kalici yayici var, mermiyle olur.
+    if hiz > 150.0:
+        var iz := CPUParticles2D.new()
+        iz.amount = 10
+        iz.lifetime = 0.22
+        iz.local_coords = false          # mermi gidince iz yerinde kalir
+        iz.direction = Vector2.ZERO
+        iz.spread = 180.0
+        iz.initial_velocity_min = 2.0
+        iz.initial_velocity_max = 10.0
+        iz.scale_amount_min = scale.x * 0.5
+        iz.scale_amount_max = scale.x * 0.9
+        var g := Gradient.new()
+        g.set_color(0, Color(c.r, c.g, c.b, 0.8))
+        g.set_color(1, Color(c.r, c.g, c.b, 0.0))
+        iz.color_ramp = g
+        iz.z_index = -2
+        add_child(iz)
+
 func _physics_process(delta: float) -> void:
     position += yon * hiz * delta
     _kalan -= delta
-
-    # Iz: hizli mermiler arkasinda sonen bir kuyruk birakir
-    _iz -= delta
-    if _iz <= 0.0 and hiz > 150.0:
-        _iz = 0.035
-        Hiss.patlama(get_parent(), global_position, _gorsel.color, 1, 6.0,
-            scale.x * 0.9, 0.16)
 
     if _kalan <= 0.0:
         _son(false)
