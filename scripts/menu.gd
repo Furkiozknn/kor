@@ -27,6 +27,7 @@ var _nefes := 0.0
 var _oyuncu: AnimatedSprite2D
 var _kademe_yazi: Label
 var _ses_yazi: Label
+var _kunye: CanvasLayer
 
 func _ready() -> void:
     _zemin_kur()
@@ -182,7 +183,7 @@ func _arayuz_kur() -> void:
     _kademe_tazele()
     _ses_tazele()
 
-    var alt := Tema.sonuk("WASD hareket · SOL TIK ateş · SAĞ TIK kor atışı · BOŞLUK dalış · Q silah · F11 tam ekran")
+    var alt := Tema.sonuk("WASD · SOL TIK ateş · SAĞ TIK kor · BOŞLUK dalış · Q silah · F11 tam ekran · C künye")
     alt.position = Vector2(48, 322)
     alt.modulate = Color(1, 1, 1, 0.55)
     k.add_child(alt)
@@ -234,10 +235,58 @@ func _unhandled_key_input(olay: InputEvent) -> void:
     var k := (olay as InputEventKey).keycode
     if k == KEY_ENTER or k == KEY_KP_ENTER or k == KEY_SPACE:
         _basla()
+    elif k == KEY_C:
+        _kunye_degis()
     elif k == KEY_F11:
         _tam_ekran_degis()
     elif k == KEY_ESCAPE:
         get_tree().quit()
+
+## Kunye. Kullanilan CC0 varliklarin hakki teslim ediliyor -- CC0 atif
+## zorunlu kilmiyor ama Kenney'in kendi lisans dosyasi "destek olmak
+## istersen kredi ver" diyor, ve tamamlanmis bir urunde bu ekran olur.
+func _kunye_degis() -> void:
+    if _kunye != null and is_instance_valid(_kunye):
+        _kunye.queue_free()
+        _kunye = null
+        return
+    _kunye = CanvasLayer.new()
+    _kunye.layer = 5
+    add_child(_kunye)
+    var fon := ColorRect.new()
+    fon.color = Color(0.01, 0.01, 0.03, 0.9)
+    fon.set_anchors_preset(Control.PRESET_FULL_RECT)
+    _kunye.add_child(fon)
+    var sarmal := PanelContainer.new()
+    sarmal.theme = Tema.tema()
+    sarmal.position = Vector2(64, 54)
+    sarmal.custom_minimum_size = Vector2(512, 0)
+    sarmal.add_theme_stylebox_override("panel",
+        Tema.kutu(Tema.GOVDE, Tema.KENAR_KOR, 1, Tema.BOSLUK_L))
+    _kunye.add_child(sarmal)
+    var kutu := VBoxContainer.new()
+    kutu.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    sarmal.add_child(kutu)
+    kutu.add_child(Tema.baslik("KÜNYE"))
+    for satir in [
+        ["Motor", "Godot Engine 4.7 — MIT"],
+        ["Yazı tipi", "PublicPixel — CC0"],
+        ["Zemin, siper, ikon, iki düşman", "Kenney Tiny Dungeon — CC0"],
+        ["Oyuncu, patron, düşman sprite'ları", "PixelLab ile üretildi"],
+        ["Ses ve müzik", "sfxr algoritmasıyla kodda üretildi"],
+        ["Kod, tasarım, denge", "Claude — Furkiozknn için"],
+    ]:
+        var r := HBoxContainer.new()
+        r.add_theme_constant_override("separation", Tema.BOSLUK_M)
+        var sol := Tema.sonuk(str(satir[0]))
+        sol.custom_minimum_size = Vector2(230, 0)
+        r.add_child(sol)
+        r.add_child(Tema.govde(str(satir[1])))
+        kutu.add_child(r)
+    var b := Control.new()
+    b.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
+    kutu.add_child(b)
+    kutu.add_child(Tema.vurgu("C ile kapat"))
 
 func _tam_ekran_degis() -> void:
     var tam: bool = not bool(Kayit.ayar("tam_ekran", false))

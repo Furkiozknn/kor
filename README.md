@@ -1,31 +1,9 @@
 # Kor
 
-Top-down roguelite. *Vampire Survivors*'ın sürüsü ile *Enter the Gungeon*'ın
-el becerisini tek bir düğmede birleştiriyor: **ateş etmek ısı biriktirir.**
+Karanlık bir dökümhanede geçen top-down roguelite. *Vampire Survivors*'ın
+sürüsü ile *Enter the Gungeon*'ın el becerisini tek bir kuralda birleştiriyor:
 
-## Çekirdek mekanik: ısı ve dalış
-
-```
-  ateş et  →  ısı ↑ ↑ ↑  →  KİLİT (2 sn savunmasız)
-                 ↓
-              DALIŞ  →  ısı = 0, dokunulmazlık
-```
-
-Silahın ısınır. Tavana varırsan iki saniye boyunca ateş edemezsin — ve
-**dalış seni o kilitten kurtarmaz.** Yani dalış hem kaçınma hem yeniden
-yükleme: sürünün içine zamanında dalarsan ısın sıfırlanır, geç kalırsan
-sürünün ortasında kilitli kalırsın. Oyunun bütün gerilimi şu tek soruda:
-*bir mermi daha mı, yoksa şimdi mi dalayım?*
-
-Ve ısı sadece tehdit değil, aynı zamanda **kaynak**: sağ tıkla kor atışı
-yaparsan biriken ısı hasara dönüşür (ne kadar sıcaksan o kadar sert, düşman
-delip geçer) ama ısın sıfırlanır. Aynı kaynağın iki çıkışı var — dalış onu
-boşa harcar ve seni kurtarır, kor atışı onu hasara çevirir ama seni orada
-bırakır. Isı göstergesindeki sarı çizgi kor atışı eşiği.
-
-Kartlar bu ikilemi büker — ısı tavanını büyütmek, soğumayı hızlandırmak,
-ya da tam tersi: ısı yüksekken hasar veren "kızgın çelik" ile kilidin
-kenarında oynamayı ödüllendirmek.
+> **Ateş etmek ısıtır. Isındıkça daha çok görürsün.**
 
 ## Ayrışma: ısı = görüş
 
@@ -40,28 +18,33 @@ Arena karanlık. Görüş yarıçapını **tek başına ısın** belirliyor:
 
 | Isı | Görüş | Sonuç |
 |---|---|---|
-| soğuk | 34 px | neredeyse körsün, nereye ateş ettiğini bilmiyorsun |
-| sıcak | 215 px | arena açılır, sürüyü görürsün — **ama kilide yaklaşırsın** |
+| soğuk | 40 px | neredeyse körsün, nereye ateş ettiğini bilmiyorsun |
+| sıcak | 300 px | arena açılır, sürüyü görürsün — **ama kilide yaklaşırsın** |
 | kilitli | 26 px | hem silahsız hem kör, iki katmanlı ceza |
 
-Dalış ısıyı boşaltır → ekran kararır. **Güvenliği görüşle ödüyorsun.**
+Silahın ısınır; tavana varırsan iki saniye kilitlenir ve **dalış o kilidi
+kırmaz.** Dalış ısıyı boşaltır → ekran kararır: **güvenliği görüşle ödersin.**
+
 Bu tek kural türün iki bilinen kusurunu birden kapatıyor: durup izlemek
 mümkün değil (görmek için ısınmak gerek), ve ekran hiçbir zaman okunamaz
 parçacık çorbasına dönmüyor (görünür alan zaten ısıyla sınırlı).
+
+### Isının üç çıkışı
+
+- **Dalış** — ısıyı boşa harcar, seni kurtarır, seni kör bırakır.
+- **Kor atışı** (sağ tık) — biriken ısıyı delici hasara çevirir. Ne kadar
+  sıcaksan o kadar sert, ama sonrasında soğumuş ve açıktasın.
+- **Kor yayılımı** — sıcakken çevreni yakarsın; menzil görüş yarıçapına
+  bağlı, yani *gördüğünü yakıyorsun*.
 
 ### Arena termodinamiği
 
 Siperler dekor değil, ısı ekonomisinin parçası:
 
-- **Mangal** — sabit ışık adası, yanında görürsün **ama ısınırsın**
-  (saniyede +11; orada oyalanırsan mangal seni kilitler).
-- **Örs** — ışık vermez ama yanında soğuma **2,6 katına** çıkar.
-  Kör ama güvenli liman.
+- **Mangal** — ışık adası, yanında görürsün **ama ısınırsın** (+11/sn).
+- **Örs** — ışık vermez ama soğumayı **2,6 katına** çıkarır. Kör liman.
 - **Fıçı/sandık** — kırılabilir. Ateş hattını açarken ışık adanı da
   yok edebilirsin.
-
-Yani "nerede duruyorum" sorusu, "ne kadar görüyorum" ve "ne kadar sıcağım"
-sorularıyla aynı soru hâline geliyor.
 
 ## Kontroller
 
@@ -69,141 +52,181 @@ sorularıyla aynı soru hâline geliyor.
 |---|---|
 | `WASD` / yön tuşları | hareket |
 | Sol tık (basılı) | ateş — fareye nişan alır |
-| Sağ tık | **kor atışı** — biriken ısıyı delici bir akkor mermiye çevirir |
+| Sağ tık | **kor atışı** — biriken ısıyı delici akkor mermiye çevirir |
 | `Boşluk` | dalış (ısıyı boşaltır, dokunulmazlık verir) |
-| `Q` / `1-4` | silah değiştir (birden fazla açıksa) |
-| `R` | öldükten sonra yeniden başla |
+| `Q` / `1-4` | silah değiştir |
+| `ESC` | duraklat |
+| `F11` tam ekran · `C` künye | menüde |
 
-## Silahlar
+## Koşu
 
-Dördü de **aynı ısı sistemini** kullanır; fark, ısıyı ne hızda biriktirdikleri.
-Silah seçmek aslında "kaç saniyede kilitlenmeyi göze alıyorum" sorusunun cevabı.
-Başlangıçta sadece tabanca açık, diğerleri kart olarak çıkar.
+**12 dakika.** 30 değil: Kor'da her saniye bir ısı kararı var, 30 dakika
+yorar; ayrıca tarayıcıda tek oturumda bitmesi gerekiyor.
+
+Koşu bir eğri değil **bir şekil** (`scripts/dalgalar.gd`): ısınma → basınç →
+**nefes** → daha sert basınç → final. Nefes anları zirveleri hissettiriyor ve
+kart okuyacak alan açıyor — türün en çok eleştirilen yanı sürekli aynı
+basınçtı. 12:00'de dökümhane söner: **kazandın**.
+
+### Silahlar
+
+Dördü de aynı ısı sistemini kullanır; fark ısıyı ne hızda biriktirdikleri.
+Silah seçmek "kaç saniyede kilitlenmeyi göze alıyorum" sorusunun cevabı.
 
 | Silah | Karakteri | Kilide kalan |
 |---|---|---|
-| **Kor Tabancası** | dengeli, her işi görür | ~1.6 sn |
-| **Saçma** | 6 saçma, kısa menzil, yıkıcı — sürünün içine girmeni ister | ~1.9 sn |
-| **Işın** | en yüksek hasar, parmağını kaldırmayı öğreten silah | ~1.2 sn |
+| **Kor Tabancası** | dengeli | ~1.6 sn |
+| **Saçma** | 6 saçma, kısa menzil — sürünün içine girmeni ister | ~1.9 sn |
+| **Işın** | en yüksek hasar, parmağını kaldırmayı öğretir | ~1.2 sn |
 | **Çekiç** | yavaş, delici, sırayı süpürür | ~2.5 sn |
-
-## Patron: Kül Anası
-
-Patron can torbası değil, **çekirdek mekaniğin sınavı.** 2:30, 5:30, 9:00 ve
-13:00'te uyanıyor, her seferinde daha güçlü.
-
-- **Işık içer** — sen soğukken kendini onarır ve neredeyse görünmez olur;
-  aldığı hasar %15'e düşer. Onu öldürmek için **sıcak kalmak** zorundasın,
-  yani kilide yaklaşmak zorundasın. Isın %55'i geçince hasar %160'a çıkar.
-- **Soğuk dalga** — 13 saniyede bir ısını **bir anda söndürür**. Kör
-  kalırsın ve o karanlıkta üstüne gelir. Mangal coğrafyası burada hayat
-  kurtarıyor: seni yeniden ısıtacak tek şey o.
-
-Yani patron "daha çok vur"u değil, **ısı ekonomisini yönetmeyi** ödüllendiriyor.
-Düştüğünde XP yağdırır, ama dalgalar da sertleşir.
-
-## Koşu döngüsü
-
-Düşman öl → XP küpü düşer → mıknatıs menzilinde sana akar → seviye →
-3 karttan biri. Süre geçtikçe dalgalar sıklaşır, düşmanlar sertleşir ve
-yeni türler devreye girer.
 
 ### Düşmanlar
 
-| Tür | Ne yapar | Ne zaman |
-|---|---|---|
-| **kül** | standart takip | baştan |
-| **imp** | hızlı, zayıf | 15. saniye |
-| **iskelet** | dengeli ama sert, 2 XP | 30. saniye |
-| **cüruf** | iri, yavaş, 2 hasar, 3 XP | 45. saniye |
-| **hayalet** | **duvar ve siper tanımaz**, hızlı, 2 XP | 60. saniye |
-| **cadı** | mesafesini korur, uzaktan mermi atar, 3 XP | 75. saniye |
+| Tür | Ne yapar |
+|---|---|
+| **kül** | standart takip |
+| **imp** | hızlı, zayıf |
+| **iskelet** | dengeli ama sert |
+| **koşucu** | **durup ısınır (telegraf), sonra hücum eder** — görüşün genişse erken görürsün |
+| **cüruf** | iri, yavaş, 2 hasar |
+| **hayalet** | **duvar ve siper tanımaz** |
+| **cadı** | mesafesini korur, uzaktan vurur |
 
-Hayalet oyunun siper mantığını bozmak için var: bir köşeye yerleşip
-sürüyü fıçıların arkasında tutmak 60. saniyeden sonra işe yaramaz. Cadı
-ise tersini yapar — yaklaşırsan geri çekilir, uzaktan vurur. İkisi birlikte
-"tek bir güvenli nokta" diye bir şey bırakmıyor.
+Tür listesi bir **ağırlık** listesi: tehlikeli türler seyrek, doldurucular
+sık. Ölçüldü — koşucuyu eşit ağırlıkta koymak hayatta kalmayı %43 düşürüyor.
 
-### Arena ve siperler
+### Patron: Kül Anası
 
-Arena her koşuda yeniden kuruluyor: 40×22 karo zemin, çevresi çarpışmalı
-duvar, içine 14 siper serpiliyor. **Fıçı, sandık ve fıçı yığını kırılabilir**
-— ateş hattını sen açarsın, kırınca XP düşer. **Örs ve mangal kalıcı**:
-mermiyi de sürüyü de durdurur, ama kırılmaz.
+2:30, 6:40 ve 11:30'da uyanır. Can torbası değil, **çekirdek mekaniğin
+sınavı**:
 
-## Çalıştırma
+- **Işık içer** — sen soğukken kendini onarır ve aldığı hasar %15'e düşer.
+  Onu öldürmek için sıcak kalmak, yani kilide yaklaşmak zorundasın.
+- **Soğuk dalga** — 13 saniyede bir ısını bir anda söndürür. Kör kalırsın ve
+  o karanlıkta üstüne gelir. Mangal coğrafyası burada hayat kurtarır.
+
+### Kartlar ve fırına atma
+
+Her kart **ısı ekonomisinin bir değişkenini** çevirir: ısı tavanı, soğuma,
+kilit, görüş menzili, kor atışı bedeli, yayılım. Böylece "doğru silah
+gelmedi, koşu öldü" durumu doğmaz.
+
+Beğenmediğin kartı **fırına atabilirsin** (koşu başına 3 hak): yakılan kart
+o koşu boyunca bir daha gelmez. Türün en yaygın şikâyeti "yapmak istediğim
+şeyi hiç göremedim" idi; VS'in Banish'i bunu yarım çözüyor, bizde kalıcı.
+
+## Meta ilerleme: fırın kademesi
+
+Koşu sonunda **cüruf** kazanırsın (öldürme × kademe çarpanı). Kalıcı gelişim
+**güç değil seçenek** verir — ısı baskısını azaltan hiçbir şey kalıcı değil,
+yoksa oyunun çekirdeği söner.
+
+Fırın kademesi 0-3 gönüllü zorluktur ve **Kor'un kendi dilini** kullanır:
+zorluğu artırmanın yolu fırını daha çok yakmaktır. Körük (ısı %25 hızlı),
+sıkışan valf (kilit 3 sn), dökümhane uyanık (düşman %15 güçlü). Her kademe
+cüruf kazancını çarpar.
+
+## Erişilebilirlik
+
+Bilgi hiçbir yerde *sadece* renge yüklenmiyor:
+
+- Oyuncu **ekranın en parlak nesnesi** ve ısıyla parlaklığı artıyor — gri
+  testinde de, renk körlüğünde de "en parlak şey benim" diye okunuyor.
+- Düşman çekirdeğinin nabzı **ölçekte**, alfada değil — hareket hiçbir görme
+  tipinde kaybolmaz.
+- Isı tehlikesi üç kanaldan: doluluk, eşik çizgisi, ve eşik üstünde yanıp
+  sönme.
+
+## Çalıştırma ve doğrulama
 
 ```
 godot --path .                      # editörde aç
 build/windows/kor.exe               # derlenmiş sürüm
+
+bash tests/dogrula.sh               # TAM DOGRULAMA -- her sey burada
 ```
 
-Testler (ikisi de headless, saniyeler sürer):
+`dogrula.sh` import + iki test + botlu koşu + menü çalıştırır ve **herhangi
+bir** `ERROR` / `Assertion` / `Parse` satırını başarısızlık sayar. Dar filtre
+kullanmaz: geçmişte `grep TAMAM` ile bakarken bir fizik akışı hatası gizli
+kalmıştı.
+
+Tek tek:
 
 ```
-godot --headless --script res://tests/test_isi.gd     # ısı/kilit/dalış kuralları
-godot --headless --script res://tests/test_dongu.gd   # arena, siper, 5 tür,
-                                                      # spawn -> hasar -> küp -> XP -> kart
-godot --script res://tests/ekran_al.gd                # gerçek render'ı PNG'ye yazar
+godot --headless --script res://tests/test_isi.gd       # ısı/kilit/dalış kuralları
+godot --headless --script res://tests/test_dongu.gd     # uçtan uca oyun döngüsü
+godot --script res://tests/ekran_al.gd                  # ekran görüntüsü
+godot --script res://tests/ekran_al.gd -- --kart        #   kart ekranı
+godot --script res://tests/ekran_al.gd -- --gorus       #   soğuk/sıcak/kilitli
+godot --script res://tests/ekran_al.gd -- --zafer       #   kazanma ekranı
+godot --script res://tests/ekran_al.gd -- --perf        #   performans ölçümü
 ```
+
+### Denge ölçüm takımı
+
+Denge tahminle değil ölçümle ayarlanıyor:
+
+```
+godot --headless --fixed-fps 60 --script res://tests/denge.gd -- --kosu 10 --sure 740
+bash tests/tarama.sh                # parametre taramasi
+```
+
+Bot **gerçek oyunu** oynuyor (aynı ateş/ısı/dalış yolları) ve **sadece
+gördüğünü biliyor** — ısı=görüş mekaniğini bot da ödemezse ölçüm iyimser
+çıkar. `--fixed-fps 60` ile 12 dakikalık koşu ~40 saniyede biter.
+
+Takım üç "makul" varsayımı çürüttü: alan hasarı eklemek hayatta kalmayı
+*kötüleştirdi*, oyuncu kuşatılıp ölmüyor (koşu başına 4-7 darbe), ve canı
+iki katına çıkarmak neredeyse hiçbir şey değiştirmedi — bağlayıcı kısıt
+zorluk rampasıydı.
+
+### Geliştirici katmanı
+
+Hata ayıklama derlemesinde `F1` paneli açar: FPS, ısı, görüş yarıçapı,
+evre adı, canlı/tavan, alınan kartlar. `F2` karanlığı kapatır, `F3`
+ölümsüzlük, `F4` +30 sn, `F5` dalga, `F6` ısıyı tavana, `F7` seviye atlat,
+`F8` bütün silahlar, `F9` temizle, `+/-` zaman ölçeği.
+
+## Performans
+
+Ölçüldü (Intel UHD, GL Compatibility, vsync kapalı, 92 düşman + patron +
+dört silah ateş ederken): **ortanca 4,77 ms**, p95 10,6 ms, **bütçe aşan
+kare %0**, 187 FPS.
+
+İki gerçek sorun ölçümle bulundu ve çözüldü: mermi izi her 35 ms'de bir yeni
+parçacık düğümü ayırıyordu (saniyede ~570 ayırma), ve her patlama düğüm
+yaratıyordu. İkisi de havuzlandı.
+
+Karanlık mekaniği `PointLight2D` kullanmıyor: tek tam ekran quad + shader,
+24 ışığa kadar sabit maliyet. Ölçülmüştü — gölge açılırsa kare bütçesi
+18,49 ms'ye fırlıyor.
 
 ## Dosya haritası
 
 | Dosya | İşi |
 |---|---|
 | `scripts/isi.gd` | çekirdek mekanik, saf mantık — oyundan bağımsız test edilir |
-| `scripts/oyuncu.gd` | hareket, nişan, ateş, dalış, hasar |
-| `scripts/dusman.gd` | takip + temas hasarı, beş tür tek sahnede |
-| `scripts/yapi.gd` | arena siperleri, kırılabilir ve kalıcı |
-| `scripts/mermi.gd` | mermi uçuşu ve çarpışma |
-| `scripts/kup.gd` | XP küpü + mıknatıs |
-| `scripts/ana.gd` | arena kurulumu, dalga doğurma, XP/seviye, kart ekranı, HUD |
-
-## Oyun hissi
-
-`scripts/hiss.gd` (autoload `Hiss`) tek bir varlık dosyası kullanmadan,
-hepsi kodla: kamera sarsıntısı, ağır darbelerde vuruş donması, parçacık
-patlamaları, dalış hayaletleri, yarıçapsal parlama dokuları ve toplamalı
-karışım. Ateş ederken geri tepme, namlu alevi ve kamera sarsıntısı var;
-vurulan düşman eziliyor ve geri itiliyor; ölünce kül patlıyor. Düşmanlar
-yoktan bitmiyor, büyüyerek geliyor.
-
-## Görsel kimlik
-
-Sıcak ve soğuk. Oyuncu tek sıcak şey: karanlık dökümhanede ateş eden,
-altında ısıyla büyüyen bir kor parlaması taşıyan figür. Mangallar zemine
-sıcak ışık havuzları döküyor, kenarları vinyet karartıyor. Bütün düşmanlar tek "kül fraksiyonu"
-paletinde — gri-camgöbeği, soğuk. Isın yükseldikçe halkan büyür ve
-beyazlaşır; ısı göstergesine bakmadan da nerede olduğunu görürsün.
-
-## Animasyon
-
-Oyuncu **8 yöne dönüyor ve gerçek 8 kareli yürüyüş** oynatıyor; nişan aldığın
-yöne bakar, hızına göre adım temposu değişir, dururken duruş karesine döner.
-Altı düşman türünün her birinin kendi 8 kareli döngüsü var — kül sürüklenerek,
-imp seğirterek, iskelet katı adımlarla, hayalet süzülerek, cadı asasını
-kaldırarak, cüruf ağır ağır yalpalayarak.
-
-`SpriteFrames` kaynakları **kodda** kuruluyor (`scripts/yonlu.gd`), `.tres`
-olarak elle yazılmıyor — BOM'lu dosya yazıp Godot ayrıştırıcısını çökertme
-sınıfı hata böylece hiç doğmuyor. Düşman kareleri tür başına bir kez kurulup
-önbelleğe alınıyor, 60 düşman aynı anda doğsa bile yeniden kurulmuyor.
+| `scripts/karanlik.gd` + `assets/karanlik.gdshader` | ısı = görüş |
+| `scripts/dalgalar.gd` | koşunun şekli: evreler, nefes anları, ağırlıklar |
+| `scripts/oyuncu.gd` | hareket, nişan, ateş, dalış, kor atışı, yayılım |
+| `scripts/dusman.gd` | yedi tür tek sahnede |
+| `scripts/patron.gd` | Kül Anası |
+| `scripts/yapi.gd` | siperler ve arena termodinamiği |
+| `scripts/ana.gd` | arena, dalga, XP/seviye, kartlar, HUD, paneller |
+| `scripts/tema.gd` | görsel dil — tek yerden |
+| `scripts/hiss.gd` | oyun hissi: sarsıntı, donma, parçacık havuzu |
+| `scripts/kayit.gd` | kalıcı kayıt, cüruf, fırın kademesi, ayarlar |
+| `scripts/gelistirici.gd` | F1-F9 geliştirici katmanı (sadece debug) |
 
 ## Varlıklar
 
-- **Oyuncu** — PixelLab. Önce `create_image_pixen` ile tek kare, sonra
-  `create_character` v3 referans modu o kareyi 8 yöne döndürdü (1 generation),
-  `animate_character` şablon modu 8 yönün her birine yürüyüş verdi
-  (yön başına 1 generation). Kareler `assets/sprites/oyuncu/`.
-- **Düşman animasyonları** — `animate_image`, tür başına 1 generation,
-  `assets/sprites/anim/`. Ham tek kareler `assets/sprites/_ham/` altında.
-- **Zemin, duvar, siperler, kart ikonları, iskelet ve hayalet** —
-  [Kenney](https://kenney.nl) *Tiny Dungeon* (CC0), paleti oyunun
-  fraksiyonuna uyacak şekilde değiştirildi.
+- **Oyuncu, patron, düşmanlar** — PixelLab. Tek kare → `create_character` v3
+  ile 8 yöne döndürme → `animate_character` ile yürüyüş. Hepsi tek "kül
+  fraksiyonu" paletine çekildi; oyuncu tek sıcak nesne.
+- **Zemin, siper, kart ikonları, iskelet, hayalet** — [Kenney](https://kenney.nl)
+  *Tiny Dungeon*, CC0.
+- **Yazı tipi** — PublicPixel, CC0.
+- **Ses ve müzik** — sfxr algoritmasıyla kodda üretildi.
 
-## Durum
-
-Oynanabilir dikey dilim. Tek arena, dört silah + kor atışı, on iki kart
-ve üç silah kartı, altı düşman türü.
-
-Sırada: ses (ayrı oturumda), 8 yönlü sprite ve yürüme animasyonu, patron.
+Ham (paletlenmemiş) kopyalar `assets/sprites/_ham/` altında.
