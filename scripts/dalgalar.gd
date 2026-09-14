@@ -24,11 +24,11 @@ const KOSU_SURESI := 720.0     # 12:00 -- kazanma anı
 ## (kül, imp) birkaç kez geçer. Ölçüldü: eşit ağırlıkta koşucu koymak
 ## hayatta kalmayı 540 -> 276 sn'ye düşürüyordu.
 const EVRELER := [
-    {"sn":   0.0, "spawn": 2.20, "tavan":  30, "turler": [0],
+    {"sn":   0.0, "spawn": 0.95, "tavan":  30, "turler": [0],
         "ad": "kül"},
-    {"sn": 100.0, "spawn": 1.45, "tavan":  55, "turler": [0, 1],
+    {"sn": 100.0, "spawn": 0.80, "tavan":  55, "turler": [0, 1],
         "ad": "sürü kalabalıklaşıyor"},
-    {"sn": 190.0, "spawn": 1.15, "tavan":  75, "turler": [0, 0, 0, 1, 1, 3, 6],
+    {"sn": 190.0, "spawn": 0.68, "tavan":  75, "turler": [0, 0, 0, 1, 1, 3, 6],
         "ad": "koşucular"},
     {"sn": 285.0, "spawn": 0.62, "tavan": 115, "turler": [0, 0, 0, 1, 1, 3, 3, 2, 6],
         "ad": "İLK BASKI", "baski": true},
@@ -90,4 +90,4 @@ static func tur_sec(gecen: float) -> int:
 
 ## Düşman gücü. Süreye göre doğrusal; 12 dakikada ~2,4 kat.
 static func guc(gecen: float) -> float:
-    return 1.0 + gecen / 510.0
+    return 0.72 + gecen / 640.0
