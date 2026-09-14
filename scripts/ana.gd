@@ -181,6 +181,8 @@ func _process(delta: float) -> void:
     if bitti:
         if Input.is_key_pressed(KEY_R):
             get_tree().reload_current_scene()
+        elif Input.is_key_pressed(KEY_ESCAPE):
+            get_tree().change_scene_to_file("res://scenes/menu.tscn")
         return
 
     gecen += delta
@@ -613,6 +615,6 @@ func _oyun_bitti() -> void:
     get_tree().paused = false
     SesYonetici.muzik_dur()
     SesYonetici.cal("asiri_isinma")
-    _panel_kur("SÖNDÜN", _ozet_satirlari(true), "R ile yeniden başla")
+    _panel_kur("SÖNDÜN", _ozet_satirlari(true), "R yeniden başla   ·   ESC menü")
     for d in get_tree().get_nodes_in_group("dusman"):
         d.queue_free()

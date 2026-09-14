@@ -11,15 +11,26 @@ var _kart_modu := "--kart" in OS.get_cmdline_user_args()
 var _gorus_modu := "--gorus" in OS.get_cmdline_user_args()
 ## Olum/duraklatma ozet panelini cek
 var _ozet_modu := "--ozet" in OS.get_cmdline_user_args()
+var _menu_modu := "--menu" in OS.get_cmdline_user_args()
 
 var _ana: Node2D
 var _kare := 0
 
 func _initialize() -> void:
-    _ana = load("res://scenes/level.tscn").instantiate()
+    var yol := "res://scenes/menu.tscn" if _menu_modu else "res://scenes/level.tscn"
+    _ana = load(yol).instantiate()
     root.add_child(_ana)
 
 func _process(_delta: float) -> bool:
+    if _menu_modu:
+        _kare += 1
+        if _kare < 120:
+            return false
+        RenderingServer.force_draw()
+        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-menu.png")
+        print("menu: kor-menu.png")
+        return true
+
     _kare += 1
     # Isi çubuğu ve mermiler görünsün diye ateş ettir
     if _kare == 80 and not _gorus_modu:
