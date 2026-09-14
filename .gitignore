@@ -19,3 +19,9 @@ desktop.ini
 # Editor
 .vscode/
 *.tmp
+
+# Yan oturumdan gelen, henuz baglanmamis varliklar (tuketilince silinecek)
+_gelen/
+
+# godot-mcp editor eklentisi -- yerel arac, npm paketinden yeniden kurulabilir
+addons/godot_mcp/
