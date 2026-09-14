@@ -81,6 +81,77 @@ func _ready() -> void:
         _lbl_silah.text = "◤ " + str(ad) + ek)
     oyuncu.silah_degisti.emit(oyuncu.silah(), oyuncu.silah_indeksi)
 
+func _unhandled_key_input(olay: InputEvent) -> void:
+    if not olay.is_pressed() or olay.is_echo():
+        return
+    if (olay as InputEventKey).keycode == KEY_ESCAPE and not bitti:
+        _duraklat_degis()
+
+## ESC duraklatma. Kart ekrani aciksa karismiyor -- o zaten duraklatmis
+## durumda ve kendi kararini bekliyor.
+func _duraklat_degis() -> void:
+    if _kart_katman != null and is_instance_valid(_kart_katman):
+        return
+    if _duraklat_katman != null and is_instance_valid(_duraklat_katman):
+        _duraklat_katman.queue_free()
+        _duraklat_katman = null
+        get_tree().paused = false
+        return
+    _duraklat_katman = _panel_kur("DURAKLATILDI", _ozet_satirlari(false),
+        "ESC devam   ·   R yeniden basla")
+    get_tree().paused = true
+
+## Duraklatma ve olum ekrani ayni govdeyi kullaniyor.
+func _panel_kur(baslik: String, satirlar: Array, alt: String) -> CanvasLayer:
+    var k := CanvasLayer.new()
+    k.layer = 4
+    k.process_mode = Node.PROCESS_MODE_ALWAYS
+    add_child(k)
+    var fon := ColorRect.new()
+    fon.color = Color(0.01, 0.01, 0.03, 0.82)
+    fon.set_anchors_preset(Control.PRESET_FULL_RECT)
+    k.add_child(fon)
+    var kutu := VBoxContainer.new()
+    kutu.position = Vector2(56, 52)
+    kutu.add_theme_constant_override("separation", 5)
+    k.add_child(kutu)
+    kutu.add_child(_panel_yazi(baslik, 16, Color(1, 1, 1)))
+    for satir in satirlar:
+        kutu.add_child(_panel_yazi(str(satir), 8, Color(1, 1, 1)))
+    kutu.add_child(_panel_yazi("", 8, Color(1, 1, 1)))
+    kutu.add_child(_panel_yazi(alt, 8, Color(1.0, 0.82, 0.45)))
+    return k
+
+func _panel_yazi(metin: String, boy: int, renk: Color) -> Label:
+    var l := Label.new()
+    l.add_theme_font_override("font", YAZI_TIPI)
+    l.add_theme_font_size_override("font_size", boy)
+    l.modulate = renk
+    l.text = metin
+    return l
+
+## Kosu ozeti. Olumde ve duraklatmada ayni bilgi -- oyuncu neyi nasil
+## yaptigini gorsun.
+func _ozet_satirlari(olum: bool) -> Array:
+    var s: Array = []
+    s.append("sure %02d:%02d    seviye %d    oldurme %d" % [
+        int(gecen) / 60, int(gecen) % 60, seviye, oldurulen])
+    s.append("silah %s    acik %d/4" % [oyuncu.silah(), oyuncu.acik_silahlar.size()])
+    s.append("")
+    if alinan_kartlar.is_empty():
+        s.append("kart alinmadi")
+    else:
+        s.append("BUILD")
+        for ad in alinan_kartlar:
+            var b: Dictionary = alinan_kartlar[ad]
+            var sayi: int = int(b["sayi"])
+            s.append("  %s%s   %s" % [ad, (" x%d" % sayi) if sayi > 1 else "", b["aciklama"]])
+    if olum:
+        s.append("")
+        s.append("dakikada %.1f oldurme    seviye basina %.0f sn" % [
+            oldurulen / maxf(gecen / 60.0, 0.01), gecen / maxf(float(seviye), 1.0)])
+    return s
+
 func _process(delta: float) -> void:
     if bitti:
         if Input.is_key_pressed(KEY_R):
@@ -448,9 +519,6 @@ func _oyun_bitti() -> void:
     bitti = true
     SesYonetici.muzik_dur()
     SesYonetici.cal("asiri_isinma")
-    var l := _yazi(16)
-    l.position = Vector2(180, 150)
-    l.text = "SÖNDÜN\n%d öldürme · %02d:%02d · seviye %d\nR ile yeniden" % [
-        oldurulen, int(gecen) / 60, int(gecen) % 60, seviye]
+    _panel_kur("SÖNDÜN", _ozet_satirlari(true), "R ile yeniden başla")
     for d in get_tree().get_nodes_in_group("dusman"):
         d.queue_free()

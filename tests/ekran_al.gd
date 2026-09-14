@@ -9,6 +9,8 @@ const CIKTI_KART := "D:/Claude Projeleri/gecici/kor-kart.png"
 var _kart_modu := "--kart" in OS.get_cmdline_user_args()
 ## Isi = gorus kanitI: ayni sahne soguk ve sicak halde
 var _gorus_modu := "--gorus" in OS.get_cmdline_user_args()
+## Olum/duraklatma ozet panelini cek
+var _ozet_modu := "--ozet" in OS.get_cmdline_user_args()
 
 var _ana: Node2D
 var _kare := 0
@@ -54,6 +56,25 @@ func _process(_delta: float) -> bool:
             d.kur(t, 1.0)
             d.global_position = _ana.oyuncu.global_position + Vector2(-85 + t * 34, -54)
             _ana.add_child(d)
+    if _ozet_modu:
+        if _kare == 100:
+            for n in 4:
+                _ana._xp_topla(_ana.xp_hedef)
+                var kk = _ana.get("_kart_katman")
+                if kk != null and is_instance_valid(kk):
+                    for kat in kk.get_children():
+                        for c in kat.get_children():
+                            if c is Button:
+                                c.pressed.emit()
+                                break
+        if _kare == 130:
+            _ana.oyuncu.hasar_al(99.0)
+        if _kare == 160:
+            RenderingServer.force_draw()
+            root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-ozet.png")
+            print("ozet paneli: kor-ozet.png")
+            return true
+        return false
     if _gorus_modu:
         var o = _ana.oyuncu
         if _kare == 150:
