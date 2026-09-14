@@ -50,7 +50,6 @@ var tavan_artis := CANLI_TAVAN_ARTIS
 var _spawn_sayaci := 0.0
 var _hud: CanvasLayer
 var _lbl_ust: Label
-var _lbl_can: Label
 var _isi_cubuk: ColorRect
 var _isi_yazi: Label
 var _lbl_silah: Label
@@ -60,6 +59,9 @@ var _bekleyen_kart := 0
 ## Alinan kartlar: ad -> {"sayi": int, "ikon": String, "aciklama": String}
 var alinan_kartlar := {}
 var _build_kutu: HBoxContainer
+var _can_kutu: HBoxContainer
+var _xp_cubuk: ColorRect
+var _ipucu: Label
 var _duraklat_katman: CanvasLayer
 
 func _ready() -> void:
@@ -75,7 +77,7 @@ func _ready() -> void:
         g.ana = self
         add_child(g)
     oyuncu.oldu.connect(_oyun_bitti)
-    oyuncu.can_degisti.connect(func(c, m): _lbl_can.text = "CAN  " + "*".repeat(max(c, 0)) + "-".repeat(max(m - c, 0)))
+    oyuncu.can_degisti.connect(_can_tazele)
     oyuncu.can_degisti.emit(oyuncu.can, oyuncu.maks_can)
     oyuncu.silah_degisti.connect(func(ad, _i):
         var ek := "   [Q]" if oyuncu.acik_silahlar.size() > 1 else ""
@@ -205,6 +207,12 @@ func _process(delta: float) -> void:
         _isi_yazi.text = "ISI"
     _lbl_ust.text = "%02d:%02d   SEVİYE %d   XP %d/%d   ÖLDÜRME %d" % [
         int(gecen) / 60, int(gecen) % 60, seviye, xp, xp_hedef, oldurulen]
+    _xp_cubuk.size.x = 640.0 * clampf(float(xp) / maxf(float(xp_hedef), 1.0), 0.0, 1.0)
+    if _ipucu != null and gecen > 25.0:
+        _ipucu.modulate.a = maxf(_ipucu.modulate.a - delta * 0.5, 0.0)
+        if _ipucu.modulate.a <= 0.0:
+            _ipucu.queue_free()
+            _ipucu = null
 
 ## Isi = gorus. Oyunun ayrisma noktasi; ayrinti karanlik.gd icinde.
 func _karanlik_kur() -> void:
@@ -481,45 +489,11 @@ func _kart_secildi(kart: Dictionary) -> void:
 
 # --- HUD --------------------------------------------------------------------
 
-func _hud_kur() -> void:
-    _vinyet_kur()
-    _hud = CanvasLayer.new()
-    _hud.layer = 2          # karanlik 1'de, HUD onun ustunde
-    add_child(_hud)
-
-    _lbl_ust = _yazi(8)
-    _lbl_ust.position = Vector2(10, 4)
-
-    _lbl_can = _yazi(8)
-    _lbl_can.position = Vector2(10, 18)
-
-    # Isi cubugu: cerceveli, kor atisi esigi centikli -- tema.gd'den
-    var c := Tema.cubuk(120, 8, oyuncu.KOR_ESIK)
-    var kok: Control = c["kok"]
-    kok.position = Vector2(10, 36)
-    _hud.add_child(kok)
-    _isi_cubuk = c["dolgu"]
-
-    _isi_yazi = _yazi(8)
-    _isi_yazi.position = Vector2(134, 33)
-
-    _lbl_silah = _yazi(8)
-    _lbl_silah.position = Vector2(10, 48)
-    _lbl_silah.modulate = Color(1.0, 0.82, 0.45)
-
-    # Build seridi -- oyuncu ne aldigini GORSUN. VS'te bile var, bizde yoktu.
-    _build_kutu = HBoxContainer.new()
-    _build_kutu.position = Vector2(640 - 12, 6)
-    _build_kutu.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-    _build_kutu.add_theme_constant_override("separation", 3)
-    _hud.add_child(_build_kutu)
-
-    var ipucu := _yazi(8)
-    ipucu.position = Vector2(10, 330)
-    ipucu.modulate = Color(1, 1, 1, 0.55)
-    ipucu.text = "WASD  SOL TIK ateş  SAĞ TIK kor  BOŞLUK dalış  Q silah"
-
+## HUD. Tek hizalanmis blok: ust satir kosu bilgisi, altinda can pulleri,
+## isi cubugu ve silah. Hepsi ayni sol kenardan (10 px) baslar, satir
+## araliklari 4'un kati. Onceden her parca kendi yerinde duruyordu.
 ## Kenarlari karartan vinyet -- arenayi bir dokumhane cukuru gibi gosterir.
+## Karanlik shader'inin altinda, zeminin ustunde.
 func _vinyet_kur() -> void:
     var k := CanvasLayer.new()
     k.layer = -1
@@ -532,8 +506,76 @@ func _vinyet_kur() -> void:
     t.mouse_filter = Control.MOUSE_FILTER_IGNORE
     k.add_child(t)
 
-## HUD yazilari. PublicPixel 8x8 bir pixel font: boyut 8'in kati olmali,
-## ara degerlerde piksel izgarasi bozulup bulaniyor.
+func _hud_kur() -> void:
+    _vinyet_kur()
+    _hud = CanvasLayer.new()
+    _hud.layer = 2          # karanlik 1'de, HUD onun ustunde
+    add_child(_hud)
+
+    # XP seridi: ekranin en ust kenarinda 2 px. Surekli bakilacak bir sey
+    # degil, goz ucuyla gorulecek bir sey -- o yuzden kenarda ve ince.
+    var xp_arka := ColorRect.new()
+    xp_arka.color = Color(0.06, 0.06, 0.09)
+    xp_arka.size = Vector2(640, 2)
+    _hud.add_child(xp_arka)
+    _xp_cubuk = ColorRect.new()
+    _xp_cubuk.color = Tema.SOGUK
+    _xp_cubuk.size = Vector2(0, 2)
+    _hud.add_child(_xp_cubuk)
+
+    var kok := VBoxContainer.new()
+    kok.position = Vector2(10, 7)
+    kok.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    _hud.add_child(kok)
+
+    _lbl_ust = Tema.sonuk("")
+    kok.add_child(_lbl_ust)
+
+    # Can pulleri: yildiz yerine kor kareleri
+    _can_kutu = HBoxContainer.new()
+    _can_kutu.add_theme_constant_override("separation", 3)
+    kok.add_child(_can_kutu)
+
+    # Isi cubugu + durum yazisi
+    var isi_satir := HBoxContainer.new()
+    isi_satir.add_theme_constant_override("separation", Tema.BOSLUK_M)
+    kok.add_child(isi_satir)
+    var c := Tema.cubuk(120, 8, oyuncu.KOR_ESIK)
+    var cubuk_kok: Control = c["kok"]
+    cubuk_kok.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+    isi_satir.add_child(cubuk_kok)
+    _isi_cubuk = c["dolgu"]
+    _isi_yazi = Tema.sonuk("ISI")
+    isi_satir.add_child(_isi_yazi)
+
+    _lbl_silah = Tema.vurgu("")
+    kok.add_child(_lbl_silah)
+
+    # Build seridi -- oyuncu ne aldigini GORSUN. VS'te bile var, bizde yoktu.
+    _build_kutu = HBoxContainer.new()
+    _build_kutu.position = Vector2(640 - 12, 6)
+    _build_kutu.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+    _build_kutu.add_theme_constant_override("separation", 3)
+    _hud.add_child(_build_kutu)
+
+    # Ipucu satiri ogretici gurultusu: ilk 25 saniyeden sonra soner.
+    _ipucu = Tema.sonuk("WASD  SOL TIK ateş  SAĞ TIK kor  BOŞLUK dalış  Q silah  ESC duraklat")
+    _ipucu.position = Vector2(10, 332)
+    _ipucu.modulate = Color(1, 1, 1, 0.5)
+    _hud.add_child(_ipucu)
+
+## Can pulleri. Dolu = kor, bos = sonuk cerceve.
+func _can_tazele(mevcut: int, maks: int) -> void:
+    if _can_kutu == null:
+        return
+    for c in _can_kutu.get_children():
+        c.queue_free()
+    for n in maks:
+        var pul := ColorRect.new()
+        pul.custom_minimum_size = Vector2(7, 7)
+        pul.color = Tema.KOR if n < mevcut else Color(0.16, 0.16, 0.20)
+        _can_kutu.add_child(pul)
+
 ## Alinan kartlari sag ust seride ikon + sayac olarak goster.
 func _build_tazele() -> void:
     if _build_kutu == null:
@@ -558,13 +600,6 @@ func _build_tazele() -> void:
             sy.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
             kutu.add_child(sy)
         _build_kutu.add_child(kutu)
-
-func _yazi(boy: int) -> Label:
-    var l := Label.new()
-    l.add_theme_font_override("font", YAZI_TIPI)
-    l.add_theme_font_size_override("font_size", boy)
-    _hud.add_child(l)
-    return l
 
 func _oyun_bitti() -> void:
     bitti = true
