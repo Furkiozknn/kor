@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mermi.gd" id="1_kod"]
+
+[sub_resource type="CircleShape2D" id="1_govde"]
+radius = 2.5
+
+[node name="DusmanMermisi" type="Area2D"]
+collision_layer = 32
+collision_mask = 3
+script = ExtResource("1_kod")
+
+[node name="Gorsel" type="Polygon2D" parent="."]
+color = Color(0.55, 0.9, 1, 1)
+polygon = PackedVector2Array(-3, -2, 3, -2, 3, 2, -3, 2)
+
+[node name="Carpisma" type="CollisionShape2D" parent="."]
+shape = SubResource("1_govde")

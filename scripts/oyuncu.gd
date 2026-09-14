@@ -154,10 +154,10 @@ func _renk_guncelle() -> void:
     _gorsel.modulate = Color(2, 2, 2) if _dokunulmaz > 0.0 and int(Time.get_ticks_msec() / 60) % 2 == 0 else Color(1, 1, 1)
     _gorsel.flip_h = _namlu.position.x < 0.0
 
-func hasar_al(miktar: int) -> void:
+func hasar_al(miktar: float) -> void:
     if _dokunulmaz > 0.0 or dalisityor() or can <= 0:
         return
-    can -= miktar
+    can -= int(ceilf(miktar))
     _dokunulmaz = VURULMA_DOKUNULMAZLIK
     can_degisti.emit(can, maks_can)
     if can <= 0:

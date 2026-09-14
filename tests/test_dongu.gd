@@ -68,7 +68,28 @@ func _process(_delta: float) -> bool:
         assert(yeni.can > 0.0, "tur %d cansiz" % t)
         if t == 4:
             assert(yeni.collision_mask == 0, "hayalet duvardan gecmeli")
+        if t == 5:
+            assert(yeni.menzil > 0.0, "cadi menzilli olmali")
         yeni.queue_free()
+
+    # Cadinin mermisi oyuncuya hasar vermeli (ayri carpisma katmani)
+    var cadi = _ana.DusmanSahne.instantiate()
+    cadi.kur(5, 1.0)
+    cadi.global_position = oyuncu.global_position + Vector2(90, 0)
+    _ana.add_child(cadi)
+    cadi._ates_et(Vector2.LEFT)
+    var mermiler := _ana.get_children().filter(func(c): return c.name.begins_with("DusmanMermisi"))
+    assert(mermiler.size() > 0, "cadi mermi uretmedi")
+    var cm: Node = mermiler[0]
+    assert(cm.collision_mask & 2 != 0, "cadi mermisi oyuncu katmanini gormeli")
+    assert(cm.collision_mask & 4 == 0, "cadi mermisi dusmanlari vurmamali")
+    # NOT: testin can-doldurma kancasi hasari aninda geri aliyor,
+    # o yuzden cani degil hasar sayacini olcuyoruz.
+    var vurus_once: int = _hasar_sayaci
+    oyuncu._dokunulmaz = 0.0
+    cm._carpti(oyuncu)
+    assert(_hasar_sayaci > vurus_once, "cadi mermisi oyuncuya hasar vermeli")
+    cadi.queue_free()
 
     # Kor atisi: esik altinda calismamali
     oyuncu.isi.bosalt()

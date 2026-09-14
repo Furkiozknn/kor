@@ -52,9 +52,12 @@ yeni türler devreye girer.
 | **iskelet** | dengeli ama sert, 2 XP | 30. saniye |
 | **cüruf** | iri, yavaş, 2 hasar, 3 XP | 45. saniye |
 | **hayalet** | **duvar ve siper tanımaz**, hızlı, 2 XP | 60. saniye |
+| **cadı** | mesafesini korur, uzaktan mermi atar, 3 XP | 75. saniye |
 
 Hayalet oyunun siper mantığını bozmak için var: bir köşeye yerleşip
-sürüyü fıçıların arkasında tutmak 60. saniyeden sonra işe yaramaz.
+sürüyü fıçıların arkasında tutmak 60. saniyeden sonra işe yaramaz. Cadı
+ise tersini yapar — yaklaşırsan geri çekilir, uzaktan vurur. İkisi birlikte
+"tek bir güvenli nokta" diye bir şey bırakmıyor.
 
 ### Arena ve siperler
 
@@ -108,6 +111,6 @@ beyazlaşır; ısı göstergesine bakmadan da nerede olduğunu görürsün.
 
 ## Durum
 
-Oynanabilir dikey dilim. Tek arena, iki ateş modu, on iki kart, beş düşman türü.
+Oynanabilir dikey dilim. Tek arena, iki ateş modu, on iki kart, altı düşman türü.
 
-Sırada: yürüme animasyonu ve 8 yönlü sprite, ses, menzilli düşman türü.
+Sırada: yürüme animasyonu ve 8 yönlü sprite, ses.

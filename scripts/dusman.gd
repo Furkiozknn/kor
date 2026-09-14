@@ -1,6 +1,7 @@
 extends CharacterBody2D
 ## Sürüyü oluşturan düşman. Tek sahne, beş tür:
-## 0 kül, 1 imp (hızlı), 2 cüruf (iri), 3 iskelet (sert), 4 hayalet (duvar tanımaz).
+## 0 kül, 1 imp (hızlı), 2 cüruf (iri), 3 iskelet (sert), 4 hayalet (duvar
+## tanımaz), 5 cadı (mesafesini korur, ateş eder).
 
 signal olduruldu(pozisyon: Vector2, xp: int)
 
@@ -10,7 +11,10 @@ const DOKULAR := {
     2: preload("res://assets/sprites/dusman_curuf.png"),
     3: preload("res://assets/sprites/dusman_iskelet.png"),
     4: preload("res://assets/sprites/dusman_hayalet.png"),
+    5: preload("res://assets/sprites/dusman_cadi.png"),
 }
+
+const MermiSahne := preload("res://scenes/dusman_mermisi.tscn")
 
 var hiz := 42.0
 var can := 3.0
@@ -22,6 +26,8 @@ var _tur := 0
 var _yaricap := 7.0
 var _hedef: Node2D
 var _temas_bekleme := 0.0
+var _atis_bekleme := 0.0
+var menzil := 0.0          # 0 = temas dusmani, >0 = bu mesafeyi korur ve ates eder
 var _parlama := 0.0
 
 @onready var _gorsel: Sprite2D = $Gorsel
@@ -55,6 +61,13 @@ func kur(tur: int, guc: float) -> void:
             _yaricap = 5.0
             temas_mesafe = 10.0
             xp_degeri = 2
+        5:  # cadi: mesafesini korur, mermi atar
+            hiz = 46.0
+            can = 4.0 * guc
+            xp_degeri = 3
+            _yaricap = 6.0
+            temas_mesafe = 10.0
+            menzil = 112.0
         _:  # kul: standart
             hiz = 44.0
             can = 3.0 * guc
@@ -88,14 +101,37 @@ func _physics_process(delta: float) -> void:
     # ponytail: yol bulma yok, duz hedefe yurur -- siperin arkasinda takilir.
     # Sure gectikce siperler kirildigi icin simdilik yeterli; tikanma his olarak
     # rahatsiz edince NavigationAgent2D'ye gec.
-    var yon := (_hedef.global_position - global_position).normalized()
-    velocity = velocity.move_toward(yon * hiz, 600.0 * delta)
+    var fark := _hedef.global_position - global_position
+    var yon := fark.normalized()
+    if menzil > 0.0:
+        # Cadi: cok yaklasirsa geri ceker, menzildeyse durup ates eder
+        var uzak := fark.length()
+        var git := yon
+        if uzak < menzil * 0.75:
+            git = -yon
+        elif uzak < menzil:
+            git = Vector2.ZERO
+        velocity = velocity.move_toward(git * hiz, 600.0 * delta)
+        _atis_bekleme -= delta
+        if uzak < menzil * 1.35 and _atis_bekleme <= 0.0:
+            _atis_bekleme = 1.6
+            _ates_et(yon)
+    else:
+        velocity = velocity.move_toward(yon * hiz, 600.0 * delta)
     move_and_slide()
     _gorsel.flip_h = yon.x < 0.0
 
     if _temas_bekleme <= 0.0 and global_position.distance_to(_hedef.global_position) < temas_mesafe:
         _temas_bekleme = 0.5
         _hedef.hasar_al(temas_hasari)
+
+func _ates_et(yon: Vector2) -> void:
+    var m := MermiSahne.instantiate()
+    m.global_position = global_position + yon * 10.0
+    m.yon = yon
+    m.hasar = 1.0
+    m.hiz = 115.0
+    get_parent().add_child(m)
 
 func hasar_al(miktar: float) -> void:
     can -= miktar

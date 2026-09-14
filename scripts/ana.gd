@@ -118,6 +118,8 @@ func _dusman_dog() -> void:
 ## Sure gectikce yeni turler devreye girer.
 func _tur_sec() -> int:
     var r := randf()
+    if gecen > 75.0 and r < 0.10:
+        return 5    # cadi -- menzilli
     if gecen > 60.0 and r < 0.12:
         return 4    # hayalet -- duvar tanimaz
     if gecen > 45.0 and r < 0.22:

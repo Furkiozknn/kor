@@ -48,7 +48,7 @@ diye basitleştirmek oyunu düzleştirir. Aynı şekilde kor atışı ısıyı
 - [ ] ses — **başka bir oturumda**, `assets/ses/` + `scripts/ses.gd`
 - [ ] yürüme animasyonu / 8 yönlü sprite (PixelLab `create_character`,
       20-40 generation — kotanın çoğunu yer, Furki'nin onayı gerekir)
-- [ ] düşman çeşitliliğine menzilli bir tür
+- [x] menzilli düşman (cadı)
 
 ## 5. Kota ve varlık kuralı
 
