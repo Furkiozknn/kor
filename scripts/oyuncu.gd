@@ -21,6 +21,11 @@ const MANGAL_MENZIL := 74.0  # bu mesafede mangal isitir
 const MANGAL_ISI := 11.0     # saniyede
 const ORS_MENZIL := 40.0     # bu mesafede ors sogutmayi hizlandirir
 const ORS_CARPAN := 2.6
+# Kor yayilimi: sicakken cevreni yakarsin. Menzil gorus yaricapina bagli,
+# yani "gordugunu yakiyorsun". Tekil hasarin surune yetismemesi sorununun
+# kimlige uygun cozumu bu -- ve uc sistemi tek dugume bagliyor:
+# isi = gorus = alan hasari.
+const YAYILIM_TICK := 0.22
 const KOR_BEKLEME := 0.5
 
 @export var hiz := 115.0
@@ -46,6 +51,8 @@ var dalis_patlamasi := 0.0     # dalis bitince cevreye hasar
 var miknatis := 38.0           # XP kupu cekim menzili
 var kor_carpani := 1.0         # kart: kor atisi hasari
 var kor_maliyet := 1.0         # kart: 1.0 = biriken isinin tamamini harcar
+var yayilim_dps := 2.4         # kart: kor yayilimi saniyelik hasari
+var yayilim_menzil := 0.62     # gorus yaricapinin bu orani
 
 var _atis_sayaci := 0.0
 var _dalis_kalan := 0.0
@@ -56,6 +63,7 @@ var _namlu_parlama := 0.0
 var _hayalet_sayaci := 0.0
 var _adim := 0.0
 var _kor_zerre := 0.0
+var _yayilim_sayaci := 0.0
 var _silah_gecis := 0.0
 # --- Bot kancasi -------------------------------------------------------
 # Denge olcum takimi oyuncuyu buradan suruyor. Insan girdisiyle ayni yollari
@@ -153,6 +161,7 @@ func _unhandled_key_input(olay: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
     isi.guncelle(delta)
     _arena_isisi(delta)
+    _kor_yayilimi(delta)
     _isi_sesleri()
     _dokunulmaz = maxf(_dokunulmaz - delta, 0.0)
     _dalis_bekleme = maxf(_dalis_bekleme - delta, 0.0)
@@ -219,6 +228,30 @@ func _arena_isisi(delta: float) -> void:
             isi.kilitle()
     if yakin_ors:
         isi.hizli_sogu(delta, ORS_CARPAN)
+
+## Kor yayilimi. Isi oraniyla olcekleniyor: soguksan hic yakmiyorsun,
+## tavana yakinsan cevren erimiye basliyor. Kilitliyken de calisiyor --
+## kilit "silahin sustu" demek, "kor sondu" demek degil.
+func _kor_yayilimi(delta: float) -> void:
+    if yayilim_dps <= 0.0:
+        return
+    var oran := isi.oran()
+    if oran < 0.12:
+        return
+    _yayilim_sayaci -= delta
+    if _yayilim_sayaci > 0.0:
+        return
+    _yayilim_sayaci = YAYILIM_TICK
+
+    var menzil := 70.0
+    var kl := get_tree().get_first_node_in_group("karanlik")
+    if kl != null:
+        menzil = kl._oyuncu_yaricapi() * yayilim_menzil
+    var hasar := yayilim_dps * oran * YAYILIM_TICK
+    var menzil_kare := menzil * menzil
+    for d in get_tree().get_nodes_in_group("dusman"):
+        if global_position.distance_squared_to(d.global_position) <= menzil_kare:
+            d.hasar_al(hasar)
 
 func _isi_sesleri() -> void:
     if isi.kilitli and not _onceki_kilit:

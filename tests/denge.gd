@@ -30,6 +30,8 @@ var ayar_gorus := -1.0
 var ayar_guc := -1.0
 var ayar_tavan := -1.0
 var ayar_hasar := -1.0
+var ayar_yayilim := -1.0
+var ayar_can := -1
 var etiket := ""
 
 var _ana: Node2D
@@ -51,6 +53,12 @@ var _karanlik: Node = null
 var _son_gorulen := Vector2.ZERO
 var _gorunen_toplam := 0.0
 var _son_gorunen_sayi := 0
+# Olum tanilama: darbeyi ne vuruyor, ne zaman, kac dusman dibimizdeydi
+var _darbe := 0
+var _darbe_zamanlari: Array = []
+var _dip_toplam := 0.0
+var _ayar_can := -1
+var _son_can := 99
 
 func _initialize() -> void:
     var a := OS.get_cmdline_user_args()
@@ -73,6 +81,10 @@ func _initialize() -> void:
             ayar_tavan = float(a[i + 1])
         elif a[i] == "--hasar" and i + 1 < a.size():
             ayar_hasar = float(a[i + 1])
+        elif a[i] == "--yayilim" and i + 1 < a.size():
+            ayar_yayilim = float(a[i + 1])
+        elif a[i] == "--can" and i + 1 < a.size():
+            ayar_can = int(a[i + 1])
         elif a[i] == "--etiket" and i + 1 < a.size():
             etiket = a[i + 1]
     print("denge: %d kosu x %.0f sn, tohum %d" % [kosu_sayisi, kosu_suresi, tohum])
@@ -93,6 +105,10 @@ func _kosu_basla() -> void:
     _seri = []
     _sonraki_ornek = 0.0
     _secilen_kartlar = []
+    _darbe = 0
+    _darbe_zamanlari = []
+    _dip_toplam = 0.0
+    _son_can = 99
     _gorunen_toplam = 0.0
     _son_gorunen_sayi = 0
     _kare = 0
@@ -105,6 +121,11 @@ func _process(delta: float) -> bool:
         if _oyuncu == null:
             return false
         _oyuncu.bot_aktif = true
+        _oyuncu.can_degisti.connect(func(c, m):
+            if c < _son_can:
+                _darbe += 1
+                _darbe_zamanlari.append(snappedf(_ana.gecen, 0.1))
+            _son_can = c)
         var kl := get_nodes_in_group("karanlik")
         _karanlik = kl[0] if not kl.is_empty() else null
         if ayar_soguma > 0.0:
@@ -119,6 +140,12 @@ func _process(delta: float) -> bool:
             _ana.tavan_artis = ayar_tavan
         if ayar_hasar > 0.0:
             _oyuncu.mermi_hasari = ayar_hasar
+        if ayar_yayilim >= 0.0:
+            _oyuncu.yayilim_dps = ayar_yayilim
+        if ayar_can > 0:
+            _oyuncu.maks_can = ayar_can
+            _oyuncu.can = ayar_can
+            _son_can = ayar_can
     if not is_instance_valid(_oyuncu):
         return true
 
@@ -133,6 +160,7 @@ func _process(delta: float) -> bool:
     var i = _oyuncu.isi
     _isi_toplam += i.oran()
     _gorunen_toplam += float(_son_gorunen_sayi)
+    _dip_toplam += float(_dipteki_dusman())
     _isi_ornek += 1
     if i.kilitli:
         _kilit_sure += delta
@@ -244,6 +272,17 @@ func _politika() -> void:
     var tehlike: bool = en_yakin != null and en_yakin_d < 30.0
     o.bot_dalis = tehlike or (not o.isi.kilitli and o.isi.oran() > 0.93 and yakin_sayi > 0)
 
+## Temas menzilindeki dusman sayisi -- olumun asil sebebi bu.
+func _dipteki_dusman() -> int:
+    if not is_instance_valid(_oyuncu):
+        return 0
+    var p := _oyuncu.global_position
+    var n := 0
+    for d in get_nodes_in_group("dusman"):
+        if p.distance_squared_to(d.global_position) < 40.0 * 40.0:
+            n += 1
+    return n
+
 func _en_yakin_kup(p: Vector2) -> Variant:
     var en: Variant = null
     var d := 1e9
@@ -273,11 +312,16 @@ func _kosu_bitir() -> void:
         "silahlar": _oyuncu.acik_silahlar.size(),
         "kartlar": _secilen_kartlar.duplicate(),
         "gorunen": _gorunen_toplam / maxf(float(_isi_ornek), 1.0),
+        "darbe": _darbe,
+        "darbe_dk": _darbe / maxf(_ana.gecen / 60.0, 0.001),
+        "dip": _dip_toplam / maxf(float(_isi_ornek), 1.0),
+        "olum_dusman": get_nodes_in_group("dusman").size(),
     })
-    print("  kosu %2d: %5.1f sn  sv%-2d  %3d oldurme  kilit %d (dk basina %.1f)  ort isi %%%.0f  %s" % [
+    var son: Dictionary = _sonuclar[-1]
+    print("  kosu %2d: %5.1f sn  sv%-2d  %3d oldurme  kilit %d  isi %%%.0f  darbe %d (dk %.1f)  dipte %.1f  gorunen %.1f  %s" % [
         _kosu, sure, _ana.seviye, _ana.oldurulen, _kilit_sayisi,
-        _sonuclar[-1]["kilit_dk"], _sonuclar[-1]["ort_isi"] * 100.0,
-        "OLDU" if _ana.bitti else "sagkaldi"])
+        son["ort_isi"] * 100.0, son["darbe"], son["darbe_dk"], son["dip"],
+        son["gorunen"], "OLDU" if _ana.bitti else "sagkaldi"])
     _ana.queue_free()
     _ana = null
 
@@ -339,9 +383,15 @@ func _rapor_yaz() -> void:
         f.store_string("\n".join(satir) + "\n")
         f.close()
     print("")
-    print("SONUC %s | sure %.1f | seviye %.0f | kilit/dk %.1f | isi %%%.0f | olum %d/%d" % [
+    var darbeler: Array = []
+    var dipler: Array = []
+    for s2 in _sonuclar:
+        darbeler.append(s2["darbe_dk"])
+        dipler.append(s2["dip"])
+    print("SONUC %s | sure %.1f | seviye %.0f | kilit/dk %.1f | isi %%%.0f | darbe/dk %.1f | dipte %.1f | olum %d/%d" % [
         etiket if etiket != "" else "varsayilan", _ortanca(sureler), _ortanca(seviyeler),
-        _ortanca(kilit_dk), _ortanca(isilar) * 100.0, olum, _sonuclar.size()])
+        _ortanca(kilit_dk), _ortanca(isilar) * 100.0, _ortanca(darbeler),
+        _ortanca(dipler), olum, _sonuclar.size()])
     print("ORTANCA: %.1f sn hayatta, seviye %.0f, kilit/dk %.1f, ort isi %%%.0f  (%d/%d oldu)" % [
         _ortanca(sureler), _ortanca(seviyeler), _ortanca(kilit_dk),
         _ortanca(isilar) * 100.0, olum, _sonuclar.size()])

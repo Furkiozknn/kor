@@ -74,6 +74,23 @@ func _process(_delta: float) -> bool:
     oyuncu.isi.kilitli = false
     oyuncu.isi.deger = 0.0
 
+    # KOR YAYILIMI: sicakken cevre yanmali, soguksan yanmamali
+    var hedef = _ana.DusmanSahne.instantiate()
+    hedef.kur(0, 1.0)
+    _ana.add_child(hedef)
+    hedef.global_position = oyuncu.global_position + Vector2(20, 0)
+    hedef.can = 999.0
+    oyuncu.isi.deger = 0.0
+    oyuncu._yayilim_sayaci = 0.0
+    oyuncu._kor_yayilimi(1.0)
+    assert(is_equal_approx(hedef.can, 999.0), "soguksan yayilim olmamali")
+    oyuncu.isi.deger = oyuncu.isi.tavan * 0.9
+    oyuncu._yayilim_sayaci = 0.0
+    oyuncu._kor_yayilimi(1.0)
+    assert(hedef.can < 999.0, "sicakken yayilim hasar vermeli")
+    hedef.queue_free()
+    oyuncu.isi.deger = 0.0
+
     # ARENA TERMODINAMIGI: mangal isitir, ors sogutur
     var mangal: Node2D = null
     var ors: Node2D = null

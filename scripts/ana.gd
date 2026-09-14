@@ -342,6 +342,10 @@ func _kart_havuzu() -> Array:
             "uygula": func(o): o.kor_carpani += 0.6},
         {"ad": "YARIM BOŞALTMA", "aciklama": "Kor atışı ısının yarısını bırakır", "ikon": "soguk",
             "uygula": func(o): o.kor_maliyet = maxf(o.kor_maliyet * 0.5, 0.25)},
+        {"ad": "KOR YAYILIMI", "aciklama": "Çevreni yakma hasarı +%70", "ikon": "kor",
+            "uygula": func(o): o.yayilim_dps *= 1.7},
+        {"ad": "GENİŞ HALKA", "aciklama": "Yayılım menzili +%25", "ikon": "kazan",
+            "uygula": func(o): o.yayilim_menzil = minf(o.yayilim_menzil * 1.25, 1.0)},
         {"ad": "YAĞLI ÇİZME", "aciklama": "Hareket hızı +%12", "ikon": "cizme",
             "uygula": func(o): o.hiz *= 1.12},
     ]
