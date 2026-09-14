@@ -56,5 +56,29 @@ func _initialize() -> void:
     assert(j.kilitli)
     assert(is_equal_approx(j.harca(1.0), 0.0), "kilitliyken harcanamaz")
 
+    # kilitle(): mangal tavana ittiginde ates etmekle ayni ceza
+    var m = Isi.new()
+    m.kilitle()
+    assert(m.kilitli, "kilitle() kilitlemeli")
+    assert(is_equal_approx(m.deger, m.tavan), "kilitle() isiyi tavana koymali")
+    assert(m.harca(1.0) == 0.0, "kilitliyken harcanamaz")
+
+    # hizli_sogu(): ors etkisi. Gecikmeyi atlar, normalden hizli soğutur.
+    var o = Isi.new()
+    var n = Isi.new()
+    for x in 5:
+        o.ates_et()
+        n.ates_et()
+    o.hizli_sogu(0.1, 2.6)
+    n.guncelle(0.1)                      # gecikme icinde, sogumamali
+    assert(o.deger < n.deger, "ors sogutmasi normalden hizli olmali")
+    # kilitliyken ors de kurtarmaz
+    for x in 12:
+        o.ates_et()
+    assert(o.kilitli)
+    var kilit_degeri: float = o.deger
+    o.hizli_sogu(0.5, 2.6)
+    assert(is_equal_approx(o.deger, kilit_degeri), "kilitliyken ors islememeli")
+
     print("test_isi: TAMAM")
     quit(0)

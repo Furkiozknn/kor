@@ -32,6 +32,7 @@ func _ready() -> void:
     s.radius = t["yaricap"]
     _carpisma.shape = s
     if _tur == "mangal":
+        add_to_group("isik_kaynagi")
         # Mangal arenaya sicak bir isik havuzu dokuyor -- duz zemini kirar
         _hale = Sprite2D.new()
         _hale.texture = Hiss.parlama_dokusu(
@@ -40,6 +41,14 @@ func _ready() -> void:
         _hale.z_index = -1
         _hale.scale = Vector2.ONE * 1.1
         add_child(_hale)
+
+func turu() -> String:
+    return _tur
+
+## Karanlik shader'i her karede bunu soruyor. Mangal nefes alsin diye
+## yaricap hafifce salinir.
+func isik_yaricapi() -> float:
+    return 62.0 + sin(Time.get_ticks_msec() / 240.0 + position.x) * 6.0
 
 func _process(delta: float) -> void:
     if _hale != null:

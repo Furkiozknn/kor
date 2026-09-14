@@ -7,6 +7,8 @@ const CIKTI_KART := "D:/Claude Projeleri/gecici/kor-kart.png"
 
 ## `godot --script res://tests/ekran_al.gd -- --kart` ile kart ekranini cek
 var _kart_modu := "--kart" in OS.get_cmdline_user_args()
+## Isi = gorus kanitI: ayni sahne soguk ve sicak halde
+var _gorus_modu := "--gorus" in OS.get_cmdline_user_args()
 
 var _ana: Node2D
 var _kare := 0
@@ -18,9 +20,9 @@ func _initialize() -> void:
 func _process(_delta: float) -> bool:
     _kare += 1
     # Isi çubuğu ve mermiler görünsün diye ateş ettir
-    if _kare == 80:
+    if _kare == 80 and not _gorus_modu:
         _ana.oyuncu.silah_ver(1)          # SACMA -- cok mermi gorunsun
-    if _kare > 90 and _kare < 200 and _kare % 9 == 0:
+    if not _gorus_modu and _kare > 90 and _kare < 200 and _kare % 9 == 0:
         _ana.oyuncu._ates_et(Vector2.RIGHT.rotated(randf() * TAU))
     if _kare == 180:
         # Gercek girdi taklidi: yuruyus animasyonu calissin
@@ -52,6 +54,26 @@ func _process(_delta: float) -> bool:
             d.kur(t, 1.0)
             d.global_position = _ana.oyuncu.global_position + Vector2(-85 + t * 34, -54)
             _ana.add_child(d)
+    if _gorus_modu:
+        var o = _ana.oyuncu
+        if _kare == 150:
+            o.isi.kilitli = false
+            o.isi.deger = 0.0
+        if _kare == 170:
+            RenderingServer.force_draw()
+            root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-soguk.png")
+        if _kare == 172:
+            o.isi.deger = o.isi.tavan * 0.95
+        if _kare == 210:
+            RenderingServer.force_draw()
+            root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-sicak.png")
+            o.isi.kilitle()
+        if _kare == 240:
+            RenderingServer.force_draw()
+            root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-kilit.png")
+            print("gorus: soguk + sicak + kilit")
+            return true
+        return false
     if _kart_modu and _kare == 120:
         _ana._xp_topla(_ana.xp_hedef)      # seviye kartlarini ac
     if _kart_modu and _kare == 150:

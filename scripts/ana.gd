@@ -6,6 +6,7 @@ const KupSahne := preload("res://scenes/kup.tscn")
 const YapiSahne := preload("res://scenes/yapi.tscn")
 const Silahlar := preload("res://scripts/silahlar.gd")
 const YAZI_TIPI := preload("res://assets/fonts/PublicPixel.ttf")
+const KaranlikSahne := preload("res://scripts/karanlik.gd")
 
 const SUTUN := 40
 const SATIR := 22
@@ -33,6 +34,7 @@ var _lbl_can: Label
 var _isi_cubuk: ColorRect
 var _isi_yazi: Label
 var _lbl_silah: Label
+var karanlik: CanvasLayer
 var _kart_katman: CanvasLayer
 var _bekleyen_kart := 0
 
@@ -42,6 +44,7 @@ func _ready() -> void:
     _arena_kur()
     _lekeler()
     _yapilari_dog()
+    _karanlik_kur()
     _hud_kur()
     oyuncu.oldu.connect(_oyun_bitti)
     oyuncu.can_degisti.connect(func(c, m): _lbl_can.text = "CAN  " + "*".repeat(max(c, 0)) + "-".repeat(max(m - c, 0)))
@@ -80,6 +83,12 @@ func _process(delta: float) -> void:
         _isi_yazi.text = "ISI"
     _lbl_ust.text = "%02d:%02d   SEVİYE %d   XP %d/%d   ÖLDÜRME %d" % [
         int(gecen) / 60, int(gecen) % 60, seviye, xp, xp_hedef, oldurulen]
+
+## Isi = gorus. Oyunun ayrisma noktasi; ayrinti karanlik.gd icinde.
+func _karanlik_kur() -> void:
+    karanlik = KaranlikSahne.new()
+    karanlik.oyuncu = oyuncu
+    add_child(karanlik)
 
 # --- Arena ------------------------------------------------------------------
 
@@ -247,6 +256,7 @@ func _kartlari_ac() -> void:
     var secilen := havuz.slice(0, 3)
 
     _kart_katman = CanvasLayer.new()
+    _kart_katman.layer = 3
     _kart_katman.process_mode = Node.PROCESS_MODE_ALWAYS
     add_child(_kart_katman)
 
@@ -297,6 +307,7 @@ func _kart_secildi(uygula: Callable) -> void:
 func _hud_kur() -> void:
     _vinyet_kur()
     _hud = CanvasLayer.new()
+    _hud.layer = 2          # karanlik 1'de, HUD onun ustunde
     add_child(_hud)
 
     _lbl_ust = _yazi(8)

@@ -27,6 +27,42 @@ Kartlar bu ikilemi büker — ısı tavanını büyütmek, soğumayı hızlandı
 ya da tam tersi: ısı yüksekken hasar veren "kızgın çelik" ile kilidin
 kenarında oynamayı ödüllendirmek.
 
+## Ayrışma: ısı = görüş
+
+Tür doymuş durumda ve "ateş et, ısın, güçlen" fikri tek başına ayrıştırmıyor —
+2026'da bunu yapan başka oyunlar var. Kor'un farkı ısıyı **silah kaynağı**
+olmaktan çıkarıp **bilgi kaynağı** yapması:
+
+> Vampire Survivors'ta ekran dolar ve sen izlersin.
+> **Kor'da ekran senin ısınla açılır ve kapanır.**
+
+Arena karanlık. Görüş yarıçapını **tek başına ısın** belirliyor:
+
+| Isı | Görüş | Sonuç |
+|---|---|---|
+| soğuk | 34 px | neredeyse körsün, nereye ateş ettiğini bilmiyorsun |
+| sıcak | 215 px | arena açılır, sürüyü görürsün — **ama kilide yaklaşırsın** |
+| kilitli | 26 px | hem silahsız hem kör, iki katmanlı ceza |
+
+Dalış ısıyı boşaltır → ekran kararır. **Güvenliği görüşle ödüyorsun.**
+Bu tek kural türün iki bilinen kusurunu birden kapatıyor: durup izlemek
+mümkün değil (görmek için ısınmak gerek), ve ekran hiçbir zaman okunamaz
+parçacık çorbasına dönmüyor (görünür alan zaten ısıyla sınırlı).
+
+### Arena termodinamiği
+
+Siperler dekor değil, ısı ekonomisinin parçası:
+
+- **Mangal** — sabit ışık adası, yanında görürsün **ama ısınırsın**
+  (saniyede +11; orada oyalanırsan mangal seni kilitler).
+- **Örs** — ışık vermez ama yanında soğuma **2,6 katına** çıkar.
+  Kör ama güvenli liman.
+- **Fıçı/sandık** — kırılabilir. Ateş hattını açarken ışık adanı da
+  yok edebilirsin.
+
+Yani "nerede duruyorum" sorusu, "ne kadar görüyorum" ve "ne kadar sıcağım"
+sorularıyla aynı soru hâline geliyor.
+
 ## Kontroller
 
 | Tuş | İş |

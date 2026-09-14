@@ -59,6 +59,45 @@ func _process(_delta: float) -> bool:
         ses.cal("vurus")
     assert(ses.dusen_sayisi() > dusen_once, "bekleme suresi calismiyor")
 
+    # ISI = GORUS: oyunun ayrisma noktasi. Soguk dar, sicak genis, kilit kor.
+    var kar := get_nodes_in_group("karanlik")
+    assert(kar.size() == 1, "karanlik katmani yok")
+    var kl: Node = kar[0]
+    oyuncu.isi.bosalt()
+    var dar: float = kl._oyuncu_yaricapi()
+    while oyuncu.isi.oran() < 0.9 and not oyuncu.isi.kilitli:
+        oyuncu.isi.ates_et()
+    var genis: float = kl._oyuncu_yaricapi()
+    assert(genis > dar * 1.8, "isindikca gorus acilmali: %.0f -> %.0f" % [dar, genis])
+    oyuncu.isi.kilitle()
+    assert(kl._oyuncu_yaricapi() < dar, "kilitliyken gorus daralmali")
+    oyuncu.isi.kilitli = false
+    oyuncu.isi.deger = 0.0
+
+    # ARENA TERMODINAMIGI: mangal isitir, ors sogutur
+    var mangal: Node2D = null
+    var ors: Node2D = null
+    for y in get_nodes_in_group("yapi"):
+        if y.turu() == "mangal" and mangal == null:
+            mangal = y
+        elif y.turu() == "orsa" and ors == null:
+            ors = y
+    if mangal != null:
+        var eski_yer: Vector2 = oyuncu.global_position
+        oyuncu.global_position = mangal.global_position + Vector2(10, 0)
+        oyuncu.isi.deger = 20.0
+        oyuncu._arena_isisi(0.5)
+        assert(oyuncu.isi.deger > 20.0, "mangalin yaninda isi artmali")
+        oyuncu.global_position = eski_yer
+    if ors != null:
+        var eski_yer2: Vector2 = oyuncu.global_position
+        oyuncu.global_position = ors.global_position + Vector2(8, 0)
+        oyuncu.isi.deger = 50.0
+        oyuncu._arena_isisi(0.5)
+        assert(oyuncu.isi.deger < 50.0, "orsun yaninda isi dusmeli")
+        oyuncu.global_position = eski_yer2
+    oyuncu.isi.deger = 0.0
+
     # Arena: her hucre doldu mu
     var hucre: int = _ana._karolar.get_used_cells().size()
     assert(hucre == _ana.SUTUN * _ana.SATIR, "arena karolari eksik: %d" % hucre)

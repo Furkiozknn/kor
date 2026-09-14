@@ -46,6 +46,21 @@ func harca(pay: float) -> float:
     _gecikme_kalan = soguma_gecikmesi
     return oncesi - oran()
 
+## Disaridan kilitle (mangal tavana ittiginde). Ates etmekle ayni ceza.
+func kilitle() -> void:
+    if kilitli:
+        return
+    deger = tavan
+    kilitli = true
+    _kilit_kalan = kilit_suresi
+
+## Ors etkisi: gecikmeyi atlayip hizlandirilmis soguma uygula.
+func hizli_sogu(delta: float, carpan: float) -> void:
+    if kilitli:
+        return
+    _gecikme_kalan = 0.0
+    deger = maxf(deger - soguma_hizi * carpan * delta, 0.0)
+
 func guncelle(delta: float) -> void:
     if kilitli:
         _kilit_kalan -= delta

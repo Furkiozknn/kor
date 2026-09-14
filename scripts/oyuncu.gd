@@ -17,6 +17,10 @@ const DALIS_HIZ := 430.0
 const DALIS_BEKLEME := 0.65
 const VURULMA_DOKUNULMAZLIK := 0.6
 const KOR_ESIK := 0.35       # bu isinin altinda kor atisi yapilamaz
+const MANGAL_MENZIL := 74.0  # bu mesafede mangal isitir
+const MANGAL_ISI := 11.0     # saniyede
+const ORS_MENZIL := 40.0     # bu mesafede ors sogutmayi hizlandirir
+const ORS_CARPAN := 2.6
 const KOR_BEKLEME := 0.5
 
 @export var hiz := 115.0
@@ -137,6 +141,7 @@ func _unhandled_key_input(olay: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
     isi.guncelle(delta)
+    _arena_isisi(delta)
     _isi_sesleri()
     _dokunulmaz = maxf(_dokunulmaz - delta, 0.0)
     _dalis_bekleme = maxf(_dalis_bekleme - delta, 0.0)
@@ -179,6 +184,27 @@ func _physics_process(delta: float) -> void:
     _gorunum_guncelle(delta, nisan)
 
 ## Isi esiklerini GECERKEN ses cal -- her karede degil, sadece gecis aninda.
+## Arena termodinamigi. Mangal gorus verir ama isitir; ors korduur ama
+## sogutur. Harita boylece isi ekonomisinin parcasi oluyor -- "nerede
+## duruyorum" sorusu "ne kadar goruyorum" ve "ne kadar sicagim" ile ayni soru.
+func _arena_isisi(delta: float) -> void:
+    if isi.kilitli:
+        return
+    var yakin_mangal := false
+    var yakin_ors := false
+    for y in get_tree().get_nodes_in_group("yapi"):
+        var d := global_position.distance_to(y.global_position)
+        if y.turu() == "mangal" and d < MANGAL_MENZIL:
+            yakin_mangal = true
+        elif y.turu() == "orsa" and d < ORS_MENZIL:
+            yakin_ors = true
+    if yakin_mangal:
+        isi.deger = minf(isi.deger + MANGAL_ISI * delta, isi.tavan)
+        if isi.deger >= isi.tavan:
+            isi.kilitle()
+    if yakin_ors:
+        isi.hizli_sogu(delta, ORS_CARPAN)
+
 func _isi_sesleri() -> void:
     if isi.kilitli and not _onceki_kilit:
         SesYonetici.cal("asiri_isinma")
@@ -265,6 +291,9 @@ func _kor_at(nisan: Vector2) -> Area2D:
     velocity -= nisan * 150.0 * harcanan
     _namlu_parlama = 1.6
     SesYonetici.cal("kor_atisi")
+    var k := get_tree().get_first_node_in_group("karanlik")
+    if k != null:
+        k.cakma(0.22, 150.0 + 190.0 * harcanan)   # patlama arenayi aydinlatir
     Hiss.sars(2.0 + 4.0 * harcanan)
     Hiss.dondur(0.045)
     Hiss.patlama(get_parent(), global_position + nisan * 14.0,
