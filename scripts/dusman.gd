@@ -53,6 +53,16 @@ var xp_degeri := 1
 var _tur := 0
 var _yaricap := 7.0
 var _hedef: Node2D
+
+## Kul yaratiklari ISIYI SEZER. Yapisal bosluk buydu: isinin dort faydasi
+## (gorus, yayilim, hasar carpani, kor atisi) ve tek bedeli (kilit) vardi,
+## yani en iyi oyun %85-99 bandinda sonsuza kalmakti. Soguk olmak bir secim
+## degil ceza suresiydi -- karanlik oyuncunun KULLANDIGI degil CEKTIGI bir
+## seydi. Emsal: Brotato'nun "Obscuring Fog"u sadece aliyor, karsiliginda bir
+## sey vermiyor ve "can sikici ama fena degil" diye karsilandi. Burada takas
+## kuruluyor: soguksan izini kaybederler, sicaksan kosarlar.
+const KOKU_TABAN := 0.62
+const KOKU_ARALIK := 0.72
 var _temas_bekleme := 0.0
 var _atis_bekleme := 0.0
 var menzil := 0.0          # 0 = temas dusmani, >0 = bu mesafeyi korur ve ates eder
@@ -201,13 +211,13 @@ func _physics_process(delta: float) -> void:
             git = -yon
         elif uzak < menzil:
             git = Vector2.ZERO
-        velocity = velocity.move_toward(git * hiz + _itme, 600.0 * delta)
+        velocity = velocity.move_toward(git * hiz * _koku() + _itme, 600.0 * delta)
         _atis_bekleme -= delta
         if uzak < menzil * 1.35 and _atis_bekleme <= 0.0:
             _atis_bekleme = 1.6
             _ates_et(yon)
     else:
-        velocity = velocity.move_toward(yon * hiz + _itme, 600.0 * delta)
+        velocity = velocity.move_toward(yon * hiz * _koku() + _itme, 600.0 * delta)
     move_and_slide()
     _gorsel.flip_h = yon.x < 0.0
     _gorsel.speed_scale = clampf(0.5 + velocity.length() / maxf(hiz, 1.0), 0.4, 1.8)
@@ -224,7 +234,7 @@ func _kosucu_isle(delta: float, fark: Vector2, yon: Vector2) -> void:
     _sarj_sayaci -= delta
     match _sarj_durum:
         0:
-            velocity = velocity.move_toward(yon * hiz, 300.0 * delta)
+            velocity = velocity.move_toward(yon * hiz * _koku(), 300.0 * delta)
             if fark.length() < 150.0 and _sarj_sayaci <= 0.0:
                 _sarj_durum = 1
                 _sarj_sayaci = 0.9
@@ -261,6 +271,12 @@ func _ates_et(yon: Vector2) -> void:
     m.hiz = 115.0
     get_parent().add_child(m)
     SesYonetici.cal("cadi_atisi")
+
+## Oyuncunun isisina gore hiz carpani: soguksa 0.62x, tavanda 1.34x.
+func _koku() -> float:
+    if not is_instance_valid(_hedef):
+        return 1.0
+    return KOKU_TABAN + KOKU_ARALIK * _hedef.isi.oran()
 
 func hasar_al(miktar: float, itme: Vector2 = Vector2.ZERO) -> void:
     can -= miktar

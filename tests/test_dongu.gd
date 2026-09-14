@@ -11,6 +11,7 @@ const Silahlar := preload("res://scripts/silahlar.gd")
 var _ana: Node2D
 var _kare := 0
 var _hasar_sayaci := 0
+var _can_koru := true
 var _asama := 0
 var _xp_once := 0
 var _kup_karesi := 0
@@ -22,13 +23,22 @@ func _initialize() -> void:
 
 func _process(_delta: float) -> bool:
     _kare += 1
+    if _kare == 2:
+        # Temas hasarini zamana birakma: dusmanlar artik oyuncu SOGUKSA
+        # %38 yavas geliyor (isi takasi) ve 8 saniyede yetisemiyorlar.
+        # Bir dusmani dibe koyup olayi deterministik hale getiriyoruz.
+        var yakin = _ana.DusmanSahne.instantiate()
+        yakin.kur(0, 1.0)
+        _ana.add_child(yakin)
+        yakin.global_position = _ana.oyuncu.global_position + Vector2(8, 0)
     if _kare == 1:
         # Sabit duran oyuncu er ya da geç ölür; bu test hayatta kalmayı değil
         # döngünün döndüğünü ölçüyor -- canı dolu tutup hasarı sayıyoruz.
         _ana.oyuncu.can_degisti.connect(func(c, m):
             if c < m:
                 _hasar_sayaci += 1
-                _ana.oyuncu.can = m)
+                if _can_koru:              # olcum sirasinda kapatiliyor
+                    _ana.oyuncu.can = m)
     if _kare > KARE_TAVANI:
         push_error("test_dongu: kare tavanı aşıldı")
         return true
@@ -130,6 +140,42 @@ func _process(_delta: float) -> bool:
     var xp_once2: int = _ana.xp
     mermi._carpti(kurban)            # body_entered'in cagirdigi yol
     assert(kurban.is_queued_for_deletion(), "mermi dusmani olduremedi")
+
+    # ISI TAKASI. Yapisal bosluk: isinin dort faydasi ve tek bedeli vardi,
+    # yani soguk olmak bir secim degil ceza suresiydi. Iki karsi bedel
+    # eklendi ve ikisi de burada korunuyor.
+    var iz = _ana.DusmanSahne.instantiate()
+    iz.kur(0, 1.0)
+    _ana.add_child(iz)
+    iz._hedef = oyuncu
+    oyuncu.isi.deger = 0.0
+    var koku_soguk: float = iz._koku()
+    oyuncu.isi.deger = oyuncu.isi.tavan
+    var koku_sicak: float = iz._koku()
+    assert(koku_sicak > koku_soguk * 1.5,
+        "dusmanlar isiyi sezmeli: soguk %.2f, sicak %.2f" % [koku_soguk, koku_sicak])
+    assert(koku_soguk < 0.8, "soguksan izini kaybetmeliler")
+    iz.queue_free()
+
+    # Sicakken kirilgansin: ayni hasar daha cok can goturmeli
+    _can_koru = false          # can-doldurma kancasi olcumu bozmasin
+    oyuncu.maks_can = 40
+    oyuncu.isi.deger = 0.0
+    oyuncu._dokunulmaz = 0.0
+    oyuncu.can = 40
+    oyuncu.hasar_al(4.0)
+    var soguk_kayip: int = 40 - oyuncu.can
+    oyuncu.isi.deger = oyuncu.isi.tavan
+    oyuncu._dokunulmaz = 0.0
+    oyuncu.can = 40
+    oyuncu.hasar_al(4.0)
+    var sicak_kayip: int = 40 - oyuncu.can
+    assert(sicak_kayip > soguk_kayip,
+        "sicakken daha cok hasar almali: %d vs %d" % [sicak_kayip, soguk_kayip])
+    oyuncu.isi.deger = 0.0
+    oyuncu.maks_can = 6
+    oyuncu.can = 6
+    _can_koru = true
 
     # KALICI KAYIT + FIRIN KADEMESI
     var kyt = root.get_node_or_null("Kayit")

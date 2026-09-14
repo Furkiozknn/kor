@@ -27,6 +27,7 @@ const ORS_CARPAN := 2.6
 # isi = gorus = alan hasari.
 const YAYILIM_TICK := 0.22
 const KOR_BEKLEME := 0.5
+const KIRILGANLIK := 0.6   # sicakken alinan hasar carpani
 
 @export var hiz := 115.0
 @export var ivme := 1200.0
@@ -451,7 +452,9 @@ func hasar_al(miktar: float) -> void:
     if get_meta("olumsuz", false):      # gelistirici katmani, F3
         _dokunulmaz = VURULMA_DOKUNULMAZLIK
         return
-    can -= int(ceilf(miktar))
+    # Kizgin metal yumusaktir. %70 ustundeki hasar bonusu boylece gercek bir
+    # KUMAR oluyor: daha cok vuruyorsun ama daha cok yiyorsun. Onceden bedavaydi.
+    can -= int(ceilf(miktar * (1.0 + KIRILGANLIK * isi.oran())))
     _dokunulmaz = VURULMA_DOKUNULMAZLIK
     can_degisti.emit(can, maks_can)
     Hiss.sars(4.5)
