@@ -47,6 +47,15 @@ func _process(_delta: float) -> bool:
         print("HATA: oynatici havuzu buyudu ", once, " -> ", yon._oynaticilar.size())
         hata = 1
 
+    # 4) Efekt kaydiraci muzigi kismamali: ayri bus sart
+    var efekt_bus: int = AudioServer.get_bus_index("Efekt")
+    if efekt_bus < 0:
+        print("HATA: Efekt bus'i kurulmamis -- efekt kaydiraci muzigi de kisar")
+        hata = 1
+    elif yon._oynaticilar[0].bus != "Efekt":
+        print("HATA: efekt oynaticilari Efekt bus'inda degil -> ", yon._oynaticilar[0].bus)
+        hata = 1
+
     if hata == 0:
         print("TAMAM ses (", yon.AYAR.size(), " olay, katman ", sureler, ", havuz ", once, ")")
     quit(hata)

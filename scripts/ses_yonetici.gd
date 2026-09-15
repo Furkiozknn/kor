@@ -12,6 +12,7 @@ extends Node
 const KLASOR := "res://assets/ses/"
 const HAVUZ := 16          # ayni anda en fazla bu kadar ses
 const VARSAYILAN_BEKLEME := 0.045   # saniye
+const EFEKT_BUS := "Efekt"
 
 ## ad -> {bekleme: saniye, perde: sapma orani, ses: dB}
 const AYAR := {
@@ -45,13 +46,28 @@ var _dusen := 0
 var efekt_db := 0.0
 var muzik_db := -14.0          # bekleme yuzunden calinmayan ses sayisi (ayar icin)
 
+## Efekt bus'ini bulur, yoksa kurar. Kodda kurulmasinin sebebi: bus duzeni
+## .tscn disinda bir kaynak dosyasinda tutuluyor ve elle yazilan kaynak
+## dosyalari bu projede BOM riski yuzunden yasak.
+func _efekt_bus() -> int:
+    var i := AudioServer.get_bus_index(EFEKT_BUS)
+    if i >= 0:
+        return i
+    i = AudioServer.bus_count
+    AudioServer.add_bus(i)
+    AudioServer.set_bus_name(i, EFEKT_BUS)
+    AudioServer.set_bus_send(i, "Master")
+    return i
+
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
     # DIKKAT: havuz SADECE burada kurulur. Onceden ayarlari_uygula() icindeydi;
     # ayar menusu her kaydedisinde 16 oynatici daha ekliyordu (sizinti), ve
     # Kayit yoksa erken return yuzunden hic oynatici olusmuyordu (sessiz oyun).
+    var bus := AudioServer.get_bus_name(_efekt_bus())
     for i in HAVUZ:
         var p := AudioStreamPlayer.new()
+        p.bus = bus
         add_child(p)
         _oynaticilar.append(p)
     ayarlari_uygula()
@@ -63,6 +79,10 @@ func ayarlari_uygula() -> void:
         return
     efekt_db = float(k.ayar("ses_efekt", -6.0)) + 6.0   # -6 varsayilan = 0 offset
     muzik_db = float(k.ayar("ses_muzik", -14.0))
+    # Seviye BUS uzerinden uygulanir, oynatici uzerinden degil: web'in Sample
+    # yolunda volume_db yok sayiliyor ve kaydiraci olu dugmeye cevirir.
+    # Efektlerin AYRI bus'i var; yoksa efekt kaydiraci muzigi de kisardi.
+    AudioServer.set_bus_volume_db(_efekt_bus(), efekt_db)
     if _muzik != null:
         _muzik.volume_db = muzik_db
     if _muzik_ocak != null:
@@ -104,7 +124,7 @@ func cal(ad: String) -> bool:
     var p := _oynaticilar[_sonraki]
     _sonraki = (_sonraki + 1) % HAVUZ
     p.stream = akis
-    p.volume_db = float(ayar.get("ses", -6.0)) + efekt_db
+    p.volume_db = float(ayar.get("ses", -6.0))   # efekt_db Master bus'ta
     var sapma: float = ayar.get("perde", 0.08)
     p.pitch_scale = 1.0 + randf_range(-sapma, sapma)
     p.play()
