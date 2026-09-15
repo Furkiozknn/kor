@@ -565,8 +565,14 @@ func _kartlari_ac() -> void:
 
     var sarmal := PanelContainer.new()
     sarmal.theme = Tema.tema()
-    sarmal.position = Vector2(64, 74)
-    sarmal.custom_minimum_size = Vector2(512, 0)
+    # Sabit konum + icerige gore buyuyen genislik = tasma. Anchor'a bagli
+    # panel ekrandan cikamaz, uzun metin tasmak yerine satir atlar.
+    sarmal.set_anchors_preset(Control.PRESET_FULL_RECT)
+    sarmal.offset_left = 56
+    sarmal.offset_right = -56
+    sarmal.offset_top = 74
+    sarmal.offset_bottom = -26
+    sarmal.size_flags_vertical = Control.SIZE_SHRINK_CENTER
     sarmal.add_theme_stylebox_override("panel",
         Tema.kutu(Tema.GOVDE, Tema.KENAR_KOR, 1, Tema.BOSLUK_L))
     _kart_katman.add_child(sarmal)
@@ -589,7 +595,9 @@ func _kartlari_ac() -> void:
     for k in secilen:
         kutu.add_child(_kart_satiri(k))
     if yakma_hakki > 0:
-        kutu.add_child(Tema.sonuk("sağdaki ateşe basarak bir kartı fırına atabilirsin — kalan %d" % yakma_hakki))
+        var ipucu := Tema.sonuk("sağdaki ateşe basarak bir kartı fırına atabilirsin — kalan %d" % yakma_hakki)
+        ipucu.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        kutu.add_child(ipucu)
 
     get_tree().paused = true
     # Kart satiri artik kapsayici (secim + firina at), dugmeyi derinlemesine bul

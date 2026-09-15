@@ -10,6 +10,10 @@ gurultu='resources still in use|ObjectDB instances were leaked|NavMeshGeometryPa
 calistir() {
   local ad="$1"; shift
   local cikti; cikti=$("$@" 2>&1)
+  local kod=$?
+  if [ "$kod" -ne 0 ]; then
+    echo "  [HATA] $ad  (cikis kodu $kod)"; echo "$cikti" | grep -aE "TASMA|HATA" | head -6; HATA=1; return
+  fi
   local hatalar; hatalar=$(echo "$cikti" | grep -aE "^ERROR|^SCRIPT ERROR|Assertion failed|Parse Error" | grep -avE "$gurultu")
   if [ -n "$hatalar" ]; then
     echo "  [HATA] $ad"; echo "$hatalar" | head -5; HATA=1
@@ -24,6 +28,7 @@ calistir "isi testi"     timeout 60  godot --headless --script res://tests/test_
 calistir "ses testi"     timeout 60  godot --headless --script res://tests/test_ses.gd
 calistir "dongu testi"   timeout 120 godot --headless --script res://tests/test_dongu.gd
 calistir "botlu kosu"    timeout 150 godot --headless --fixed-fps 60 --script res://tests/denge.gd -- --kosu 1 --sure 90
+calistir "arayuz tasma" timeout 120 godot --script res://tests/test_arayuz.gd
 calistir "menu"          timeout 90  godot --script res://tests/ekran_al.gd -- --menu
 
 if [ "$HATA" -eq 0 ]; then echo "SONUC: TEMIZ"; else echo "SONUC: HATA VAR"; fi
