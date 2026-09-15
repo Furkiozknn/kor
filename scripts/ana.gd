@@ -55,6 +55,13 @@ var firin_kademesi := 0
 var gunun_dokumu := false
 var gun_sonuc := {}
 
+## PAYLASIM METNI icin isi izi. 12 ornek, kosunun sekli icin yeterli:
+## Wordle'in izgarasi gibi sonucu vermeden hikayeyi anlatiyor.
+var _isi_izi: Array[float] = []
+var _izi_sonraki := 0.0
+var kilit_sayisi := 0
+var _kilit_onceki := false
+
 var kazanilan_curuf := 0
 var evre_adi := ""
 
@@ -186,6 +193,40 @@ func _duraklat_degis() -> void:
     get_tree().paused = true
 
 ## Duraklatma ve olum ekrani ayni govdeyi kullaniyor.
+## PAYLASIM METNI. Tarayici oyununun tek dagitim kanali oyuncunun
+## kendisi; Wordle'in kanitladigi kalip kopyalanabilir, spoiler'siz
+## ve KUCUK bir metin. Isi izi satiri kosunun SEKLINI anlatiyor --
+## sonucu vermeden hikayeyi veriyor.
+func _paylasim_metni() -> String:
+    # UC SEVIYE, sekiz degil. Iki sebep:
+    #   1. PublicPixel'de sekiz blok karakterinden yalnizca uctanesi var
+    #      (▁ ▄ █); kalan besi eksik glif olarak "_" dusuyor. Fontu
+    #      denetledim, tahmin degil.
+    #   2. Uc seviye oyunun KENDI bantlarina denk geliyor: soguk (<%25),
+    #      orta, kizgin (>%70). Yani cubuk rastgele bir gorsel degil,
+    #      kosunun hangi bantta gectigini okutuyor.
+    var cubuk := ""
+    for o in _isi_izi:
+        cubuk += "█" if o > oyuncu.KIZGIN_ESIK else ("▁" if o < 0.25 else "▄")
+    var basli := tr("KOR · günün dökümü %s") % Kayit.gun_kodu_bugun() if gunun_dokumu else tr("KOR · serbest koşu")
+    var satir: Array = [basli]
+    satir.append(tr("%02d:%02d · sv%d · %d döküm%s") % [
+        int(gecen) / 60, int(gecen) % 60, seviye, kazanilan_curuf,
+        tr("   (fırın %d)") % firin_kademesi if firin_kademesi > 0 else ""])
+    if cubuk != "":
+        satir.append(tr("ısı %s · %d kilit") % [cubuk, kilit_sayisi])
+    if patron_sayisi > 0:
+        satir.append(tr("%s: %s") % [_patron_adi(),
+            tr("düştü") if _patron == null else tr("ayakta")])
+    return nl_birlestir(satir)
+
+## Godot'ta Array.join yok gibi davranmayalim; ama satir sonu platformdan
+## bagimsiz olsun diye tek yerde topluyoruz.
+func nl_birlestir(satir: Array) -> String:
+    return "
+".join(PackedStringArray(satir))
+
+
 func _panel_kur(baslik: String, satirlar: Array, alt: String) -> CanvasLayer:
     var k := CanvasLayer.new()
     k.layer = 5
@@ -225,6 +266,29 @@ func _panel_kur(baslik: String, satirlar: Array, alt: String) -> CanvasLayer:
     var b2 := Control.new()
     b2.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
     kutu.add_child(b2)
+    # PAYLASIM KUTUSU. Panoya yazma web'de kirilgan (Chrome izin sorunu,
+    # godot#81252), o yuzden ONCE secilebilir kutu: her zaman calisir.
+    # Kopyalama dugmesi onun USTUNE geliyor; basarisiz olursa metin
+    # zaten orada duruyor ve elle secilebiliyor.
+    if bitti:
+        var b3 := Control.new()
+        b3.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
+        kutu.add_child(b3)
+        var metin := _paylasim_metni()
+        var kutucuk := RichTextLabel.new()
+        kutucuk.bbcode_enabled = false
+        kutucuk.selection_enabled = true
+        kutucuk.fit_content = true
+        kutucuk.scroll_active = false
+        kutucuk.text = metin
+        kutucuk.add_theme_color_override("default_color", Tema.YAZI_SONUK)
+        kutu.add_child(kutucuk)
+        var kopyala := Button.new()
+        kopyala.text = tr("koşuyu kopyala")
+        kopyala.pressed.connect(func():
+            DisplayServer.clipboard_set(metin)
+            kopyala.text = tr("kopyalandı"))
+        kutu.add_child(kopyala)
     kutu.add_child(Tema.vurgu(alt))
     return k
 
@@ -249,7 +313,7 @@ func _ozet_satirlari(olum: bool) -> Array:
     s.append(tr("sure %02d:%02d    seviye %d    oldurme %d") % [
         int(gecen) / 60, int(gecen) % 60, seviye, oldurulen])
     for g in acilan_gorevler:
-        s.append(tr("★ GÖREV TAMAM: %s — %s") % [g["ad"], g["odul"]])
+        s.append(tr("✓ GÖREV TAMAM: %s — %s") % [g["ad"], g["odul"]])
     s.append(tr("dokumhane %d/%d mangal yandi%s") % [yakilan_mangal, toplam_mangal,
         tr("    — HEPSI") if yakilan_mangal >= toplam_mangal and toplam_mangal > 0 else ""])
     s.append(tr("silah %s    acik %d/4") % [tr(oyuncu.silah()), oyuncu.acik_silahlar.size()])
@@ -269,7 +333,7 @@ func _ozet_satirlari(olum: bool) -> Array:
         # Gunluk kosuda kiyas zemini BUGUNKU SEN. Deneme sayisini gizlemek
         # yerine gosteriyoruz: kazanma orani ~%8 oldugu icin tek denemeli
         # bir gunluk oyuncularin cogunu her gun kaybettirirdi.
-        var _r := tr("   ★ GÜNÜN REKORU") if bool(gun_sonuc.get("rekor", false)) else ""
+        var _r := tr("   ✓ GÜNÜN REKORU") if bool(gun_sonuc.get("rekor", false)) else ""
         s.append(tr("GÜNÜN DÖKÜMÜ %s   ·   bugünkü en iyin %d   ·   bugün %d. koşun%s") % [
             Kayit.gun_kodu_bugun(), int(gun_sonuc.get("en_iyi", Kayit.gun_en_iyi())),
             int(gun_sonuc.get("deneme", Kayit.gun_deneme())), _r])
@@ -311,6 +375,12 @@ func _process(delta: float) -> void:
         if evre_adi == evre_adi.to_upper():
             _duyuru(evre_adi)
     gorevler.guncelle(delta, oyuncu.isi.kilitli)
+    if oyuncu.isi.kilitli and not _kilit_onceki:
+        kilit_sayisi += 1
+    _kilit_onceki = oyuncu.isi.kilitli
+    if gecen >= _izi_sonraki and _isi_izi.size() < 12:
+        _izi_sonraki += Dalgalar.KOSU_SURESI / 12.0
+        _isi_izi.append(oyuncu.isi.oran())
     _dalis_ogret()
     # ZAFER TURU: son 90 saniyede tavana varmak silahi susturmuyor.
     if oyuncu.isi.kilit_acik and not Dalgalar.kilit_var_mi(gecen):
