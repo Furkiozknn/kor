@@ -75,6 +75,9 @@ var patron_sayisi := 0
 var gorevler := Gorevler.new()
 var acilan_gorevler: Array = []
 var _son_darbe := false
+## Nefes evresinde suruyu inceltme sayaci.
+const GERI_CEKILME_ARALIK := 0.25
+var _geri_cekilme := 0.0
 var yakilan_mangal := 0
 var toplam_mangal := 0
 var _patron: Node2D = null
@@ -405,6 +408,21 @@ func _process(delta: float) -> void:
     # Deneyimli oyuncu hemen ates ettigi icin hicbir sey kaybetmiyor.
     if not oyuncu.hic_ates and gecen < ACILIS_SESSIZLIGI:
         _spawn_sayaci = maxf(_spawn_sayaci, 0.35)
+    # NEFES: tavan yalnizca YENI DOGUMU kapatiyordu, var olan suruyu
+    # azaltmiyordu -- oyuncu 7. evreden cikip nefese girdiginde ekranda
+    # hala ~90 dusman olabiliyordu. Olculdu: nefes evresine girenlerin
+    # %55,6'si ORADA oluyordu; adi nefes olan evre kosunun en olumcul
+    # yeriydi.
+    #
+    # Cozum karanligi kullaniyor: yalnizca GORUS DISINDAKI dusmanlar
+    # geri cekiliyor. Oyuncu bir seyin kayboldugunu gormuyor, cunku
+    # zaten gormuyordu -- sadece sonraki saniyelerde uzerine gelen
+    # sayi azaliyor. XP dusmuyor: bu bir odul degil, bir nefes.
+    if not _son_darbe and Dalgalar.nefes_mi(gecen):
+        _geri_cekilme += delta
+        if _geri_cekilme >= GERI_CEKILME_ARALIK and _canli_dusman() > canli_tavan():
+            _geri_cekilme = 0.0
+            _karanliga_cekil()
     if _son_darbe:
         _spawn_sayaci = 1.0        # uzatmada yeni dusman yok
     _spawn_sayaci -= delta
@@ -716,6 +734,26 @@ func _duyuru(metin: String) -> void:
     t.tween_interval(1.6)
     t.tween_property(l, "modulate:a", 0.0, 0.8)
     t.tween_callback(l.queue_free)
+
+## Nefes evresinde GORUS DISINDAKI bir dusmani karanliga geri ceker.
+## Gorunur olani asla silmiyoruz -- oyuncunun gozunun onunde dusman
+## yok olmasi hile gibi okunur.
+func _karanliga_cekil() -> void:
+    var uzak: Node2D = null
+    var en_uzak := -1.0
+    for d in get_tree().get_nodes_in_group("dusman"):
+        if not is_instance_valid(d) or d.is_in_group("patron"):
+            continue
+        if karanlik != null and karanlik.has_method("aydinlik"):
+            if karanlik.aydinlik(d.global_position) > 0.03:
+                continue        # gorus icinde: dokunma
+        var u: float = d.global_position.distance_squared_to(oyuncu.global_position)
+        if u > en_uzak:
+            en_uzak = u
+            uzak = d
+    if uzak != null:
+        uzak.queue_free()
+
 
 func _dusman_dog() -> void:
     var d := DusmanSahne.instantiate()

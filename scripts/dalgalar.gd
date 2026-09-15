@@ -92,6 +92,16 @@ static func spawn_araligi(gecen: float) -> float:
         t = smoothstep(0.55, 1.0, t)
     return lerpf(float(su["spawn"]), float(sonraki["spawn"]), clampf(t, 0.0, 1.0))
 
+## Bu an bir NEFES evresi mi? ana.gd suruyu inceltmek icin soruyor.
+##
+## Neden gerekti: tavan yalnizca YENI DOGUMU kapatiyor, var olan suruyu
+## azaltmiyor. Oyuncu 7. evreden (tavan 110) cikip 8'e (tavan 45)
+## girdiginde ekranda hala ~90 dusman olabiliyordu; yani nefes
+## 'takviye gelmiyor' demekti, 'rahatladin' demek degil.
+## Olculdu: 8. evreye girenlerin %55,6'si ORADA oluyordu.
+static func nefes_mi(gecen: float) -> bool:
+    return bool(evre(gecen).get("nefes", false))
+
 static func canli_tavan(gecen: float) -> int:
     var i := evre_indeksi(gecen)
     var su: Dictionary = EVRELER[i]
