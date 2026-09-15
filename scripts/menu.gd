@@ -261,7 +261,7 @@ func _arayuz_kur() -> void:
     # ekran disinda kaliyordu. Iki satir + tam genislikte ortalama: sabit
     # koordinat yok, yazi tipi degisse de kesilmez.
     var alt := Tema.sonuk("WASD hareket · SOL TIK ateş · SAĞ TIK kor · BOŞLUK dalış")
-    var alt2 := Tema.sonuk("E döküm · Q silah · G görevler · F11 tam ekran · C künye")
+    var alt2 := Tema.sonuk("E döküm · Q silah · G görevler · F11 tam ekran · C künye · gamepad destekli")
     alt.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
     alt.offset_left = Tema.BOSLUK_M
     alt.offset_right = -Tema.BOSLUK_M

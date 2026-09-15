@@ -326,14 +326,22 @@ func dokum_yap() -> bool:
     dokum_degisti.emit(dokum_sarj, false)
     return true
 
+## Gamepad dugmeleri _unhandled_key_input'a DUSMEZ (InputEventJoypadButton).
+## Eylem bazli kanca hem klavyeyi hem pad'i yakaliyor.
+func _unhandled_input(olay: InputEvent) -> void:
+    if olay.is_echo():
+        return
+    if olay.is_action_pressed("dokum"):
+        dokum_yap()
+        get_viewport().set_input_as_handled()
+    elif olay.is_action_pressed("silah_gec"):
+        silah_gec(true)
+        get_viewport().set_input_as_handled()
+
 func _unhandled_key_input(olay: InputEvent) -> void:
     if not olay.is_pressed() or olay.is_echo():
         return
-    if olay.keycode == KEY_E or olay.keycode == KEY_R:
-        dokum_yap()
-    elif olay.keycode == KEY_Q or olay.keycode == KEY_TAB:
-        silah_gec(true)
-    elif olay.keycode >= KEY_1 and olay.keycode <= KEY_4:
+    if olay.keycode >= KEY_1 and olay.keycode <= KEY_4:
         var i: int = olay.keycode - KEY_1
         if i in acik_silahlar and i != silah_indeksi:
             silah_indeksi = i
@@ -363,9 +371,19 @@ func _physics_process(delta: float) -> void:
     if bot_aktif:
         nisan = bot_nisan.normalized()
     else:
-        nisan = (get_global_mouse_position() - global_position).normalized()
+        # GAMEPAD NISANI: sag cubuk hareket ederse fareyi eziyor, ama fare
+        # de her an calismaya devam ediyor -- oyuncu ikisi arasinda gecis
+        # yapabiliyor ve bir "girdi modu" secmek zorunda kalmiyor.
+        var cubuk := Input.get_vector("nisan_sol", "nisan_sag", "nisan_yukari", "nisan_asagi")
+        if cubuk.length() > 0.25:
+            nisan = cubuk.normalized()
+            _son_nisan = nisan
+        else:
+            nisan = (get_global_mouse_position() - global_position).normalized()
+            if nisan != Vector2.ZERO:
+                _son_nisan = nisan
     if nisan == Vector2.ZERO:
-        nisan = Vector2.RIGHT
+        nisan = _son_nisan
 
     if _dalis_kalan > 0.0:
         _dalis_kalan -= delta
@@ -470,10 +488,10 @@ func _ates_istegi() -> bool:
         return bot_ates
     if otomatik_ates:
         return true
-    return Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+    return Input.is_action_pressed("ates")
 
 func _kor_istegi() -> bool:
-    return bot_kor if bot_aktif else Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+    return bot_kor if bot_aktif else Input.is_action_pressed("kor")
 
 ## Oyuncu bir kez bile daldiysa ogretmeye gerek yok.
 var hic_daldi := false
@@ -482,6 +500,9 @@ var hic_ates := false
 var hic_silah_degisti := false
 ## Ayar: sol tusu basili tutmadan surekli ates. Nisan yine oyuncuda.
 var otomatik_ates := false
+## Son gecerli nisan yonu. Gamepad'de cubuk birakilinca sifira dusuyor;
+## oyuncunun namlusu o anda saga zıplamasin diye son yon korunuyor.
+var _son_nisan := Vector2.RIGHT
 
 func _dalis_basla(nisan: Vector2) -> void:
     hic_daldi = true

@@ -1,0 +1,4 @@
+keys,en
+"Isı tavanı +25, soğuma -%15","Heat ceiling +25, cooling -%15"
+"Isı %50 üstündeyken hasar +%50","Damage +%50 above %50 heat"
+"Taban görüş +14 px, soğukken hasar +%25","Base sight +14 px, damage +%25 while cold"

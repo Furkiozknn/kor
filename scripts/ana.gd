@@ -175,11 +175,14 @@ func _notification(ne: int) -> void:
         return
     _duraklat_degis()
 
-func _unhandled_key_input(olay: InputEvent) -> void:
-    if not olay.is_pressed() or olay.is_echo():
+## Gamepad START'i da yakalasin diye eylem bazli (InputEventJoypadButton
+## _unhandled_key_input'a dusmez).
+func _unhandled_input(olay: InputEvent) -> void:
+    if olay.is_echo() or bitti:
         return
-    if (olay as InputEventKey).keycode == KEY_ESCAPE and not bitti:
+    if olay.is_action_pressed("duraklat"):
         _duraklat_degis()
+        get_viewport().set_input_as_handled()
 
 ## ESC duraklatma. Kart ekrani aciksa karismiyor -- o zaten duraklatmis
 ## durumda ve kendi kararini bekliyor.
