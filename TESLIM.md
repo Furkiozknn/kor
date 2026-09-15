@@ -48,6 +48,13 @@ tarayıcı indirmesi (gzip)           ~11,4 MB  (wasm 9,9 + pck 1,4)
 4. Işık duvarlardan geçiyor (`karanlik.gdshader` saf radyal). Şu an fark
    edilmiyor çünkü yapılar 16 px; koridorlu arena yapılırsa sorun olur.
 
+## Depo
+
+`https://github.com/Furkiozknn/kor` — **private**, 60 commit, master.
+
+Public yapmak tek tık ama geri alınamaz (fork ve arşivler kalır).
+Güvenlik denetimi yapıldığı için teknik engel yok; karar senin.
+
 ## Güvenlik denetimi — 15 Eylül
 
 | kontrol | sonuç |
