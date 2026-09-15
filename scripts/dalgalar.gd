@@ -46,6 +46,24 @@ const EVRELER := [
         "ad": "FİNAL", "baski": true},
 ]
 
+## ZAFER TURU. Son UC DAKIKADA isi ARTIK KILITLEMIYOR.
+##
+## Olculdu: kosu boyunca baski ~4,6 kat artiyor ama oyuncu sadece ayak
+## uyduruyor, onune gecmiyor -- yani kosu hicbir zaman kolaylasmiyor.
+## Ustelik seviye araligi sv12'de 243 saniyeye ciktigi icin son ucte birde
+## TEK bir odul var: en zor, en uzun ve en odulsuz bolum ayni yer.
+##
+## Turun cekirdegi bunun tersi: "tek zayif saldiriyla savunmasiz baslarsin
+## ve durdurulamaz bir guce donusursun." Son ucte bir ZAFER TURU olmali.
+##
+## Cozum tek degisken: tavana varmak artik silahi susturmuyor. Isini
+## sonuna kadar tutabiliyorsun -- en genis gorus, en yuksek yayilim, en
+## buyuk miknatis, hepsi bir arada. Dokumhane tamamen uyandi.
+const ZAFER_TURU := KOSU_SURESI - 180.0
+
+static func kilit_var_mi(gecen: float) -> bool:
+    return gecen < ZAFER_TURU
+
 ## Patronlar. Nefes anlarına denk getirilmiyor -- nefes gerçekten nefes olsun.
 const PATRON_ZAMANLARI := [150.0, 400.0, 690.0]
 

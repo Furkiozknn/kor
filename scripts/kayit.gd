@@ -130,8 +130,15 @@ func kademe_carpani() -> float:
 	return 1.0 + 0.35 * kademe()
 
 ## Kosu bitince tek cagri: rekorlari gunceller, curufu kademeye gore ekler.
+## Kosu sirasinda BIRIKEN curuf. Onceden butun kazanc kosu SONUNDA tek
+## seferde hesaplaniyordu; yani kosunun ikinci yarisinda oyuncunun aldigi
+## tek geri bildirim "olmedim" oluyordu. Artik her oldurme gorunur ve
+## KALICI bir odul -- olsen bile kazandigin curuf duruyor.
+func kosu_curufu(oldurme: int) -> int:
+	return int(round(oldurme * kademe_carpani()))
+
 func kosu_bitti(sure: float, oldurme: int) -> int:
-	var kazanc := int(round(oldurme * kademe_carpani()))
+	var kazanc := kosu_curufu(oldurme)
 	curuf_ekle(kazanc)
 	if sure > float(_veri.get("en_iyi_sure", 0.0)):
 		_veri["en_iyi_sure"] = sure

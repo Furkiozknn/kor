@@ -107,6 +107,18 @@ func _ready() -> void:
         _lbl_silah.text = "◤ " + str(ad) + ek)
     oyuncu.silah_degisti.emit(oyuncu.silah(), oyuncu.silah_indeksi)
 
+## Tarayici sekmesi degisince ya da pencere arkaya gecince oyun devam
+## ediyordu -- oyuncu geri geldiginde olmus oluyor. Sadece DURAKLAT;
+## geri gelince kendi kendine devam ETMIYOR, cunku oyuncu hazir olmayabilir.
+func _notification(ne: int) -> void:
+    if ne != NOTIFICATION_APPLICATION_FOCUS_OUT and ne != NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+        return
+    if bitti or get_tree().paused:
+        return
+    if _kart_katman != null and is_instance_valid(_kart_katman):
+        return
+    _duraklat_degis()
+
 func _unhandled_key_input(olay: InputEvent) -> void:
     if not olay.is_pressed() or olay.is_echo():
         return
@@ -228,6 +240,14 @@ func _process(delta: float) -> void:
         evre_adi = yeni_evre
         if evre_adi == evre_adi.to_upper():
             _duyuru(evre_adi)
+    _dalis_ogret()
+    # ZAFER TURU: son 90 saniyede tavana varmak silahi susturmuyor.
+    if oyuncu.isi.kilit_acik and not Dalgalar.kilit_var_mi(gecen):
+        oyuncu.isi.kilit_acik = false
+        oyuncu.isi.kilitli = false
+        _duyuru("DÖKÜMHANE UYANDI")
+        Hiss.sars(5.0)
+        SesYonetici.cal("patron_uyandi")
     if patron_sayisi < Dalgalar.PATRON_ZAMANLARI.size() and gecen >= float(Dalgalar.PATRON_ZAMANLARI[patron_sayisi]):
         _patron_dog()
     _patron_cubuk_tazele()
@@ -255,11 +275,14 @@ func _process(delta: float) -> void:
     # MANGAL sayaci sadece SONUK mangal kaldiysa gorunuyor: bu bir hedef
     # gostergesi, bir istatistik degil. Hepsi yaninca kendini siliyor --
     # HUD'da isi bitmis bir eleman durmasin.
+    var curuf_ek := ""
+    if oldurulen > 0:
+        curuf_ek = "   CÜRUF +%d" % Kayit.kosu_curufu(oldurulen)
     var mangal_ek := ""
     if toplam_mangal > 0 and yakilan_mangal < toplam_mangal:
         mangal_ek = "   MANGAL %d/%d" % [yakilan_mangal, toplam_mangal]
-    _lbl_ust.text = "%02d:%02d   SEVİYE %d   XP %d/%d   ÖLDÜRME %d%s" % [
-        int(gecen) / 60, int(gecen) % 60, seviye, xp, xp_hedef, oldurulen, mangal_ek]
+    _lbl_ust.text = "%02d:%02d   SEVİYE %d   XP %d/%d   ÖLDÜRME %d%s%s" % [
+        int(gecen) / 60, int(gecen) % 60, seviye, xp, xp_hedef, oldurulen, curuf_ek, mangal_ek]
     _xp_cubuk.size.x = 640.0 * clampf(float(xp) / maxf(float(xp_hedef), 1.0), 0.0, 1.0)
     if _ipucu != null and gecen > 25.0:
         _ipucu.modulate.a = maxf(_ipucu.modulate.a - delta * 0.5, 0.0)
@@ -419,6 +442,31 @@ func _patron_yenildi() -> void:
     for n in 6:
         _kup_dus(oyuncu.global_position + Vector2(randf_range(-40, 40), randf_range(-40, 40)), 5)
 
+## DURUMA BAGLI OGRETIM -- bir kereye mahsus.
+##
+## Dalis oyunun imza fiili ama sadece 25. saniyede solan ipucu satiriyla
+## anlatiliyordu. Sabit bir ogretici yerine: oyuncu GERCEKTEN sikisinca
+## (isi %80 ustu) ve dalmayi hic denememisse, tam yaninda tek satir.
+## Kendi kesfettiyse hic gorunmuyor -- ogretici gurultusu yok.
+var _dalis_ogretildi := false
+
+func _dalis_ogret() -> void:
+    if _dalis_ogretildi or oyuncu.hic_daldi or bitti:
+        return
+    if oyuncu.isi.oran() < 0.80 or oyuncu.isi.kilitli:
+        return
+    _dalis_ogretildi = true
+    var l := Tema.vurgu("BOŞLUK — ısını boşalt")
+    l.set_anchors_preset(Control.PRESET_TOP_WIDE)
+    l.offset_top = 152
+    l.offset_bottom = 168
+    l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    _hud.add_child(l)
+    var t := create_tween()
+    t.tween_interval(3.2)
+    t.tween_property(l, "modulate:a", 0.0, 0.8)
+    t.tween_callback(l.queue_free)
+
 ## Ekranin ortasinda kisa duyuru.
 func _duyuru(metin: String) -> void:
     var l := Tema.baslik(metin)
@@ -512,8 +560,8 @@ func _kart_havuzu() -> Array:
             o.can += 1
             o.tavlanma = true
             o.can_degisti.emit(o.can, o.maks_can)},
-        {"ad": "MIKNATIS", "aciklama": "XP toplama menzili +%60", "ikon": "miknatis",
-            "uygula": func(o): o.miknatis *= 1.6},
+        {"ad": "MIKNATIS", "aciklama": "Çekim menzili +%60 (ısıyla ayrıca büyür)", "ikon": "miknatis",
+            "uygula": func(o): o.miknatis_carpani *= 1.6},
         {"ad": "ÖRS DARBESİ", "aciklama": "Kor atışı hasarı +%60", "ikon": "ors",
             "uygula": func(o): o.kor_carpani += 0.6},
         {"ad": "YARIM BOŞALTMA", "aciklama": "Kor atışı ısının yarısını bırakır", "ikon": "soguk",

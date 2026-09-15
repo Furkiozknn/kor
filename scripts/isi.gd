@@ -7,6 +7,8 @@ var atis_basina: float = 9.0
 var soguma_hizi: float = 24.0
 var soguma_gecikmesi: float = 0.45
 var kilit_suresi: float = 2.0
+## Zafer turunda (son 90 sn) kapaniyor: tavana varmak silahi susturmuyor.
+var kilit_acik: bool = true
 
 var deger: float = 0.0
 var kilitli: bool = false
@@ -24,8 +26,9 @@ func ates_et(miktar: float = 0.0) -> void:
     _gecikme_kalan = soguma_gecikmesi
     if deger >= tavan:
         deger = tavan
-        kilitli = true
-        _kilit_kalan = kilit_suresi
+        if kilit_acik:
+            kilitli = true
+            _kilit_kalan = kilit_suresi
 
 ## Dalis isiyi bosaltir -- ama kilitliyken islemez. Gerilim burada:
 ## "bir mermi daha mi, yoksa simdi mi dalayim".

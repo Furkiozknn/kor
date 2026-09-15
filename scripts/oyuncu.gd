@@ -77,7 +77,21 @@ var ek_mermi := 0
 var ek_yayilma := 0.0
 var asiri_isi_carpani := 1.0   # isi > %70 iken gecerli
 var dalis_patlamasi := 0.0     # dalis bitince cevreye hasar
-var miknatis := 38.0           # XP kupu cekim menzili
+## XP kupu cekim menzili. SABIT DEGIL -- isiyla buyuyor.
+##
+## Turun imza dopamin ani "kupler ekran disindan sana akiyor". Kor'da bu
+## HIC yoktu: menzil 38 piksel sabitti, kupler yerinde duruyordu ve
+## oyuncu her birini tek tek toplamak zorundaydi.
+##
+## Ama bunu VS'ten kopyalamiyoruz: Kor'da akis ISININ odulu. Sicaksan
+## dokumhane senin etrafinda toplaniyor. Boylece tek satirda hem turun
+## imza ani geliyor hem de isi ekonomisinin bir degiskeni daha aciliyor.
+var miknatis := 38.0
+var miknatis_carpani := 1.0    # kart: taban menzili buyutur
+const MIKNATIS_ISI_KAZANC := 3.4   # tavanda menzil bu kat buyur
+
+func miknatis_menzili() -> float:
+    return miknatis * miknatis_carpani * lerpf(1.0, MIKNATIS_ISI_KAZANC, isi.oran())
 var kor_carpani := 1.0         # kart: kor atisi hasari
 var kor_maliyet := 1.0         # kart: 1.0 = biriken isinin tamamini harcar
 var yayilim_dps := 2.4         # kart: kor yayilimi saniyelik hasari
@@ -327,7 +341,11 @@ func _ates_istegi() -> bool:
 func _kor_istegi() -> bool:
     return bot_kor if bot_aktif else Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 
+## Oyuncu bir kez bile daldiysa ogretmeye gerek yok.
+var hic_daldi := false
+
 func _dalis_basla(nisan: Vector2) -> void:
+    hic_daldi = true
     var yon := _hareket_istegi()
     if yon == Vector2.ZERO:
         yon = nisan

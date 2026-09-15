@@ -46,7 +46,7 @@ func _physics_process(delta: float) -> void:
         _kivilcim = 0.55
         Hiss.patlama(get_parent(), global_position, Color(0.8, 1.0, 0.85), 2, 26.0, 1.0, 0.45)
     var uzak := global_position.distance_to(_hedef.global_position)
-    if uzak > _hedef.miknatis:
+    if uzak > _hedef.miknatis_menzili():
         _hiz = 0.0
         return
     _hiz = minf(_hiz + IVME * delta, MAKS_HIZ)

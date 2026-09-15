@@ -472,5 +472,5 @@ func _oyuncu_ozeti(o) -> Array:
     return [g[0], g[1],
         o.isi.tavan, o.isi.soguma_hizi, o.isi_carpani, o.hiz, o.atis_hizi_carpani,
         o.mermi_hasari, o.ek_mermi, o.ek_yayilma, o.maks_can, o.asiri_isi_carpani,
-        o.dalis_patlamasi, o.miknatis, o.kor_carpani, o.kor_maliyet, o.yayilim_dps, o.yayilim_menzil,
+        o.dalis_patlamasi, o.miknatis_menzili(), o.kor_carpani, o.kor_maliyet, o.yayilim_dps, o.yayilim_menzil,
         o.acik_silahlar.size(), o.silah_indeksi]
