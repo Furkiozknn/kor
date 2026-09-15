@@ -121,120 +121,45 @@ func _arayuz_kur() -> void:
     k.layer = 3
     add_child(k)
 
+    # ANA EKRAN SADELESTIRILDI. Oyuncu geri bildirimi: "cok fazla yazi".
+    # Onceden burada on satir vardi -- baslik, slogan, tanitim cumlesi,
+    # skor, FIRIN satiri, SES satiri, HAREKET satiri, iki dugme, gunluk
+    # durum, iki ipucu satiri. Oyuncunun ana ekranda vermesi gereken karar
+    # ise TEK: hangi kosu.
+    #
+    # Ayarlar (firin kademesi, ses, hareket, dil) A tusuyla ayri ekranda.
+    # Gorevler ve kunye zaten oyleydi; ayarlarin istisna olmasi icin sebep
+    # yoktu.
     var kutu := VBoxContainer.new()
     kutu.theme = Tema.tema()
-    # OYUN satiri eklenince kutu 24 px uzadi ve gunluk durum satiri alttaki
-    # ipucu satirina BINDI (ekran goruntusuyle gorduk). Ustte 56 px bos vardi.
-    kutu.position = Vector2(48, 32)
+    kutu.position = Vector2(48, 92)
     kutu.add_theme_constant_override("separation", Tema.BOSLUK_S)
     k.add_child(kutu)
 
-    var ad := Tema._yazi("KOR", 48, Tema.KOR)
-    kutu.add_child(ad)
+    kutu.add_child(Tema._yazi("KOR", 48, Tema.KOR))
     kutu.add_child(Tema.sonuk("karanlıkta ne kadar görürsen o kadar yakınsın"))
 
     var bosluk := Control.new()
     bosluk.custom_minimum_size = Vector2(0, Tema.BOSLUK_L)
     kutu.add_child(bosluk)
 
-    kutu.add_child(Tema.govde("Dökümhane söndü. Elinde kalan tek ateş sensin."))
-
-    var bosluk2 := Control.new()
-    bosluk2.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
-    kutu.add_child(bosluk2)
-
-    # Kalici durum: curuf ve rekor
     var rekor: float = float(Kayit._veri.get("en_iyi_sure", 0.0))
-    # Biriken toplam yerine EN IYI KOSU gosteriliyor: curuf harcanmiyor,
-    # yani biriken bir sayi olarak gostermek olmayan bir dukkan sozu veriyor.
     var durum := tr("EN İYİ DÖKÜM %d") % Kayit.en_iyi_curuf()
     if rekor > 0.0:
         durum += tr("     en iyi %02d:%02d") % [int(rekor) / 60, int(rekor) % 60]
     kutu.add_child(Tema.vurgu(durum))
 
-    # FIRIN KADEMESI -- gonullu zorluk, Kor'un kendi diliyle. Her kademe
-    # isi ekonomisine dokunuyor ve curuf kazancini carpiyor.
-    var kad := HBoxContainer.new()
-    kad.add_theme_constant_override("separation", Tema.BOSLUK_S)
-    kad.add_child(Tema.sonuk("FIRIN"))
-    for n in KADEMELER.size():
-        var d := Button.new()
-        d.text = str(n)
-        d.custom_minimum_size = Vector2(26, 22)
-        d.pressed.connect(_kademe_sec.bind(n))
-        kad.add_child(d)
-    _kademe_yazi = Tema.sonuk("")
-    kad.add_child(_kademe_yazi)
-    kutu.add_child(kad)
+    var bosluk2 := Control.new()
+    bosluk2.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
+    kutu.add_child(bosluk2)
 
-    # Ses ayarlari -- kalici. Ayri bir ayarlar ekrani acmak yerine menude,
-    # cunku tek ihtiyac bu ve fazladan adim UX borcudur.
-    var ses := HBoxContainer.new()
-    ses.add_theme_constant_override("separation", Tema.BOSLUK_S)
-    ses.add_child(Tema.sonuk("SES"))
-    for bilgi in [["müzik", "ses_muzik", -14.0], ["efekt", "ses_efekt", -6.0]]:
-        ses.add_child(Tema.sonuk(str(bilgi[0])))
-        var eksi := Button.new()
-        eksi.text = "-"
-        eksi.custom_minimum_size = Vector2(20, 20)
-        eksi.pressed.connect(_ses_degis.bind(str(bilgi[1]), -4.0, float(bilgi[2])))
-        ses.add_child(eksi)
-        var arti := Button.new()
-        arti.text = "+"
-        arti.custom_minimum_size = Vector2(20, 20)
-        arti.pressed.connect(_ses_degis.bind(str(bilgi[1]), 4.0, float(bilgi[2])))
-        ses.add_child(arti)
-    _ses_yazi = Tema.sonuk("")
-    ses.add_child(_ses_yazi)
-    kutu.add_child(ses)
-
-    # ERISILEBILIRLIK. Kor'da sarsinti ve vurus donmasi surekli; hareket
-    # duyarliligi olan oyuncu icin bu bir bariyer. Ayri bir "erisilebilirlik"
-    # ekrani acmiyoruz -- iki dugme, ses satirinin hemen altinda.
-    var hrk := HBoxContainer.new()
-    hrk.add_theme_constant_override("separation", Tema.BOSLUK_S)
-    hrk.add_child(Tema.sonuk("HAREKET"))
-    _sarsinti_dugme = Button.new()
-    _sarsinti_dugme.custom_minimum_size = Vector2(104, 20)
-    _sarsinti_dugme.pressed.connect(_sarsinti_degis)
-    hrk.add_child(_sarsinti_dugme)
-    _donma_dugme = Button.new()
-    _donma_dugme.custom_minimum_size = Vector2(104, 20)
-    _donma_dugme.pressed.connect(_donma_degis)
-    hrk.add_child(_donma_dugme)
-    kutu.add_child(hrk)
-
-    # OYUN. Oto ates ve DIL "HAREKET" satirinda duruyordu; ikisi de hareket
-    # ayari degil. Ingilizce menude satir "MOTION [shake][hitstop][auto-fire]
-    # [TURKCE]" oluyordu -- dil ayarini MOTION altinda arayan kimse bulamaz.
-    var oyn := HBoxContainer.new()
-    oyn.add_theme_constant_override("separation", Tema.BOSLUK_S)
-    oyn.add_child(Tema.sonuk("OYUN"))
-    _oto_dugme = Button.new()
-    _oto_dugme.custom_minimum_size = Vector2(112, 20)
-    _oto_dugme.pressed.connect(_oto_degis)
-    oyn.add_child(_oto_dugme)
-    _dil_dugme = Button.new()
-    _dil_dugme.custom_minimum_size = Vector2(72, 20)
-    _dil_dugme.pressed.connect(_dil_degis)
-    oyn.add_child(_dil_dugme)
-    kutu.add_child(oyn)
-
-    var bosluk3 := Control.new()
-    bosluk3.custom_minimum_size = Vector2(0, Tema.BOSLUK_S)
-    kutu.add_child(bosluk3)
-
-    # Iki kosu tipi yan yana. GUNUN DOKUMU ayni gun icinde herkese AYNI
-    # dokumhaneyi veriyor; kiyas zemini tohum oldugu icin sunucu gerekmiyor.
     var kosu_satiri := HBoxContainer.new()
     kosu_satiri.add_theme_constant_override("separation", Tema.BOSLUK_M)
-
     var basla := Button.new()
     basla.text = "  BAŞLA      [Enter]"
     basla.custom_minimum_size = Vector2(196, 30)
     basla.pressed.connect(_basla)
     kosu_satiri.add_child(basla)
-
     var gunluk := Button.new()
     gunluk.text = tr("  GÜNÜN DÖKÜMÜ   [D]")
     gunluk.custom_minimum_size = Vector2(196, 30)
@@ -242,44 +167,23 @@ func _arayuz_kur() -> void:
     gunluk.pressed.connect(_gunluk_basla)
     kosu_satiri.add_child(gunluk)
     kutu.add_child(kosu_satiri)
-
-    var gun_en := Kayit.gun_en_iyi()
-    var gun_dn := Kayit.gun_deneme()
-    if gun_dn > 0:
-        kutu.add_child(Tema.sonuk(tr("bugünkü en iyin %d   ·   %d koşu") % [gun_en, gun_dn]))
-    else:
-        kutu.add_child(Tema.sonuk(tr("bugünün dökümhanesi henüz denenmedi")))
-    var bosluk4 := Control.new()
-    bosluk4.custom_minimum_size = Vector2(0, Tema.BOSLUK_S)
-    kutu.add_child(bosluk4)
     basla.grab_focus()
-    _kademe_tazele()
-    _ses_tazele()
-    _hareket_tazele()
 
-    # Tek satira sigmiyordu (93 karakter, 640 piksel) -- son iki ipucu
-    # ekran disinda kaliyordu. Iki satir + tam genislikte ortalama: sabit
-    # koordinat yok, yazi tipi degisse de kesilmez.
-    var alt := Tema.sonuk("WASD hareket · SOL TIK ateş · SAĞ TIK kor · BOŞLUK dalış")
-    var alt2 := Tema.sonuk("E döküm · Q silah · G görevler · F11 tam ekran · C künye · gamepad destekli")
-    alt.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-    alt.offset_left = Tema.BOSLUK_M
-    alt.offset_right = -Tema.BOSLUK_M
-    alt.offset_top = -50
-    alt.offset_bottom = -28
-    alt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    alt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    alt.modulate = Color(1, 1, 1, 0.55)
-    k.add_child(alt)
-    alt2.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-    alt2.offset_left = Tema.BOSLUK_M
-    alt2.offset_right = -Tema.BOSLUK_M
-    alt2.offset_top = -28
-    alt2.offset_bottom = -6
-    alt2.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-    alt2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    alt2.modulate = Color(1, 1, 1, 0.55)
-    k.add_child(alt2)
+    # Tek ipucu satiri, ortalanmis. Ikinci satir ayarlar ekranina tasindi.
+    var alt := Tema.sonuk("WASD · SOL TIK ateş · SAĞ TIK kor · BOŞLUK dalış · E döküm")
+    var alt2 := Tema.sonuk("A ayarlar · G görevler · C künye")
+    for l in [alt, alt2]:
+        l.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+        l.offset_left = Tema.BOSLUK_M
+        l.offset_right = -Tema.BOSLUK_M
+        l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+        l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        l.modulate = Color(1, 1, 1, 0.5)
+        k.add_child(l)
+    alt.offset_top = -40
+    alt.offset_bottom = -22
+    alt2.offset_top = -22
+    alt2.offset_bottom = -4
 
 ## Sarsinti uc kademe: tam / yari / kapali. Yari kademe onemli -- cogu
 ## oyuncu sarsintiyi sevmiyor ama tamamen kapatinca vurus hissi kayboluyor.
@@ -385,6 +289,8 @@ func _unhandled_key_input(olay: InputEvent) -> void:
         _gunluk_basla()
     elif k == KEY_G:
         _gorev_degis()
+    elif k == KEY_A:
+        _ayar_degis()
     elif k == KEY_F11:
         _tam_ekran_degis()
     elif k == KEY_ESCAPE:
@@ -508,3 +414,108 @@ func _gorev_degis() -> void:
     bosluk2.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
     kutu.add_child(bosluk2)
     kutu.add_child(Tema.sonuk(tr("%d/%d açıldı   ·   G kapat") % [acik_sayi, Gorevler.LISTE.size()]))
+
+## --- AYARLAR EKRANI ---------------------------------------------------
+##
+## Firin kademesi, ses, hareket ve dil ana ekrandan buraya tasindi.
+## Gerekce (oyuncu geri bildirimi): ana ekranda on satir vardi ama
+## oyuncunun orada vermesi gereken karar TEK -- hangi kosu. Gorevler ve
+## kunye zaten ayri ekrandaydi; ayarlarin istisna olmasi icin sebep yoktu.
+var _ayar_katman: CanvasLayer
+
+func _ayar_degis() -> void:
+    if _ayar_katman != null and is_instance_valid(_ayar_katman):
+        _ayar_katman.queue_free()
+        _ayar_katman = null
+        return
+    _ayar_katman = CanvasLayer.new()
+    _ayar_katman.layer = 5
+    add_child(_ayar_katman)
+    var fon := ColorRect.new()
+    fon.color = Color(0.01, 0.01, 0.03, 0.9)
+    fon.set_anchors_preset(Control.PRESET_FULL_RECT)
+    _ayar_katman.add_child(fon)
+
+    var sarmal := PanelContainer.new()
+    sarmal.theme = Tema.tema()
+    sarmal.set_anchors_preset(Control.PRESET_TOP_WIDE)
+    sarmal.offset_left = 44
+    sarmal.offset_right = -44
+    sarmal.offset_top = 42
+    sarmal.add_theme_stylebox_override("panel",
+        Tema.kutu(Tema.GOVDE, Tema.KENAR_KOR, 1, Tema.BOSLUK_L))
+    _ayar_katman.add_child(sarmal)
+
+    var kutu := VBoxContainer.new()
+    kutu.add_theme_constant_override("separation", Tema.BOSLUK_M)
+    sarmal.add_child(kutu)
+    kutu.add_child(Tema.baslik("AYARLAR"))
+
+    # FIRIN KADEMESI -- gonullu zorluk. Her kademe isinin bir ODULUNU kapatir.
+    var kad := HBoxContainer.new()
+    kad.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    kad.add_child(Tema.sonuk("FIRIN"))
+    for n in KADEMELER.size():
+        var d := Button.new()
+        d.text = str(n)
+        d.custom_minimum_size = Vector2(26, 22)
+        d.pressed.connect(_kademe_sec.bind(n))
+        kad.add_child(d)
+    kutu.add_child(kad)
+    _kademe_yazi = Tema.sonuk("")
+    _kademe_yazi.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+    kutu.add_child(_kademe_yazi)
+
+    var ses := HBoxContainer.new()
+    ses.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    ses.add_child(Tema.sonuk("SES"))
+    for bilgi in [["müzik", "ses_muzik", -14.0], ["efekt", "ses_efekt", -6.0]]:
+        ses.add_child(Tema.sonuk(str(bilgi[0])))
+        var eksi := Button.new()
+        eksi.text = "-"
+        eksi.custom_minimum_size = Vector2(20, 20)
+        eksi.pressed.connect(_ses_degis.bind(str(bilgi[1]), -4.0, float(bilgi[2])))
+        ses.add_child(eksi)
+        var arti := Button.new()
+        arti.text = "+"
+        arti.custom_minimum_size = Vector2(20, 20)
+        arti.pressed.connect(_ses_degis.bind(str(bilgi[1]), 4.0, float(bilgi[2])))
+        ses.add_child(arti)
+    _ses_yazi = Tema.sonuk("")
+    ses.add_child(_ses_yazi)
+    kutu.add_child(ses)
+
+    var hrk := HBoxContainer.new()
+    hrk.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    hrk.add_child(Tema.sonuk("HAREKET"))
+    _sarsinti_dugme = Button.new()
+    _sarsinti_dugme.custom_minimum_size = Vector2(104, 20)
+    _sarsinti_dugme.pressed.connect(_sarsinti_degis)
+    hrk.add_child(_sarsinti_dugme)
+    _donma_dugme = Button.new()
+    _donma_dugme.custom_minimum_size = Vector2(104, 20)
+    _donma_dugme.pressed.connect(_donma_degis)
+    hrk.add_child(_donma_dugme)
+    _oto_dugme = Button.new()
+    _oto_dugme.custom_minimum_size = Vector2(112, 20)
+    _oto_dugme.pressed.connect(_oto_degis)
+    hrk.add_child(_oto_dugme)
+    kutu.add_child(hrk)
+
+    var dil_satir := HBoxContainer.new()
+    dil_satir.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    dil_satir.add_child(Tema.sonuk("DİL"))
+    _dil_dugme = Button.new()
+    _dil_dugme.custom_minimum_size = Vector2(88, 20)
+    _dil_dugme.pressed.connect(_dil_degis)
+    dil_satir.add_child(_dil_dugme)
+    kutu.add_child(dil_satir)
+
+    var bosluk := Control.new()
+    bosluk.custom_minimum_size = Vector2(0, Tema.BOSLUK_S)
+    kutu.add_child(bosluk)
+    kutu.add_child(Tema.sonuk("A kapat   ·   F11 tam ekran"))
+
+    _kademe_tazele()
+    _ses_tazele()
+    _hareket_tazele()

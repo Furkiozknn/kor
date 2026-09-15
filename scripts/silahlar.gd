@@ -4,42 +4,47 @@ extends RefCounted
 ## alıyorum" sorusunun cevabı.
 ##
 ## saniyedeki_isi = isi / aralik  ->  tavan 100 iken kaç saniyede kilit:
-##   tabanca 4.7 / 0.14 = 33.6/sn -> ~3.0 sn
-##   sacma  13.5 / 0.50 = 27.0/sn -> ~3.7 sn  (ama tek basisi cok vurur)
-##   isin    2.2 / 0.05 = 44.0/sn -> ~2.3 sn  (en tehlikeli, en yuksek DPS)
-##   cekic  17.6 / 0.85 = 20.7/sn -> ~4.8 sn  (en sabirli)
+##   tabanca 2.5 / 0.14 = 17.9/sn -> ~5.6 sn
+##   sacma   7.2 / 0.50 = 14.4/sn -> ~6.9 sn  (ama tek basisi cok vurur)
+##   isin    1.2 / 0.05 = 24.0/sn -> ~4.2 sn  (en tehlikeli, en yuksek DPS)
+##   cekic   9.4 / 0.85 = 11.1/sn -> ~9.0 sn  (en sabirli)
 ##
-## DEGERLER YARIYA INDIRILDI (onceden 1,2-2,5 sn). Gerekce: kilide varmak
-## 1,6 saniye surdugunde "isiyi tut mu harca mi" bir KARAR degil, bir
-## refleks oluyordu; oyuncunun dusunecek zamani yoktu ve tavan surekli
-## kazayla vuruluyordu. Sogumayi da orantili yavaslattik (isi.gd), yani
-## denge noktasi ayni kaldi -- sadece her sey nefes alacak hiza indi.
+## DEGERLER IKI KEZ INDIRILDI. Ilk tur 1,6 -> 3,0 saniyeydi.
+##
+## Ikinci tur GERCEK OYUNCU VERISIYLE geldi ve olcum aracinin goremedigi
+## seydi: bot dakikada 0,0-0,1 kilit yapiyor, INSAN 50 saniyede 6-9 kilit
+## yapti (~7,7-9,8 kilit/dk). Sebep basit -- insan sol tusu BASILI TUTUYOR,
+## bot ise hedef varken kisa kisa atiyor. 3 saniyede kilitlenen bir
+## sistemde oyuncu zamanin %25-30unu kilitte geciriyordu.
+##
+## Artik ~5,6 sn (tabanca). Kilit hala var ve hala cezali, ama "her birkac
+## saniyede bir" degil "dikkatsiz oynarsan" oluyor.
 
 const LISTE := [
     {
         "ad": "KOR TABANCASI", "ikon": "tetik",
-        "aralik": 0.14, "isi": 4.7, "hasar": 1.0, "adet": 1,
+        "aralik": 0.14, "isi": 2.5, "hasar": 1.0, "adet": 1,
         "yayilma": 0.05, "hiz": 265.0, "omur": 1.1, "boy": 1.0,
         "delici": false, "geri_tepme": 26.0, "sarsinti": 0.7,
         "not": "Dengeli. Her şeyi yapar, hiçbirini en iyi yapmaz.",
     },
     {
         "ad": "SAÇMA", "ikon": "catal",
-        "aralik": 0.50, "isi": 13.5, "hasar": 0.85, "adet": 6,
+        "aralik": 0.50, "isi": 7.2, "hasar": 0.85, "adet": 6,
         "yayilma": 0.40, "hiz": 225.0, "omur": 0.42, "boy": 0.85,
         "delici": false, "geri_tepme": 95.0, "sarsinti": 2.6,
         "not": "Kısa menzil, yıkıcı. Sürünün içine girmeni ister.",
     },
     {
         "ad": "IŞIN", "ikon": "celik",
-        "aralik": 0.05, "isi": 2.2, "hasar": 0.45, "adet": 1,
+        "aralik": 0.05, "isi": 1.2, "hasar": 0.45, "adet": 1,
         "yayilma": 0.015, "hiz": 430.0, "omur": 1.0, "boy": 0.7,
         "delici": false, "geri_tepme": 8.0, "sarsinti": 0.35,
         "not": "En yüksek hasar, en hızlı kilit. Parmağını kaldırmayı öğren.",
     },
     {
         "ad": "ÇEKİÇ", "ikon": "ors",
-        "aralik": 0.85, "isi": 17.6, "hasar": 5.0, "adet": 1,
+        "aralik": 0.85, "isi": 9.4, "hasar": 5.0, "adet": 1,
         "yayilma": 0.0, "hiz": 195.0, "omur": 1.5, "boy": 2.1,
         "delici": true, "geri_tepme": 120.0, "sarsinti": 3.4,
         "not": "Delip geçer. Sabır isteyen, sırayı süpüren silah.",

@@ -4,8 +4,10 @@ extends RefCounted
 
 var tavan: float = 100.0
 var atis_basina: float = 9.0
-var soguma_hizi: float = 15.0
-var soguma_gecikmesi: float = 0.45
+## Soguma da hizlandi (15 -> 19): kilitten ve yuksek isidan donus
+## hissedilir olmali, yoksa yavas dolum "surekli sicak kalmak" oluyor.
+var soguma_hizi: float = 19.0
+var soguma_gecikmesi: float = 0.30   # ates birakinca daha cabuk sogumaya baslasin
 var kilit_suresi: float = 2.0
 ## Zafer turunda (son 90 sn) kapaniyor: tavana varmak silahi susturmuyor.
 var kilit_acik: bool = true
