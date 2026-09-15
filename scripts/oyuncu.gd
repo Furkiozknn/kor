@@ -96,6 +96,12 @@ var mermi_hasari := 1.0
 var ek_mermi := 0
 var ek_yayilma := 0.0
 var asiri_isi_carpani := 1.0   # isi > %70 iken gecerli
+## Firin kademesi 1: sicak bolgenin HASAR odulu kapaniyor (kirilganlik kaliyor).
+var sicak_hasar_bonusu := true
+## Firin kademesi 2: dokum artik kilidi kirmiyor -- guvenlik valfi yok.
+var dokum_kilit_kirar := true
+## Firin kademesi 1: miknatis artik isiyla buyumuyor -- kupleri elle topla.
+var miknatis_isiya_bagli := true
 var dalis_patlamasi := 0.0     # dalis bitince cevreye hasar
 ## XP kupu cekim menzili. SABIT DEGIL -- isiyla buyuyor.
 ##
@@ -111,9 +117,28 @@ var miknatis_carpani := 1.0    # kart: taban menzili buyutur
 const MIKNATIS_ISI_KAZANC := 3.4   # tavanda menzil bu kat buyur
 
 func miknatis_menzili() -> float:
-    return miknatis * miknatis_carpani * lerpf(1.0, MIKNATIS_ISI_KAZANC, isi.oran())
+    var isi_kazanci := lerpf(1.0, MIKNATIS_ISI_KAZANC, isi.oran()) if miknatis_isiya_bagli else 1.0
+    return miknatis * miknatis_carpani * isi_kazanci
 var kor_carpani := 1.0         # kart: kor atisi hasari
-var kor_maliyet := 1.0         # kart: 1.0 = biriken isinin tamamini harcar
+## ISI BIR KAYNAK, SIFIRLANAN BIR SAYAC DEGIL.
+##
+## Onceden 1,0'di: kor atisi biriken isinin TAMAMINI siliyordu. Isinin uc
+## gideri var ve ikisi tamamini yok ediyordu -- dalis (bosalt) ve kor
+## atisi. Kor atisi oyuncunun ana alan hasari, yani HER GUCLU SALDIRIDA
+## isi sifirlaniyordu. Isi biriktirilemiyordu, cunku onu harcamanin tek
+## yolu onu yok etmekti.
+##
+## Olculdu (8'er kosuluk uc kol, tek parti, politika degisikligi yok):
+##   1,0 -> sicak bandda %8,6 / soguk bandda %46,9
+##   0,6 -> %13,0 / %23,1
+##   0,3 -> %30,6 / %12,1   (t=5,24)
+## Ve BEDAVA GUC DEGIL: hayatta kalma degismiyor (t=1,03), cunku oldurme
+## dusuyor (924 -> 875 -> 792). Denge notr; degisen sey oyuncunun
+## isi bandinda NEREDE YASADIGI.
+##
+## Bu tek sabit KIZGIN CELIK, GENIS KAZAN, tavlama ve firin kademelerini
+## kendiliginden anlamli yapiyor -- hepsi isinin ustte kalabilmesine bagli.
+var kor_maliyet := 0.4
 var yayilim_dps := 2.4         # kart: kor yayilimi saniyelik hasari
 var yayilim_menzil := 0.62     # gorus yaricapinin bu orani
 
@@ -276,7 +301,8 @@ func dokum_yap() -> bool:
         if y.turu() == "mangal" and not y.yanik                 and y.global_position.distance_to(global_position) <= menzil:
             y.yak()
 
-    isi.kilitli = false          # KILIDI KIRAN TEK SEY
+    if dokum_kilit_kirar:
+        isi.kilitli = false      # KILIDI KIRAN TEK SEY (firin 2'de kapali)
     isi.deger = 0.0
     dokum_sarj = 0.0
     dokum_kullanim += 1
@@ -478,7 +504,7 @@ func _ates_et(nisan: Vector2) -> void:
     _atis_sayaci = s["aralik"] / atis_hizi_carpani
     isi.ates_et(float(s["isi"]) * isi_carpani)
     var hasar: float = s["hasar"] * mermi_hasari
-    if isi.oran() > 0.7:
+    if sicak_hasar_bonusu and isi.oran() > 0.7:
         hasar *= asiri_isi_carpani
 
     var adet: int = int(s["adet"]) + ek_mermi

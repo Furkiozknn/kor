@@ -282,6 +282,31 @@ func _process(_delta: float) -> bool:
     oyuncu._dokunulmaz = 0.0
     _can_koru = true
 
+    # FIRIN KADEMELERI GERCEKTEN ISIRIYOR MU.
+    # Her kademe isinin bir ODULUNU kapatmali. Kademe 3'un gorus
+    # degistiricisi bir sure boyunca sessizce yok oluyordu (karanlik
+    # dugumu henuz kurulmadan cagriliyordu) ve kimse fark etmedi --
+    # olcumde kademe 2 ile 3 birebir ayni sonucu verdigi icin cikti.
+    for kademe in [1, 2, 3]:
+        oyuncu.miknatis_isiya_bagli = true
+        oyuncu.dokum_kilit_kirar = true
+        oyuncu.sicak_hasar_bonusu = true
+        var gorus_once: float = kl.gorus_carpani
+        kl.gorus_carpani = 1.0
+        kyt.kademe_yaz(kademe)
+        _ana._firin_kademesi_uygula()
+        assert(not oyuncu.miknatis_isiya_bagli, "kademe %d: miknatis odulu kapanmali" % kademe)
+        if kademe >= 2:
+            assert(not oyuncu.dokum_kilit_kirar, "kademe %d: dokum kilit kirmamali" % kademe)
+        if kademe >= 3:
+            assert(not oyuncu.sicak_hasar_bonusu, "kademe 3: sicak hasar bonusu kapanmali")
+            assert(kl.gorus_carpani < 1.0, "kademe 3: gorus daralmali (%.2f)" % kl.gorus_carpani)
+        kl.gorus_carpani = gorus_once
+    kyt.kademe_yaz(0)
+    oyuncu.miknatis_isiya_bagli = true
+    oyuncu.dokum_kilit_kirar = true
+    oyuncu.sicak_hasar_bonusu = true
+
     # GOREVLER: sayaclar dogru isliyor mu, odul SECENEK mi GUC mu
     var gv = _ana.gorevler
     gv.kosu_basla()

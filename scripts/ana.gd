@@ -61,6 +61,7 @@ var patron_sayisi := 0
 ## hepsi SECENEK aciyor -- baslangic silahi, ek yakma hakki, dokum onyukleme.
 var gorevler := Gorevler.new()
 var acilan_gorevler: Array = []
+var _son_darbe := false
 var yakilan_mangal := 0
 var toplam_mangal := 0
 var _patron: Node2D = null
@@ -104,13 +105,16 @@ static func _dil() -> String:
 func _ready() -> void:
     TranslationServer.set_locale(_dil())
     gorevler.kosu_basla()
-    _firin_kademesi_uygula()
     SesYonetici.yukle_klasorden()
     SesYonetici.muzik_katmanli_cal()
     _arena_kur()
     _lekeler()
     _yapilari_dog()
     _karanlik_kur()
+    # DIKKAT: karanlik dugumu KURULDUKTAN sonra. Kademe 3'un gorus
+    # degistiricisi karanlik'a yaziyor; once cagrilirsa sessizce yok olur
+    # (olcumde kademe 2 ve 3 birebir ayni cikinca yakalandi).
+    _firin_kademesi_uygula()
     _hud_kur()
     if OS.is_debug_build():
         var g := GelistiriciSahne.new()
@@ -247,7 +251,7 @@ func _ozet_satirlari(olum: bool) -> Array:
             var sayi: int = int(b["sayi"])
             s.append("  %s%s   %s" % [ad, (" x%d" % sayi) if sayi > 1 else "", b["aciklama"]])
     s.append("")
-    s.append(tr("CÜRUF  +%d   (toplam %d)%s") % [kazanilan_curuf, Kayit.curuf(),
+    s.append(tr("DÖKÜM  %d   (en iyi %d)%s") % [kazanilan_curuf, Kayit.en_iyi_curuf(),
         "   ·   fırın kademesi %d" % firin_kademesi if firin_kademesi > 0 else ""])
     if olum:
         s.append("")
@@ -265,8 +269,22 @@ func _process(delta: float) -> void:
 
     gecen += delta
     if gecen >= Dalgalar.KOSU_SURESI and not kazandi:
-        _kosu_kazanildi()
-        return
+        # SON DARBE: sure dolunca patron hala hayattaysa kosu BITMIYOR.
+        # Onceden t=720'de patronun durumuna bakilmadan kazaniliyordu ve
+        # _kosu_kazanildi() "dusman" grubunu supurdugu icin patron sessizce
+        # siliniyordu -- doruk nokta bir sayacti. Artik oyunu patronu
+        # oldurerek bitiriyorsun.
+        if is_instance_valid(_patron):
+            if not _son_darbe:
+                _son_darbe = true
+                _duyuru("SON DARBE")
+                Hiss.sars(6.0)
+                SesYonetici.cal("patron_uyandi")
+            # Sayac 12:00'de duruyor: uzatma "ek sure" degil, DORUK NOKTA.
+            gecen = Dalgalar.KOSU_SURESI
+        else:
+            _kosu_kazanildi()
+            return
     var yeni_evre: String = str(Dalgalar.evre(gecen)["ad"])
     if yeni_evre != evre_adi:
         evre_adi = yeni_evre
@@ -284,8 +302,10 @@ func _process(delta: float) -> void:
     if patron_sayisi < Dalgalar.PATRON_ZAMANLARI.size() and gecen >= float(Dalgalar.PATRON_ZAMANLARI[patron_sayisi]):
         _patron_dog()
     _patron_cubuk_tazele()
+    if _son_darbe:
+        _spawn_sayaci = 1.0        # uzatmada yeni dusman yok
     _spawn_sayaci -= delta
-    if _spawn_sayaci <= 0.0:
+    if not _son_darbe and _spawn_sayaci <= 0.0:
         _spawn_sayaci = Dalgalar.spawn_araligi(gecen) * spawn_carpani
         if _canli_dusman() < canli_tavan():
             _dusman_dog()
@@ -329,12 +349,27 @@ func _process(delta: float) -> void:
 func _firin_kademesi_uygula() -> void:
     var k: int = Kayit.kademe()
     firin_kademesi = k
+    # OLCULDU: eski uc degistirici de isinin BIRIKIM HIZINA dokunuyordu ve
+    # merdiven TERS calisiyordu -- kademe 1 hicbir sey yapmiyor (t=-0,33),
+    # kademe 2 oyunu KOLAYLASTIRIYOR (+60,2 sn, t=+2,21) ve en cok oduyordu.
+    # Yani baskin strateji her zaman kademe 2 idi, kademe 3'u oynamak icin
+    # kimsenin sebebi yoktu.
+    #
+    # Sebep: Kor'da isi CEZA DEGIL ODUL (gorus + hasar + yayilim + dokum +
+    # miknatis) ve tek bedeli olan kilidi dokum kiriyor. Isirmasi icin
+    # degistiricilerin ODUL tarafina dokunmasi gerekiyor.
+    # DIKKAT: kademe 1 once "sicak hasar bonusu yok" idi, ama
+    # asiri_isi_carpani VARSAYILAN 1,0 -- yani KIZGIN CELIK karti
+    # alinmadiysa bonusu kapatmak HICBIR SEY YAPMIYORDU. Olcumde de
+    # oyle cikti (605 sn, kademe 0'in 590'indan farksiz). Kademe
+    # degistiricisi KOSULSUZ isirmali.
     if k >= 1:
-        oyuncu.isi_carpani *= 1.25          # korük: isi %25 hizli birikir
+        oyuncu.miknatis_isiya_bagli = false  # KURU MIKNATIS: cekim isiyla buyumez
     if k >= 2:
-        oyuncu.isi.kilit_suresi = 3.0       # sikisan valf: kilit 2 -> 3 sn
+        oyuncu.dokum_kilit_kirar = false    # CATLAK POTA: dokum artik kilidi kirmiyor
     if k >= 3:
-        guc_carpani *= 1.15                 # dokumhane uyanir
+        oyuncu.sicak_hasar_bonusu = false   # SOGUK DEMIR: %70 ustu hasar bonusu yok
+        _gorus_degistir(0.80, 0.0)          # DAR GOZ: gorus %20 daraliyor
 
 ## Isi = gorus. Oyunun ayrisma noktasi; ayrinti karanlik.gd icinde.
 func _karanlik_kur() -> void:
@@ -644,7 +679,7 @@ func _kart_havuzu() -> Array:
         {"ad": "ÖRS DARBESİ", "aciklama": "Kor atışı hasarı +%60", "ikon": "ors",
             "uygula": func(o): o.kor_carpani += 0.6},
         {"ad": "YARIM BOŞALTMA", "aciklama": "Kor atışı ısının yarısını bırakır", "ikon": "soguk",
-            "uygula": func(o): o.kor_maliyet = maxf(o.kor_maliyet * 0.5, 0.25)},
+            "uygula": func(o): o.kor_maliyet = maxf(o.kor_maliyet * 0.5, 0.15)},
         {"ad": "KOR YAYILIMI", "aciklama": "Çevreni yakma hasarı +%70", "ikon": "kor",
             "uygula": func(o): o.yayilim_dps *= 1.7},
         {"ad": "GENİŞ HALKA", "aciklama": "Yayılım menzili +%25", "ikon": "kazan",
@@ -703,6 +738,9 @@ func _kart_havuzu() -> Array:
 ## Gorus artik bir kaynak: kartlar onu takas edebiliyor.
 func _gorus_degistir(carpan: float, taban_ek: float) -> void:
     if karanlik == null:
+        # Sessizce donmek bir kere cok pahaliya patladi: firin kademesi 3
+        # bu yuzden hicbir sey yapmiyordu ve kimse fark etmedi.
+        push_error("gorus degistirilemedi: karanlik dugumu henuz yok")
         return
     karanlik.gorus_carpani *= carpan
     karanlik.taban_yaricap += taban_ek

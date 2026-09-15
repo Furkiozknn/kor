@@ -14,11 +14,12 @@ const OYUN := "res://scenes/level.tscn"
 
 ## Firin kademeleri. Her biri isi ekonomisine dokunuyor; hicbiri oyuncuya
 ## kalici GUC vermiyor -- sadece daha zor bir firin ve daha cok curuf.
+## Her kademe isinin bir ODULUNU kapatiyor, birikim hizina dokunmuyor.
 const KADEMELER := [
     "kapalı",
-    "körük — ısı %25 hızlı birikir",
-    "sıkışan valf — kilit 3 saniye",
-    "dökümhane uyanık — düşmanlar %15 güçlü",
+    "kuru mıknatıs — çekim ısıyla büyümez",
+    "çatlak pota — döküm kilidi kırmaz",
+    "soğuk demir + dar göz — hasar bonusu yok, görüş %20 dar",
 ]
 
 var _isik: Array[Vector3] = []
@@ -142,7 +143,9 @@ func _arayuz_kur() -> void:
 
     # Kalici durum: curuf ve rekor
     var rekor: float = float(Kayit._veri.get("en_iyi_sure", 0.0))
-    var durum := tr("CÜRUF %d") % Kayit.curuf()
+    # Biriken toplam yerine EN IYI KOSU gosteriliyor: curuf harcanmiyor,
+    # yani biriken bir sayi olarak gostermek olmayan bir dukkan sozu veriyor.
+    var durum := tr("EN İYİ DÖKÜM %d") % Kayit.en_iyi_curuf()
     if rekor > 0.0:
         durum += tr("     en iyi %02d:%02d") % [int(rekor) / 60, int(rekor) % 60]
     kutu.add_child(Tema.vurgu(durum))

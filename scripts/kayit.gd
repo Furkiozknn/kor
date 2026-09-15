@@ -27,6 +27,7 @@ const VARSAYILAN := {
 	"firin_kademesi": 0,    # gonullu zorluk; 0 = kapali
 	"en_iyi_sure": 0.0,
 	"en_iyi_oldurme": 0,
+	"en_iyi_curuf": 0,
 	"ayarlar": {
 		"ses_ana": 0.0,
 		"ses_efekt": -6.0,
@@ -99,6 +100,10 @@ func sifirla() -> void:
 func curuf() -> int:
 	return int(_veri.get("curuf", 0))
 
+## Tek bir kosuda elde edilen en yuksek dokum -- oyunun skoru.
+func en_iyi_curuf() -> int:
+	return int(_veri.get("en_iyi_curuf", 0))
+
 func curuf_ekle(miktar: int) -> int:
 	_veri["curuf"] = curuf() + miktar
 	_kirli = true
@@ -128,8 +133,12 @@ func kademe_yaz(k: int) -> void:
 	_kirli = true
 
 ## Firin kademesi curuf kazancini carpar: 0 -> 1.0, her kademe +%35.
+## Kademe carpani USTEL: onceden dogrusaldi (1 + 0,35k) ve olcumde
+## kademe 2 hem kolay hem en cok oduyen secenekti -- baskin strateji.
+## Ustel egri, degistiriciler artik gercekten isirdigi icin, ust
+## kademeleri gercek bir tercih haline getiriyor.
 func kademe_carpani() -> float:
-	return 1.0 + 0.35 * kademe()
+	return pow(1.55, kademe())
 
 ## Kosu bitince tek cagri: rekorlari gunceller, curufu kademeye gore ekler.
 ## Kosu sirasinda BIRIKEN curuf. Onceden butun kazanc kosu SONUNDA tek
@@ -139,9 +148,23 @@ func kademe_carpani() -> float:
 func kosu_curufu(oldurme: int) -> int:
 	return int(round(oldurme * kademe_carpani()))
 
+## CURUF BIR PARA BIRIMI DEGIL, BIR SKOR.
+##
+## curuf_harca() hicbir yerden cagrilmiyordu -- dukkan yok, sink yok. Ama
+## curuf iki ekranda birden BIRIKEN BIR TOPLAM olarak gosteriliyordu ve
+## biriken para gostergesi "bir yerde dukkan var" sozu verir. Yoktu.
+##
+## Dukkan eklemek de yanlis olurdu: kendi ilkemiz "icerik parayla degil
+## ustalikla acilir" ve gorev sistemi zaten secenek veriyor.
+##
+## kosu_curufu = oldurme x kademe_carpani ZATEN bir arcade skor formulu.
+## Yanlis olan sunumuydu. Artik EN IYI DOKUM olarak gosteriliyor, yani
+## firin kademesi de anlam kazaniyor: yuksek kademe = yuksek tavan.
 func kosu_bitti(sure: float, oldurme: int) -> int:
 	var kazanc := kosu_curufu(oldurme)
 	curuf_ekle(kazanc)
+	if kazanc > int(_veri.get("en_iyi_curuf", 0)):
+		_veri["en_iyi_curuf"] = kazanc
 	if sure > float(_veri.get("en_iyi_sure", 0.0)):
 		_veri["en_iyi_sure"] = sure
 	if oldurme > int(_veri.get("en_iyi_oldurme", 0)):
