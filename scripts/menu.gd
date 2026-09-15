@@ -28,6 +28,8 @@ var _oyuncu: AnimatedSprite2D
 var _kademe_yazi: Label
 var _ses_yazi: Label
 var _kunye: CanvasLayer
+var _gorev_katman: CanvasLayer
+const Gorevler := preload("res://scripts/gorevler.gd")
 var _sarsinti_dugme: Button
 var _donma_dugme: Button
 
@@ -201,7 +203,7 @@ func _arayuz_kur() -> void:
     # ekran disinda kaliyordu. Iki satir + tam genislikte ortalama: sabit
     # koordinat yok, yazi tipi degisse de kesilmez.
     var alt := Tema.sonuk("WASD hareket · SOL TIK ateş · SAĞ TIK kor · BOŞLUK dalış
-E döküm · Q silah · F11 tam ekran · C künye")
+E döküm · Q silah · G görevler · F11 tam ekran · C künye")
     alt.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
     alt.offset_left = Tema.BOSLUK_M
     alt.offset_right = -Tema.BOSLUK_M
@@ -294,6 +296,8 @@ func _unhandled_key_input(olay: InputEvent) -> void:
         _basla()
     elif k == KEY_C:
         _kunye_degis()
+    elif k == KEY_G:
+        _gorev_degis()
     elif k == KEY_F11:
         _tam_ekran_degis()
     elif k == KEY_ESCAPE:
@@ -354,3 +358,59 @@ func _tam_ekran_degis() -> void:
 func _basla() -> void:
     SesYonetici.cal("kart_sec")
     get_tree().change_scene_to_file(OYUN)
+
+
+## GOREV LISTESI. Oyuncu neyin pesinde oldugunu bilmeli -- yoksa gorev
+## sistemi "kosu bitince surpriz cikan sey"e donusur ve hedef olmaz.
+## itch'te Steam basarimi yok; bu liste onun yerini tutuyor.
+func _gorev_degis() -> void:
+    if _gorev_katman != null and is_instance_valid(_gorev_katman):
+        _gorev_katman.queue_free()
+        _gorev_katman = null
+        return
+    _gorev_katman = CanvasLayer.new()
+    _gorev_katman.layer = 5
+    add_child(_gorev_katman)
+    var fon := ColorRect.new()
+    fon.color = Color(0.01, 0.01, 0.03, 0.9)
+    fon.set_anchors_preset(Control.PRESET_FULL_RECT)
+    _gorev_katman.add_child(fon)
+
+    var sarmal := PanelContainer.new()
+    sarmal.theme = Tema.tema()
+    sarmal.set_anchors_preset(Control.PRESET_FULL_RECT)
+    sarmal.offset_left = 48
+    sarmal.offset_right = -48
+    sarmal.offset_top = 40
+    sarmal.offset_bottom = -34
+    sarmal.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+    sarmal.add_theme_stylebox_override("panel",
+        Tema.kutu(Tema.GOVDE, Tema.KENAR_KOR, 1, Tema.BOSLUK_L))
+    _gorev_katman.add_child(sarmal)
+
+    var kutu := VBoxContainer.new()
+    kutu.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    sarmal.add_child(kutu)
+    kutu.add_child(Tema.baslik("GÖREVLER"))
+    kutu.add_child(Tema.sonuk("içerik parayla değil ustalıkla açılır"))
+    var bosluk := Control.new()
+    bosluk.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
+    kutu.add_child(bosluk)
+
+    var acik_sayi := 0
+    for g in Gorevler.LISTE:
+        var acik: bool = Kayit.acik(str(g["kod"]))
+        if acik:
+            acik_sayi += 1
+        var l := Tema.vurgu("✓  %s" % g["ad"]) if acik else Tema.govde("·  %s" % g["ad"])
+        l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        kutu.add_child(l)
+        var alt := Tema.sonuk("     %s  →  %s" % [
+            "AÇILDI" if acik else str(g["aciklama"]), str(g["odul"])])
+        alt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        kutu.add_child(alt)
+
+    var bosluk2 := Control.new()
+    bosluk2.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
+    kutu.add_child(bosluk2)
+    kutu.add_child(Tema.sonuk("%d/%d açıldı   ·   G kapat" % [acik_sayi, Gorevler.LISTE.size()]))

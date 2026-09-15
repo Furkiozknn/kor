@@ -282,6 +282,24 @@ func _process(_delta: float) -> bool:
     oyuncu._dokunulmaz = 0.0
     _can_koru = true
 
+    # GOREVLER: sayaclar dogru isliyor mu, odul SECENEK mi GUC mu
+    var gv = _ana.gorevler
+    gv.kosu_basla()
+    gv.guncelle(5.0, false)
+    gv.guncelle(3.0, true)          # kilit sayaci SIFIRLAMALI
+    assert(is_zero_approx(gv._sayac["kilitsiz_sure"]), "kilit sayaci sifirlamali")
+    gv.guncelle(4.0, false)
+    assert(is_equal_approx(gv._sayac["kilitsiz_sure"], 4.0), "kilitsiz sure birikmeli")
+    gv.oldurme(0.9)
+    gv.oldurme(0.1)
+    gv.oldurme(0.5)                 # ara bant hicbirine sayilmamali
+    assert(is_equal_approx(gv._sayac["sicak_oldurme"], 1.0), "sicak oldurme sayilmali")
+    assert(is_equal_approx(gv._sayac["soguk_oldurme"], 1.0), "soguk oldurme sayilmali")
+    # Her gorevin odulu GERCEK bir secenege baglanmis olmali
+    for g in _ana.Gorevler.LISTE:
+        assert(g.has("verir") and str(g["verir"]) != "", "gorev odulu baglanmamis: " + str(g["ad"]))
+    gv.kosu_basla()
+
     # DAMGA: silaha KALICI yapisir, tavani var, silah degisince TASINMAZ
     oyuncu.damgalar.clear()
     oyuncu.silah_indeksi = 0

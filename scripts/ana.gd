@@ -5,6 +5,7 @@ const DusmanSahne := preload("res://scenes/dusman.tscn")
 const KupSahne := preload("res://scenes/kup.tscn")
 const YapiSahne := preload("res://scenes/yapi.tscn")
 const Silahlar := preload("res://scripts/silahlar.gd")
+const Gorevler := preload("res://scripts/gorevler.gd")
 const PatronSahne := preload("res://scenes/patron.tscn")
 const Dalgalar := preload("res://scripts/dalgalar.gd")
 const YAZI_TIPI := preload("res://assets/fonts/PublicPixel.ttf")
@@ -56,6 +57,10 @@ var spawn_carpani := 1.0
 var guc_carpani := 1.0
 var tavan_artis := 1.0
 var patron_sayisi := 0
+## GOREVLER: icerik PARAYLA degil USTALIKLA acilir. Hicbiri guc vermiyor,
+## hepsi SECENEK aciyor -- baslangic silahi, ek yakma hakki, dokum onyukleme.
+var gorevler := Gorevler.new()
+var acilan_gorevler: Array = []
 var yakilan_mangal := 0
 var toplam_mangal := 0
 var _patron: Node2D = null
@@ -68,6 +73,7 @@ var _lbl_ust: Label
 var _isi_cubuk: ColorRect
 var _isi_yazi: Label
 var _lbl_silah: Label
+var _lbl_sayac: Label
 var _dokum_cubuk: ColorRect
 var _dokum_yazi: Label
 var karanlik: CanvasLayer
@@ -89,6 +95,7 @@ var _ipucu: Label
 var _duraklat_katman: CanvasLayer
 
 func _ready() -> void:
+    gorevler.kosu_basla()
     _firin_kademesi_uygula()
     SesYonetici.yukle_klasorden()
     SesYonetici.muzik_katmanli_cal()
@@ -101,6 +108,7 @@ func _ready() -> void:
         var g := GelistiriciSahne.new()
         g.ana = self
         add_child(g)
+    _acilan_secenekleri_uygula()
     oyuncu.oldu.connect(_oyun_bitti)
     oyuncu.can_degisti.connect(_can_tazele)
     oyuncu.can_degisti.emit(oyuncu.can, oyuncu.maks_can)
@@ -215,6 +223,8 @@ func _ozet_satirlari(olum: bool) -> Array:
     var s: Array = []
     s.append("sure %02d:%02d    seviye %d    oldurme %d" % [
         int(gecen) / 60, int(gecen) % 60, seviye, oldurulen])
+    for g in acilan_gorevler:
+        s.append("★ GÖREV TAMAM: %s — %s" % [g["ad"], g["odul"]])
     s.append("dokumhane %d/%d mangal yandi%s" % [yakilan_mangal, toplam_mangal,
         "    — HEPSI" if yakilan_mangal >= toplam_mangal and toplam_mangal > 0 else ""])
     s.append("silah %s    acik %d/4" % [oyuncu.silah(), oyuncu.acik_silahlar.size()])
@@ -253,6 +263,7 @@ func _process(delta: float) -> void:
         evre_adi = yeni_evre
         if evre_adi == evre_adi.to_upper():
             _duyuru(evre_adi)
+    gorevler.guncelle(delta, oyuncu.isi.kilitli)
     _dalis_ogret()
     # ZAFER TURU: son 90 saniyede tavana varmak silahi susturmuyor.
     if oyuncu.isi.kilit_acik and not Dalgalar.kilit_var_mi(gecen):
@@ -284,18 +295,17 @@ func _process(delta: float) -> void:
     elif oyuncu.kor_atabilir():
         _isi_yazi.text = "KOR HAZIR"
     else:
-        _isi_yazi.text = "ISI"
+        _isi_yazi.text = ""
     # MANGAL sayaci sadece SONUK mangal kaldiysa gorunuyor: bu bir hedef
     # gostergesi, bir istatistik degil. Hepsi yaninca kendini siliyor --
     # HUD'da isi bitmis bir eleman durmasin.
-    var curuf_ek := ""
+    _lbl_ust.text = "%02d:%02d" % [int(gecen) / 60, int(gecen) % 60]
+    var alt: Array = ["sv%d" % seviye, "×%d" % oldurulen]
     if oldurulen > 0:
-        curuf_ek = "   CÜRUF +%d" % Kayit.kosu_curufu(oldurulen)
-    var mangal_ek := ""
+        alt.append("+%d" % Kayit.kosu_curufu(oldurulen))
     if toplam_mangal > 0 and yakilan_mangal < toplam_mangal:
-        mangal_ek = "   MANGAL %d/%d" % [yakilan_mangal, toplam_mangal]
-    _lbl_ust.text = "%02d:%02d   SEVİYE %d   XP %d/%d   ÖLDÜRME %d%s%s" % [
-        int(gecen) / 60, int(gecen) % 60, seviye, xp, xp_hedef, oldurulen, curuf_ek, mangal_ek]
+        alt.append("▲%d/%d" % [yakilan_mangal, toplam_mangal])
+    _lbl_sayac.text = "   ".join(alt)
     _xp_cubuk.size.x = 640.0 * clampf(float(xp) / maxf(float(xp_hedef), 1.0), 0.0, 1.0)
     if _dokum_yazi != null and oyuncu.dokum_hazir():
         _dokum_yazi.scale = Vector2.ONE * (1.0 + 0.06 * sin(gecen * 7.0))
@@ -453,6 +463,7 @@ func _mangal_yakildi(poz: Vector2) -> void:
 ## Patron olunce oyuncu odullendirilir ve dalgalar sertlesir.
 func _patron_yenildi() -> void:
     _patron = null
+    gorevler.patron_dustu()
     tavan_artis *= 1.08
     guc_carpani *= 1.10
     _duyuru("KÜL ANASI DÜŞTÜ")
@@ -533,6 +544,7 @@ func _kenar_noktasi() -> Vector2:
 
 func _dusman_oldu(poz: Vector2, kazanc: int) -> void:
     oldurulen += 1
+    gorevler.oldurme(oyuncu.isi.oran())
     _kup_dus(poz, kazanc)
 
 ## XP kupu. DIKKAT: bu fonksiyon fizik sorgusu akarken cagrilabiliyor
@@ -850,8 +862,17 @@ func _hud_kur() -> void:
     kok.add_theme_constant_override("separation", Tema.BOSLUK_S)
     _hud.add_child(kok)
 
-    _lbl_ust = Tema.sonuk("")
-    kok.add_child(_lbl_ust)
+    # HIYERARSI: sure parlak, sayaclar sonuk. Onceden alti veri de ayni
+    # boyut ve ayni renkteydi; oyuncu bir bakista neyin onemli oldugunu
+    # ayirt edemiyordu.
+    var ust_satir := HBoxContainer.new()
+    ust_satir.add_theme_constant_override("separation", Tema.BOSLUK_L)
+    kok.add_child(ust_satir)
+    _lbl_ust = Tema.vurgu("")
+    ust_satir.add_child(_lbl_ust)
+    _lbl_sayac = Tema.sonuk("")
+    _lbl_sayac.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+    ust_satir.add_child(_lbl_sayac)
 
     # Can pulleri: yildiz yerine kor kareleri
     _can_kutu = HBoxContainer.new()
@@ -956,8 +977,10 @@ func _build_tazele() -> void:
 ## Koşu tamamlandı. Turde kazanma kosulu yoktu -- eklendi.
 func _kosu_kazanildi() -> void:
     kazandi = true
+    gorevler.kazandi()
     bitti = true
     kazanilan_curuf = Kayit.kosu_bitti(gecen, oldurulen)
+    acilan_gorevler = gorevler.kosu_bitti()
     SesYonetici.muzik_dur()
     SesYonetici.cal("kosu_bitti")
     for d in get_tree().get_nodes_in_group("dusman"):
@@ -968,6 +991,7 @@ func _kosu_kazanildi() -> void:
 func _oyun_bitti() -> void:
     bitti = true
     kazanilan_curuf = Kayit.kosu_bitti(gecen, oldurulen)
+    acilan_gorevler = gorevler.kosu_bitti()
     # Acik modal kalmasin: olum her seyin ustunde
     for katman in [_kart_katman, _duraklat_katman]:
         if katman != null and is_instance_valid(katman):
@@ -981,3 +1005,18 @@ func _oyun_bitti() -> void:
     _panel_kur("SÖNDÜN", _ozet_satirlari(true), "R yeniden başla   ·   ESC menü")
     for d in get_tree().get_nodes_in_group("dusman"):
         d.queue_free()
+
+
+## Gorevlerle acilan secenekleri kosu basinda uygular. Hicbiri GUC degil:
+## farkli baslangic silahi farkli bir oynayis, daha guclu bir oynayis degil.
+func _acilan_secenekleri_uygula() -> void:
+    var acik: Array = Gorevler.acik_secenekler()
+    var silahlar := {"baslangic_sacma": 1, "baslangic_isin": 2, "baslangic_cekic": 3}
+    for anahtar in acik:
+        if silahlar.has(anahtar):
+            oyuncu.silah_ver(int(silahlar[anahtar]))
+        elif anahtar == "ek_yakma":
+            yakma_hakki += 1
+        elif anahtar == "dokum_onyukleme":
+            oyuncu.dokum_sarj = 0.5
+            oyuncu.dokum_degisti.emit(0.5, false)

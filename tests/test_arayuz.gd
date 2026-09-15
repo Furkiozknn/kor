@@ -35,21 +35,25 @@ func _process(_delta: float) -> bool:
     match _asama:
         0:
             _tara("MENU", _ana)
-            _gec("res://scenes/level.tscn")
+            _ana._gorev_degis()
         1:
+            _tara("GÖREV EKRANI", _ana)
+            _ana._gorev_degis()
+            _gec("res://scenes/level.tscn")
+        2:
             _tara("OYUN HUD", _ana)
             _ana._xp_topla(_ana.xp_hedef)      # kart ekrani acilsin
-        2:
+        3:
             _tara("KART EKRANI", _ana)
             for d in _dugme_ara(_ana):         # karti sec, ekran kapansin
                 d.pressed.emit()
                 break
             _ana._duraklat_degis()
-        3:
+        4:
             _tara("DURAKLATMA", _ana)
             _ana._duraklat_degis()
             _ana._oyun_bitti()
-        4:
+        5:
             _tara("OLUM EKRANI", _ana)
             return _bitir()
     _asama += 1
@@ -73,7 +77,7 @@ func _bitir() -> bool:
     for satir in _rapor:
         print(satir)
     if _hata == 0:
-        print("TAMAM arayuz: bes ekranda tasan eleman yok")
+        print("TAMAM arayuz: alti ekranda tasan eleman yok")
     quit(_hata)
     return true
 
