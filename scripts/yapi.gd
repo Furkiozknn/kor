@@ -32,6 +32,7 @@ var _tur := "fici"
 var _parlama := 0.0
 var _hale: Sprite2D
 var _zerre := 0.0
+var _oyuncu: Node2D
 
 @onready var _gorsel: Sprite2D = $Gorsel
 @onready var _carpisma: CollisionShape2D = $Carpisma
@@ -88,7 +89,37 @@ func turu() -> String:
 func isik_yaricapi() -> float:
     return 62.0 + sin(Time.get_ticks_msec() / 240.0 + position.x) * 6.0
 
+## GORUNMEZ OGRETIM. Sonuk mangal, SICAK oyuncu yaklasinca uyaniyor gibi
+## titriyor -- "beni yak" diyor. Metin kutusu yok, ipucu yok. Oyuncu soguksa
+## hicbir sey olmuyor, yani mesaj "yaklas" degil "ISIN ve yaklas".
+const UYANIS_MENZIL := 68.0
+
+func _sonuk_tepki(delta: float) -> void:
+    if not is_instance_valid(_oyuncu):
+        _oyuncu = get_tree().get_first_node_in_group("oyuncu")
+        if not is_instance_valid(_oyuncu):
+            return
+    var d := global_position.distance_to(_oyuncu.global_position)
+    if d > UYANIS_MENZIL:
+        _gorsel.modulate = Color(0.42, 0.45, 0.52)
+        return
+    # Yakinlik VE isi birlikte: ikisi de yuksekse kor rengine donuyor.
+    var yakinlik := 1.0 - d / UYANIS_MENZIL
+    var hazir: float = clampf(_oyuncu.isi.oran() / _oyuncu.YAKMA_ESIK, 0.0, 1.0)
+    var g := yakinlik * hazir
+    var nabiz := 0.85 + 0.15 * sin(Time.get_ticks_msec() / 90.0)
+    _gorsel.modulate = Color(0.42, 0.45, 0.52).lerp(
+        Color(1.35, 0.78, 0.35) * nabiz, g)
+    if g > 0.75:
+        _zerre -= delta
+        if _zerre <= 0.0:
+            _zerre = randf_range(0.10, 0.22)
+            Hiss.patlama(get_parent(), global_position + Vector2(randf_range(-4, 4), -2),
+                Color(1.0, 0.55, 0.15), 1, 26.0, 1.0, 0.7)
+
 func _process(delta: float) -> void:
+    if _tur == "mangal" and not yanik:
+        _sonuk_tepki(delta)
     if _hale != null and yanik:
         var n := 1.05 + sin(Time.get_ticks_msec() / 220.0 + position.x) * 0.10
         _hale.scale = Vector2(n, n)

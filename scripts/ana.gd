@@ -190,6 +190,8 @@ func _ozet_satirlari(olum: bool) -> Array:
     var s: Array = []
     s.append("sure %02d:%02d    seviye %d    oldurme %d" % [
         int(gecen) / 60, int(gecen) % 60, seviye, oldurulen])
+    s.append("dokumhane %d/%d mangal yandi%s" % [yakilan_mangal, toplam_mangal,
+        "    — HEPSI" if yakilan_mangal >= toplam_mangal and toplam_mangal > 0 else ""])
     s.append("silah %s    acik %d/4" % [oyuncu.silah(), oyuncu.acik_silahlar.size()])
     s.append("")
     if alinan_kartlar.is_empty():
@@ -250,8 +252,14 @@ func _process(delta: float) -> void:
         _isi_yazi.text = "KOR HAZIR"
     else:
         _isi_yazi.text = "ISI"
-    _lbl_ust.text = "%02d:%02d   SEVİYE %d   XP %d/%d   ÖLDÜRME %d" % [
-        int(gecen) / 60, int(gecen) % 60, seviye, xp, xp_hedef, oldurulen]
+    # MANGAL sayaci sadece SONUK mangal kaldiysa gorunuyor: bu bir hedef
+    # gostergesi, bir istatistik degil. Hepsi yaninca kendini siliyor --
+    # HUD'da isi bitmis bir eleman durmasin.
+    var mangal_ek := ""
+    if toplam_mangal > 0 and yakilan_mangal < toplam_mangal:
+        mangal_ek = "   MANGAL %d/%d" % [yakilan_mangal, toplam_mangal]
+    _lbl_ust.text = "%02d:%02d   SEVİYE %d   XP %d/%d   ÖLDÜRME %d%s" % [
+        int(gecen) / 60, int(gecen) % 60, seviye, xp, xp_hedef, oldurulen, mangal_ek]
     _xp_cubuk.size.x = 640.0 * clampf(float(xp) / maxf(float(xp_hedef), 1.0), 0.0, 1.0)
     if _ipucu != null and gecen > 25.0:
         _ipucu.modulate.a = maxf(_ipucu.modulate.a - delta * 0.5, 0.0)
