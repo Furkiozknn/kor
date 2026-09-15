@@ -1,5 +1,15 @@
 extends Node
-## kayit.gd dogrulama testi. Calistirma: godot --headless --path . --quit-after 200
+## kayit.gd dogrulama testi.
+##
+## DIKKAT: bu test `extends Node`, yani --script ILE CALISMAZ. Oyle
+## cagrildiginda sessizce hicbir sey yapmaz ve CIKTI DA VERMEZ -- yani
+## kirik oldugu halde gecmis gibi gorunur. Bir kez tam boyle oldu.
+## O yuzden yaninda bir sahne duruyor:
+##
+##   godot --headless --path . --quit-after 300 tests/test_kayit.tscn
+##
+## Diger bes test SceneTree oldugu icin --script ile calisiyor; yalnizca
+## bu farkli.
 
 const KayitSinif := preload("res://scripts/kayit.gd")
 
@@ -38,9 +48,11 @@ func _ready() -> void:
 	# 3) Kademe carpani — gonullu zorluk odule baglaniyor
 	assert(is_equal_approx(k.kademe_carpani(), 1.0))
 	k.kademe_yaz(2)
-	assert(is_equal_approx(k.kademe_carpani(), 1.7), "kademe 2 -> 1.70 olmali")
+	# kademe_carpani() = pow(1.55, kademe) -> kademe 2 icin 2,4025
+	assert(is_equal_approx(k.kademe_carpani(), pow(1.55, 2)), "kademe 2 -> 2,4025 olmali")
 	var kazanc: int = k.kosu_bitti(95.0, 40)
-	assert(kazanc == 68, "40 oldurme x 1.7 = 68 bekleniyordu, gelen: %d" % kazanc)
+	var bek := int(round(40.0 * pow(1.55, 2)))
+	assert(kazanc == bek, "40 oldurme x %.4f = %d bekleniyordu, gelen: %d" % [pow(1.55, 2), bek, kazanc])
 	print("3) kademe carpani OK (kazanc %d)" % kazanc)
 
 	# 4) Disk turu: yeniden yukleyince ayni mi
