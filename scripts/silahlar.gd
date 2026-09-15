@@ -106,9 +106,22 @@ static func damga(anahtar: String) -> Dictionary:
 
 ## Silahin temel degerlerine damgalari uygular. Cagiran tarafta dallanma
 ## olmasin diye tek yerde toplandi; yeni damga eklemek bir satir.
+## Damgalarin CARPMA cinsinden olanlari. Toplamalardan SONRA uygulanmali:
+## "catal" yayilmaya +0,10 ekliyor, "uzun_namlu" ×0,60 carpiyor -- alinma
+## sirasina birakilirsa ayni iki damga 0,090 ya da 0,130 yayilma uretiyor,
+## yani %44 fark, ve oyuncu bunu goremiyor.
+const CARPAN_DAMGALAR := ["soguk_namlu", "agir_dokum", "uzun_namlu"]
+
 static func damgali(i: int, anahtarlar: Array) -> Dictionary:
     var s := al(i).duplicate()
+    var sirali: Array = []
     for a in anahtarlar:
+        if not str(a) in CARPAN_DAMGALAR:
+            sirali.append(a)
+    for a in anahtarlar:
+        if str(a) in CARPAN_DAMGALAR:
+            sirali.append(a)
+    for a in sirali:
         match str(a):
             "delici":
                 s["delici"] = true

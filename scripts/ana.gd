@@ -384,12 +384,21 @@ func _arena_kur() -> void:
         for x in SUTUN:
             var kenar := x == 0 or y == 0 or x == SUTUN - 1 or y == SATIR - 1
             var atlas: Vector2i
+            # ZEMIN BILESIMI. Onceden hucrelerin %80'i TEK bir neredeyse
+            # bos karoydu ve isi %75'te oyun alaninin %58'i aydinlik --
+            # yani kosunun cogunda ekranin yarisi bos kahverengi duzlem.
+            # Alti dokumhane karosu (oluk, izgara, dikis, tahliye, is
+            # halkasi, catlak+kor) %14 oraninda serpiliyor. Yogunluk
+            # gozle denendi: %14 kullanilmis endustriyel zemin, %40 duvar
+            # kagidi oluyor ve dusman aramak zorlasiyor.
             if kenar:
                 atlas = Vector2i(4 + randi() % 3, 0)          # duvar (carpismali)
-            elif randf() < 0.80:
-                atlas = ZEMIN_SADE
-            else:
+            elif randf() < 0.14:
+                atlas = Vector2i(7 + randi() % 6, 0)          # dokumhane karolari
+            elif randf() < 0.24:
                 atlas = Vector2i(1 + randi() % 3, 0)          # catlakli zemin
+            else:
+                atlas = ZEMIN_SADE
             _karolar.set_cell(Vector2i(x, y), 0, atlas)
 
 ## Zemine is/kurum lekeleri serp -- duz kahverengi bir deniz kalmasin.
@@ -476,6 +485,15 @@ func _canli_dusman() -> int:
 
 ## Patron. Can torbasi degil, cekirdek mekanigin sinavi -- ayrinti
 ## patron.gd icinde.
+## Uc patron da ayni sahne ve ayni dovus; ama ekranda ayni ISIM olunca
+## 150. saniyedeki ilk karsilasma ile 690. saniyedeki doruk birbirinden
+## ayirt edilemiyordu. Isimler ayrilinca KUL ANASI adi yalnizca finale ait
+## oluyor ve oyuncu onu ilk kez 690'da duyuyor.
+const PATRON_ADLARI := ["OCAK BEKÇİSİ", "CÜRUF ANASI", "KÜL ANASI"]
+
+func _patron_adi() -> String:
+    return str(PATRON_ADLARI[clampi(patron_sayisi - 1, 0, PATRON_ADLARI.size() - 1)])
+
 func _patron_dog() -> void:
     patron_sayisi += 1
     var p := PatronSahne.instantiate()
@@ -487,7 +505,7 @@ func _patron_dog() -> void:
     _patron = p
     Hiss.sars(5.0)
     SesYonetici.cal("patron_uyandi")
-    _duyuru("KÜL ANASI UYANDI")
+    _duyuru("%s UYANDI" % _patron_adi())
 
 ## Mangal yakmak kalici bir kazanim: arena aydinlanir, yeni bir isi kaynagi
 ## acilir. Odulu XP degil -- odul haritanin kendisi. Ustune kucuk bir XP
@@ -510,7 +528,7 @@ func _patron_yenildi() -> void:
     gorevler.patron_dustu()
     tavan_artis *= 1.08
     guc_carpani *= 1.10
-    _duyuru("KÜL ANASI DÜŞTÜ")
+    _duyuru("%s DÜŞTÜ" % _patron_adi())
     for n in 6:
         _kup_dus(oyuncu.global_position + Vector2(randf_range(-40, 40), randf_range(-40, 40)), 5)
 

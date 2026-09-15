@@ -141,7 +141,7 @@ func hasar_al(miktar: float) -> void:
     can -= miktar
     _parlama = 0.09
     Hiss.patlama(get_parent(), global_position, Color(0.9, 0.7, 0.4), 3, 60.0, 1.2, 0.2)
-    _gorsel.modulate = Color(3, 3, 3)
+    _gorsel.modulate = Color(1.8, 2.3, 1.6)   # kehribar: arena kimligi
     if can <= 0.0:
         kirildi.emit(global_position)
         Hiss.patlama(get_parent(), global_position, Color(0.85, 0.62, 0.35),

@@ -77,7 +77,35 @@ var _itme := Vector2.ZERO
 var _dogus := 0.0
 var _adim := 0.0
 
+## --- CEKIRDEK IMZALARI ---------------------------------------------------
+##
+## Karanlikta dusmanin TEK gorunen parcasi cekirdegi. Yedi turun yedisi de
+## ayni camgobegi noktayi tasiyordu; yaricap disinda (5,5,6,6,6,7,11) hicbir
+## fark yoktu, yani bes tur birbirinden ayirt edilemiyordu.
+##
+## Imzalar TIPE gore degil, OYUNCUNUN VERMESI GEREKEN TEPKIYE gore
+## gruplandi -- yedi ayri isaret ezberlenmez, uc tanesi bir kosuda ogrenilir:
+##
+##   taban    tek cekirdek, yavas nabiz          -> normal davran
+##   hizli    tek cekirdek, UC KAT HIZLI nabiz   -> simdi kac
+##   agir     tek cekirdek, NABIZ YOK, buyuk     -> dovusme, yer degistir
+##   menzilli IKI cekirdek yan yana              -> ates hattindan cik
+##
+## Kanal secimi renk korlugu icin: nabiz OLCEKTE (hareket), sayi KONUMDA.
+## Ikisi de hue'dan bagimsiz -- mevcut kodun "nabzi alfaya degil olcege
+## koyuyoruz" karariyla ayni gerekce.
+const IMZA := {
+    0: {"hiz": 420.0, "genlik": 0.34, "adet": 1},   # kul      -- taban
+    1: {"hiz": 140.0, "genlik": 0.42, "adet": 1},   # imp      -- hizli
+    2: {"hiz":   0.0, "genlik": 0.00, "adet": 1},   # curuf    -- agir
+    3: {"hiz":   0.0, "genlik": 0.00, "adet": 1},   # iskelet  -- agir
+    4: {"hiz": 140.0, "genlik": 0.42, "adet": 1},   # hayalet  -- hizli
+    5: {"hiz": 420.0, "genlik": 0.34, "adet": 2},   # cadi     -- menzilli
+    6: {"hiz": 140.0, "genlik": 0.42, "adet": 1},   # kosucu   -- hizli
+}
+
 var _cekirdek: Sprite2D
+var _cekirdek2: Sprite2D
 
 @onready var _gorsel: AnimatedSprite2D = $Gorsel
 @onready var _carpisma: CollisionShape2D = $Carpisma
@@ -152,6 +180,16 @@ func _ready() -> void:
         _kl.parilti.add_child(_cekirdek)      # karanligin USTUNDE
     else:
         add_child(_cekirdek)
+    if int(IMZA.get(_tur, {}).get("adet", 1)) > 1:
+        _cekirdek2 = Sprite2D.new()
+        _cekirdek2.texture = _cekirdek.texture
+        _cekirdek2.material = _cekirdek.material
+        _cekirdek2.z_index = -1
+        if _kl != null and _kl.parilti != null:
+            _kl.parilti.add_child(_cekirdek2)
+        else:
+            add_child(_cekirdek2)
+
     var s := CircleShape2D.new()   # her ornek kendi seklini tasisin
     s.radius = _yaricap
     _carpisma.shape = s
@@ -167,7 +205,13 @@ func _physics_process(delta: float) -> void:
         # Renk korlugu denetimi: hue gidince camgobegi aksan sonukleşiyor.
         # Nabzi ALFA'ya degil OLCEK'e koyuyoruz -- hareket hicbir gorme
         # tipinde kaybolmaz.
-        var n := 0.82 + 0.34 * sin(Time.get_ticks_msec() / 420.0 + position.x)
+        var im: Dictionary = IMZA.get(_tur, {"hiz": 420.0, "genlik": 0.34, "adet": 1})
+        var hiz_im: float = float(im["hiz"])
+        var n := 1.0
+        if hiz_im > 0.0:
+            n = (1.0 - float(im["genlik"]) * 0.53) + float(im["genlik"]) * sin(Time.get_ticks_msec() / hiz_im + position.x)
+        else:
+            n = 1.18      # nabiz yok: sabit ve BUYUK -- durgunluk agirlik okur
         _cekirdek.global_position = global_position
         # KARANLIKTA parla, isikta cekil: isikta sprite zaten okunuyor,
         # karanlikta gorunen TEK sey cekirdek olmali.
@@ -177,6 +221,14 @@ func _physics_process(delta: float) -> void:
             golge = 1.0 - _kara.aydinlik(global_position)
         _cekirdek.scale = Vector2.ONE * (_yaricap / 16.0) * n * lerpf(1.0, 2.1, golge)
         _cekirdek.modulate.a = lerpf(0.34, 0.95, golge) * (0.82 + 0.18 * n)
+        if _cekirdek2 != null:
+            # Iki cekirdek: yan yana, aralari yaricapla olcekli. Hareket
+            # yonune DIK duruyorlar ki yururken de ayri gorunsunler.
+            var ay := Vector2(_yaricap * 0.85, 0.0).rotated(rotation + PI * 0.5)
+            _cekirdek.global_position = global_position - ay
+            _cekirdek2.global_position = global_position + ay
+            _cekirdek2.scale = _cekirdek.scale
+            _cekirdek2.modulate = _cekirdek.modulate
     if _dogus > 0.0:
         _dogus = maxf(_dogus - delta * 4.5, 0.0)
         var b := 1.0 - _dogus
@@ -292,7 +344,7 @@ func _koku() -> float:
 func hasar_al(miktar: float, itme: Vector2 = Vector2.ZERO) -> void:
     can -= miktar
     _parlama = 0.09
-    _gorsel.modulate = Color(3, 3, 3)
+    _gorsel.modulate = Color(1.5, 2.8, 3.2)   # camgobegi: karanlikta NE vurdugunu soyler
     _gorsel.scale = Vector2(1.35, 0.72)          # vurus ezilmesi
     _itme += itme
     SesYonetici.cal("vurus")
@@ -311,3 +363,5 @@ func hasar_al(miktar: float, itme: Vector2 = Vector2.ZERO) -> void:
 func _exit_tree() -> void:
     if is_instance_valid(_cekirdek) and _cekirdek.get_parent() != self:
         _cekirdek.queue_free()
+        if _cekirdek2 != null:
+            _cekirdek2.queue_free()

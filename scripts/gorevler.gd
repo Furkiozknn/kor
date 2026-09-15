@@ -42,8 +42,8 @@ const LISTE := [
         "ilerleme": "soguk_oldurme", "hedef": 150.0,
     },
     {
-        "kod": "kademe_1", "ad": "KÜL ANASI",
-        "aciklama": "KÜL ANASI'nı yen",
+        "kod": "kademe_1", "ad": "PATRON AVCISI",
+        "aciklama": "Bir patronu yen",
         "odul": "+1 kart fırına atma hakkı",
         "verir": "ek_yakma",
         "ilerleme": "patron", "hedef": 1.0,

@@ -145,7 +145,7 @@ func hasar_al(miktar: float, itme: Vector2 = Vector2.ZERO) -> void:
             carpan = 1.6           # sıcakken savunmasız
     can -= miktar * carpan
     _parlama = 0.08
-    _gorsel.modulate = Color(2.4, 2.4, 2.4)
+    _gorsel.modulate = Color(1.6, 2.6, 3.0)   # koyu camgobegi
     Hiss.patlama(get_parent(), global_position, Color(0.75, 0.95, 1.0), 3, 60.0, 1.4, 0.2)
     if can <= 0.0:
         olduruldu.emit(global_position, xp_degeri)
