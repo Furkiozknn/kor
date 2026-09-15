@@ -123,7 +123,9 @@ func _arayuz_kur() -> void:
 
     var kutu := VBoxContainer.new()
     kutu.theme = Tema.tema()
-    kutu.position = Vector2(48, 54)
+    # OYUN satiri eklenince kutu 24 px uzadi ve gunluk durum satiri alttaki
+    # ipucu satirina BINDI (ekran goruntusuyle gorduk). Ustte 56 px bos vardi.
+    kutu.position = Vector2(48, 32)
     kutu.add_theme_constant_override("separation", Tema.BOSLUK_S)
     k.add_child(kutu)
 
@@ -200,17 +202,23 @@ func _arayuz_kur() -> void:
     _donma_dugme.custom_minimum_size = Vector2(104, 20)
     _donma_dugme.pressed.connect(_donma_degis)
     hrk.add_child(_donma_dugme)
+    kutu.add_child(hrk)
+
+    # OYUN. Oto ates ve DIL "HAREKET" satirinda duruyordu; ikisi de hareket
+    # ayari degil. Ingilizce menude satir "MOTION [shake][hitstop][auto-fire]
+    # [TURKCE]" oluyordu -- dil ayarini MOTION altinda arayan kimse bulamaz.
+    var oyn := HBoxContainer.new()
+    oyn.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    oyn.add_child(Tema.sonuk("OYUN"))
     _oto_dugme = Button.new()
     _oto_dugme.custom_minimum_size = Vector2(112, 20)
     _oto_dugme.pressed.connect(_oto_degis)
-    hrk.add_child(_oto_dugme)
-    # DIL. Anahtarlar Turkce metinlerin kendisi oldugu icin "tr" secildiginde
-    # ceviri tablosu devreden cikiyor ve oyun kaynaktaki metinleri gosteriyor.
+    oyn.add_child(_oto_dugme)
     _dil_dugme = Button.new()
     _dil_dugme.custom_minimum_size = Vector2(72, 20)
     _dil_dugme.pressed.connect(_dil_degis)
-    hrk.add_child(_dil_dugme)
-    kutu.add_child(hrk)
+    oyn.add_child(_dil_dugme)
+    kutu.add_child(oyn)
 
     var bosluk3 := Control.new()
     bosluk3.custom_minimum_size = Vector2(0, Tema.BOSLUK_S)
