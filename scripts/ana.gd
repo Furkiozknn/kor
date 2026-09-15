@@ -79,7 +79,7 @@ var _duraklat_katman: CanvasLayer
 func _ready() -> void:
     _firin_kademesi_uygula()
     SesYonetici.yukle_klasorden()
-    SesYonetici.muzik_cal()
+    SesYonetici.muzik_katmanli_cal()
     _arena_kur()
     _lekeler()
     _yapilari_dog()
@@ -344,7 +344,7 @@ func _patron_dog() -> void:
     add_child(p)
     _patron = p
     Hiss.sars(5.0)
-    SesYonetici.cal("seviye")
+    SesYonetici.cal("patron_uyandi")
     _duyuru("KÜL ANASI UYANDI")
 
 ## Patron olunce oyuncu odullendirilir ve dalgalar sertlesir.
@@ -767,7 +767,7 @@ func _kosu_kazanildi() -> void:
     bitti = true
     kazanilan_curuf = Kayit.kosu_bitti(gecen, oldurulen)
     SesYonetici.muzik_dur()
-    SesYonetici.cal("seviye")
+    SesYonetici.cal("kosu_bitti")
     for d in get_tree().get_nodes_in_group("dusman"):
         d.queue_free()
     Hiss.sars(4.0)
@@ -785,7 +785,7 @@ func _oyun_bitti() -> void:
     _bekleyen_kart = 0
     get_tree().paused = false
     SesYonetici.muzik_dur()
-    SesYonetici.cal("asiri_isinma")
+    SesYonetici.cal("oyun_bitti")
     _panel_kur("SÖNDÜN", _ozet_satirlari(true), "R yeniden başla   ·   ESC menü")
     for d in get_tree().get_nodes_in_group("dusman"):
         d.queue_free()

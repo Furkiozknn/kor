@@ -173,6 +173,8 @@ func _unhandled_key_input(olay: InputEvent) -> void:
 
 func _physics_process(delta: float) -> void:
     isi.guncelle(delta)
+    # Muzigin kor katmani isiyla acilir -- durum sesle de anlatilsin.
+    SesYonetici.muzik_isi(isi.oran())
     _arena_isisi(delta)
     _kor_yayilimi(delta)
     _isi_sesleri()
@@ -457,6 +459,7 @@ func hasar_al(miktar: float) -> void:
     can -= int(ceilf(miktar * (1.0 + KIRILGANLIK * isi.oran())))
     _dokunulmaz = VURULMA_DOKUNULMAZLIK
     can_degisti.emit(can, maks_can)
+    SesYonetici.cal("oyuncu_hasar")
     Hiss.sars(4.5)
     Hiss.dondur(0.06)
     Hiss.patlama(get_parent(), global_position, Color(1.0, 0.35, 0.25), 14, 130.0, 2.0)

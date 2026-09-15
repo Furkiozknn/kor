@@ -108,7 +108,7 @@ func _physics_process(delta: float) -> void:
 func _soguk_dalga() -> void:
     Hiss.sars(6.0)
     Hiss.patlama(get_parent(), global_position, Color(0.5, 0.9, 1.0), 40, 220.0, 3.0, 0.7)
-    SesYonetici.cal("asiri_isinma")
+    SesYonetici.cal("soguk_dalga")
     if is_instance_valid(_hedef):
         if global_position.distance_to(_hedef.global_position) < SOGUK_DALGA_MENZIL:
             _hedef.isi.deger = 0.0

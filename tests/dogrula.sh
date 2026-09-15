@@ -21,6 +21,7 @@ calistir() {
 echo "Kor dogrulama"
 calistir "import"        timeout 240 godot --headless --import
 calistir "isi testi"     timeout 60  godot --headless --script res://tests/test_isi.gd
+calistir "ses testi"     timeout 60  godot --headless --script res://tests/test_ses.gd
 calistir "dongu testi"   timeout 120 godot --headless --script res://tests/test_dongu.gd
 calistir "botlu kosu"    timeout 150 godot --headless --fixed-fps 60 --script res://tests/denge.gd -- --kosu 1 --sure 90
 calistir "menu"          timeout 90  godot --script res://tests/ekran_al.gd -- --menu

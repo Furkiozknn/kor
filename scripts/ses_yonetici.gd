@@ -27,6 +27,13 @@ const AYAR := {
     # 6. tur sonrasi: kor atisi ve menzilli dusman
     "kor_atisi":     {"bekleme": 0.30,  "perde": 0.04, "ses": -1.0},
     "cadi_atisi":    {"bekleme": 0.06,  "perde": 0.12, "ses": -10.0},
+    # Duygusal anlar: perde sapmasi yok -- bunlar her calisinda AYNI olmali,
+    # taninabilir olsunlar diye. Bekleme uzun: ust uste binmesinler.
+    "oyuncu_hasar":  {"bekleme": 0.22,  "perde": 0.04, "ses": -3.0},
+    "oyun_bitti":    {"bekleme": 1.00,  "perde": 0.00, "ses": -2.0},
+    "patron_uyandi": {"bekleme": 1.00,  "perde": 0.00, "ses": 0.0},
+    "soguk_dalga":   {"bekleme": 0.50,  "perde": 0.02, "ses": -1.0},
+    "kosu_bitti":    {"bekleme": 1.00,  "perde": 0.00, "ses": -2.0},
 }
 
 var _sesler := {}
@@ -40,6 +47,13 @@ var muzik_db := -14.0          # bekleme yuzunden calinmayan ses sayisi (ayar ic
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
+    # DIKKAT: havuz SADECE burada kurulur. Onceden ayarlari_uygula() icindeydi;
+    # ayar menusu her kaydedisinde 16 oynatici daha ekliyordu (sizinti), ve
+    # Kayit yoksa erken return yuzunden hic oynatici olusmuyordu (sessiz oyun).
+    for i in HAVUZ:
+        var p := AudioStreamPlayer.new()
+        add_child(p)
+        _oynaticilar.append(p)
     ayarlari_uygula()
 
 ## Kayit'tan ses seviyelerini oku ve uygula. Menuden degisince tekrar cagrilir.
@@ -51,10 +65,8 @@ func ayarlari_uygula() -> void:
     muzik_db = float(k.ayar("ses_muzik", -14.0))
     if _muzik != null:
         _muzik.volume_db = muzik_db
-    for i in HAVUZ:
-        var p := AudioStreamPlayer.new()
-        add_child(p)
-        _oynaticilar.append(p)
+    if _muzik_ocak != null:
+        _muzik_ocak.volume_db = muzik_db
 
 func yukle(ad: String, akis: AudioStream) -> void:
     _sesler[ad] = akis
@@ -106,6 +118,7 @@ func dusen_sayisi() -> int:
 var _muzik: AudioStreamPlayer = null
 
 func muzik_cal(yol := "res://assets/ses/muzik_dokumhane.ogg", ses_db := 999.0) -> bool:
+    muzik_katmanli_dur()
     var akis: AudioStream = load(yol)
     if akis == null:
         push_warning("muzik bulunamadi: " + yol)
@@ -132,3 +145,67 @@ func muzik_ses(db: float) -> void:
 func muzik_dur() -> void:
     if _muzik != null:
         _muzik.stop()
+    muzik_katmanli_dur()
+
+## --- Katmanli muzik: isiyla yukselen ikinci kat -------------------------
+##
+## Tek 10 saniyelik dongu 720 saniyelik kosuda 72 kez tekrar ediyordu. Iki
+## sorunu birden cozuyor: dongu 40 saniye, VE muzik oyunun durumunu anlatiyor.
+##
+##   muzik_ocak.ogg  her zaman calar       (drone + cekic + uzak metal)
+##   muzik_kor.ogg   isiyla acilir, ustune (bas nabiz + hizli perkusyon)
+##
+## Ikisi ayni uzunlukta (40,000 sn) ve AYNI KAREDE baslatiliyor -- yoksa
+## senkron kayar ve iki ayri parca gibi duyulur.
+
+var _muzik_ocak: AudioStreamPlayer = null
+var _muzik_kor: AudioStreamPlayer = null
+var _kor_hedef_db := SESSIZ_DB
+
+const SESSIZ_DB := -60.0
+
+func _process(delta: float) -> void:
+    if _muzik_kor == null:
+        return
+    # Kare hizindan bagimsiz yumusatma; yoksa her atista ses sicriyor.
+    var k := 1.0 - pow(0.02, delta)
+    _muzik_kor.volume_db = lerpf(_muzik_kor.volume_db, _kor_hedef_db, k)
+
+func _oynatici(yol: String, db: float) -> AudioStreamPlayer:
+    var akis: AudioStream = load(yol)
+    if akis == null:
+        push_warning("muzik bulunamadi: " + yol)
+        return null
+    if akis is AudioStreamOggVorbis:
+        akis.loop = true
+    var p := AudioStreamPlayer.new()
+    p.stream = akis
+    p.volume_db = db
+    add_child(p)
+    return p
+
+## Katmanli muzigi baslatir. Dosyalar yoksa tek katmanli eskiye duser.
+func muzik_katmanli_cal() -> bool:
+    if _muzik_ocak != null and _muzik_ocak.playing:
+        return true
+    if _muzik != null:
+        _muzik.stop()
+    _muzik_ocak = _oynatici("res://assets/ses/muzik_ocak.ogg", muzik_db)
+    _muzik_kor = _oynatici("res://assets/ses/muzik_kor.ogg", SESSIZ_DB)
+    if _muzik_ocak == null or _muzik_kor == null:
+        return muzik_cal()
+    _kor_hedef_db = SESSIZ_DB
+    _muzik_ocak.play()
+    _muzik_kor.play()
+    return true
+
+## Her karede oyuncunun isi oranini ver (0..1). Ustel egri onemli: dogrusal
+## olursa dusuk isida bile kor katmani duyuluyor ve etki kayboluyor.
+func muzik_isi(oran: float) -> void:
+    _kor_hedef_db = lerpf(SESSIZ_DB, muzik_db, pow(clampf(oran, 0.0, 1.0), 1.6))
+
+func muzik_katmanli_dur() -> void:
+    _kor_hedef_db = SESSIZ_DB
+    for p in [_muzik_ocak, _muzik_kor]:
+        if p != null:
+            p.stop()
