@@ -106,6 +106,22 @@ static func tur_sec(gecen: float) -> int:
     var turler: Array = evre(gecen)["turler"]
     return int(turler[randi() % turler.size()])
 
-## Düşman gücü. Süreye göre doğrusal; 12 dakikada ~2,4 kat.
+## Düşman gücü. Süreye göre doğrusal.
+##
+## ÖLÇÜLDÜ (16 koşu, kademe 0): eski eğri `0.72 + t/640` ARKAYA ÇOK
+## YÜKLÜYDÜ. İlk ölüm 510. saniyede görünüyordu -- yani koşunun %71'i
+## risksizdi -- ve ölümlerin %78,6'sı tek bir evreye (9) yığılıyordu.
+##
+## Önce spawn hızını denedim, ELENDI: %39 daha hızlı doğum ilk ölümü
+## erkene bile almadı (478,9 -> 488,6 sn). Sebep ölçüldü -- ekrandaki
+## düşman sayısı zaten tavanın çok altında (~15-20 / 140), yani oyuncu
+## geleni öldürebiliyor. Öldüren şey SAYI değil GÜÇ.
+##
+## Düzleştirilmiş eğri (12 koşu):
+##   ilk ölüm 510 -> 157 sn (koşunun %71'i -> %22'si)
+##   ölümler tek evreye yığılmak yerine 2/6/7/8/9'a DAĞILDI
+##   ortalama süre 620 -> 546 sn (-%12)
+##
+## t=0'da 0,95 (+%32), t=720'de 1,75 (-%5): baş sertleşti, uç yumuşadı.
 static func guc(gecen: float) -> float:
-    return 0.72 + gecen / 640.0
+    return 0.95 + gecen / 900.0
