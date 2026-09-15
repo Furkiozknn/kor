@@ -34,6 +34,13 @@ var xp_degeri := 40
 var _hedef: Node2D
 var _temas_bekleme := 0.0
 var _dalga_sayaci := 6.0
+## TELEGRAF. Soguk dalga telegrafsizdi: oyuncu isisini bir anda kaybediyor
+## ve neden oldugunu anlamiyordu. Turun en sik elestirisi tam bu --
+## "kacinilamayan vurus". 0,9 saniyelik hazirlik: patron kasiliyor,
+## cekirdegi buyuyup mavilesiyor. Dalga ayni sertlikte kaliyor ama artik
+## OKUNABILIR -- kacmak ya da mangala kosmak icin zaman var.
+const TELEGRAF := 0.9
+var _telegraf_kalan := 0.0
 var _parlama := 0.0
 var _dogus := 1.0
 var _adim := 0.0
@@ -89,9 +96,21 @@ func _physics_process(delta: float) -> void:
 
     # Soğuk dalga
     _dalga_sayaci -= delta
-    if _dalga_sayaci <= 0.0:
+    if _telegraf_kalan > 0.0:
+        _telegraf_kalan -= delta
+        # Kasilma: cekirdek buyuyor, govde maviye caliyor
+        var t := 1.0 - _telegraf_kalan / TELEGRAF
+        _cekirdek.scale = Vector2.ONE * (0.6 + 2.4 * t)
+        _cekirdek.modulate = Color(0.5, 0.9, 1.0, 0.35 + 0.65 * t)
+        _gorsel.modulate = Color(1, 1, 1).lerp(Color(0.55, 0.85, 1.25), t)
+        if _telegraf_kalan <= 0.0:
+            _gorsel.modulate = Color(1, 1, 1)
+            _soguk_dalga()
+    elif _dalga_sayaci <= 0.0:
         _dalga_sayaci = SOGUK_DALGA_ARALIK
-        _soguk_dalga()
+        _telegraf_kalan = TELEGRAF
+        SesYonetici.cal("isi_uyari")
+        Hiss.sars(1.6)
 
     var yon := (_hedef.global_position - global_position).normalized()
     velocity = velocity.move_toward(yon * hiz, 320.0 * delta)

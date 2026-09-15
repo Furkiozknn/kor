@@ -46,6 +46,16 @@ const LISTE := [
     },
 ]
 
+## Silahin isi profili, KART UZERINDE gosterilmek uzere.
+##
+## Turun tekrar eden elestirisi "bilincli karar verecek kadar bilgi yok".
+## Kor'da silah secmek dogrudan "kac saniyede kilitlenmeyi goze aliyorum"
+## sorusu -- bu sayiyi gizlemek oyuncuyu korlemek demek.
+static func isi_profili(i: int, tavan: float = 100.0) -> String:
+    var s := al(i)
+    var sn_isi: float = float(s["isi"]) / float(s["aralik"])
+    return "%.0f ısı/sn · ~%.1f sn'de kilit" % [sn_isi, tavan / sn_isi]
+
 static func al(i: int) -> Dictionary:
     return LISTE[clampi(i, 0, LISTE.size() - 1)]
 

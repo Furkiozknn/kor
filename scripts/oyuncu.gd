@@ -429,13 +429,19 @@ func _dalis_istegi() -> bool:
     return bot_dalis if bot_aktif else Input.is_key_pressed(KEY_SPACE)
 
 func _ates_istegi() -> bool:
-    return bot_ates if bot_aktif else Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+    if bot_aktif:
+        return bot_ates
+    if otomatik_ates:
+        return true
+    return Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
 
 func _kor_istegi() -> bool:
     return bot_kor if bot_aktif else Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 
 ## Oyuncu bir kez bile daldiysa ogretmeye gerek yok.
 var hic_daldi := false
+## Ayar: sol tusu basili tutmadan surekli ates. Nisan yine oyuncuda.
+var otomatik_ates := false
 
 func _dalis_basla(nisan: Vector2) -> void:
     hic_daldi = true
@@ -594,7 +600,9 @@ func _gorunum_guncelle(delta: float, nisan: Vector2) -> void:
     # Silah degisiminde kisa beyaz parlama
     if _silah_gecis > 0.0:
         _gorsel.modulate = Color(1, 1, 1).lerp(Color(2.2, 2.0, 1.4), _silah_gecis / 0.25)
-    elif _dokunulmaz > 0.0 and int(Time.get_ticks_msec() / 60) % 2 == 0:
+    # 60 ms = 8,3 Hz -- fotosensitif nobet esiginin (3-60 Hz) tam icinde
+    # ve gozu yoruyor. 85 ms = 5,9 Hz: hala net okunuyor, cok daha sakin.
+    elif _dokunulmaz > 0.0 and int(Time.get_ticks_msec() / 85) % 2 == 0:
         _gorsel.modulate = Color(2.4, 1.2, 1.2)
     else:
         _gorsel.modulate = Color(1, 1, 1)

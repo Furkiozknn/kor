@@ -108,6 +108,7 @@ func _ready() -> void:
         var g := GelistiriciSahne.new()
         g.ana = self
         add_child(g)
+    oyuncu.otomatik_ates = bool(Kayit.ayar("otomatik_ates", false))
     _acilan_secenekleri_uygula()
     oyuncu.oldu.connect(_oyun_bitti)
     oyuncu.can_degisti.connect(_can_tazele)
@@ -417,7 +418,11 @@ func _yapilari_dog() -> void:
             else:
                 y.yakildi.connect(_mangal_yakildi)
         y.position = bilgi["poz"]
-        y.kirildi.connect(func(poz: Vector2) -> void: _kup_dus(poz, 1))
+        # Varil 1 XP dusuruyordu -- sv10'da bir seviyenin 1/165'i, yani
+        # gorunmez. Artik kirmak ISI veriyor: karanlikta bir varil kirmak
+        # "biraz gorus satin almak" oluyor ve siperi kirmanin bedeli
+        # (acik kalmak) karsiligini buluyor.
+        y.kirildi.connect(_yapi_kirildi)
         add_child(y)
 
 # --- Dalgalar ---------------------------------------------------------------
@@ -542,9 +547,17 @@ func _kenar_noktasi() -> Vector2:
             return p
     return ALAN.position
 
+const KILOMETRE_TASLARI := [100, 250, 500, 750, 1000]
+
 func _dusman_oldu(poz: Vector2, kazanc: int) -> void:
     oldurulen += 1
     gorevler.oldurme(oyuncu.isi.oran())
+    # Seviye araligi sv12'de 243 saniyeye ciktigi icin kosunun ikinci
+    # yarisi sessizlesiyor. Bunlar o sessizligi dolduran ucuz ritim.
+    if oldurulen in KILOMETRE_TASLARI:
+        _duyuru("%d KÜL" % oldurulen)
+        Hiss.sars(2.4)
+        SesYonetici.cal("seviye")
     _kup_dus(poz, kazanc)
 
 ## XP kupu. DIKKAT: bu fonksiyon fizik sorgusu akarken cagrilabiliyor
@@ -626,7 +639,9 @@ func _kart_havuzu() -> Array:
             continue
         var sl: Dictionary = Silahlar.LISTE[i]
         liste.append({
-            "ad": "SİLAH: " + str(sl["ad"]), "aciklama": str(sl["not"]),
+            "ad": "SİLAH: " + str(sl["ad"]),
+            "aciklama": "%s
+%s" % [str(sl["not"]), Silahlar.isi_profili(i, oyuncu.isi.tavan)],
             "ikon": str(sl["ikon"]), "silah": i,
             "uygula": func(o): o.silah_ver(i),
         })
@@ -1020,3 +1035,13 @@ func _acilan_secenekleri_uygula() -> void:
         elif anahtar == "dokum_onyukleme":
             oyuncu.dokum_sarj = 0.5
             oyuncu.dokum_degisti.emit(0.5, false)
+
+
+## Kirilan siperin odulu: XP degil ISI. Karanlikta bir varil kirmak
+## "biraz gorus satin almak" demek -- ve siperi kaybetmenin bedeli
+## (artik arkasina saklanamiyorsun) boylece bir karsilik buluyor.
+func _yapi_kirildi(poz: Vector2) -> void:
+    _kup_dus(poz, 2)
+    if not oyuncu.isi.kilitli:
+        oyuncu.isi.ates_et(9.0)
+    Hiss.patlama(self, poz, Color(1.0, 0.62, 0.22), 10, 90.0, 1.6, 0.5)

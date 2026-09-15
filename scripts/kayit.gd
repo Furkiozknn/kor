@@ -34,6 +34,7 @@ const VARSAYILAN := {
 		"tam_ekran": false,
 		"sarsinti": 1.0,
 		"donma": true,
+		"otomatik_ates": false,
 	},
 }
 

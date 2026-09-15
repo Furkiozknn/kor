@@ -32,6 +32,7 @@ var _gorev_katman: CanvasLayer
 const Gorevler := preload("res://scripts/gorevler.gd")
 var _sarsinti_dugme: Button
 var _donma_dugme: Button
+var _oto_dugme: Button
 
 func _ready() -> void:
     _zemin_kur()
@@ -183,6 +184,10 @@ func _arayuz_kur() -> void:
     _donma_dugme.custom_minimum_size = Vector2(104, 20)
     _donma_dugme.pressed.connect(_donma_degis)
     hrk.add_child(_donma_dugme)
+    _oto_dugme = Button.new()
+    _oto_dugme.custom_minimum_size = Vector2(112, 20)
+    _oto_dugme.pressed.connect(_oto_degis)
+    hrk.add_child(_oto_dugme)
     kutu.add_child(hrk)
 
     var bosluk3 := Control.new()
@@ -236,9 +241,16 @@ func _donma_degis() -> void:
     SesYonetici.cal("kart_sec")
     _hareket_tazele()
 
+func _oto_degis() -> void:
+    Kayit.ayar_yaz("otomatik_ates", not bool(Kayit.ayar("otomatik_ates", false)))
+    SesYonetici.cal("kart_sec")
+    _hareket_tazele()
+
 func _hareket_tazele() -> void:
     if _sarsinti_dugme == null:
         return
+    if _oto_dugme != null:
+        _oto_dugme.text = "oto ateş açık" if bool(Kayit.ayar("otomatik_ates", false)) else "oto ateş kapalı"
     var su := float(Kayit.ayar("sarsinti", 1.0))
     var i := 0
     for n in SARSINTI_KADEME.size():
