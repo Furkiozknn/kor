@@ -134,7 +134,7 @@ func _ready() -> void:
         if dmg.size() > 0:
             var adlar: Array = []
             for a in dmg:
-                adlar.append(str(Silahlar.damga(str(a)).get("ad", a)))
+                adlar.append(tr(str(Silahlar.damga(str(a)).get("ad", a))))
             dmg_ek = "  ·  " + " · ".join(adlar)
         _lbl_silah.text = "◤ " + tr(str(ad)) + ek + dmg_ek)
     oyuncu.dokum_degisti.connect(_dokum_tazele)
@@ -240,7 +240,7 @@ func _ozet_satirlari(olum: bool) -> Array:
         s.append(tr("★ GÖREV TAMAM: %s — %s") % [g["ad"], g["odul"]])
     s.append(tr("dokumhane %d/%d mangal yandi%s") % [yakilan_mangal, toplam_mangal,
         tr("    — HEPSI") if yakilan_mangal >= toplam_mangal and toplam_mangal > 0 else ""])
-    s.append(tr("silah %s    acik %d/4") % [oyuncu.silah(), oyuncu.acik_silahlar.size()])
+    s.append(tr("silah %s    acik %d/4") % [tr(oyuncu.silah()), oyuncu.acik_silahlar.size()])
     s.append("")
     if alinan_kartlar.is_empty():
         s.append("kart alinmadi")
@@ -740,7 +740,7 @@ func _kart_havuzu() -> Array:
                 continue
             var dm: Dictionary = Silahlar.DAMGALAR[anahtar]
             liste.append({
-                "ad": tr("DAMGA: %s → %s") % [str(dm["ad"]), eldeki],
+                "ad": tr("DAMGA: %s → %s") % [tr(str(dm["ad"])), tr(str(eldeki))],
                 "aciklama": tr(str(dm["not"])) + tr("  (kalıcı)"),
                 "ikon": str(dm["ikon"]), "damga": anahtar,
                 "uygula": func(o): o.damga_tak(str(anahtar)),

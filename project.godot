@@ -26,7 +26,6 @@ driver/mix_rate.web=48000
 Hiss="*res://scripts/hiss.gd"
 SesYonetici="*res://scripts/ses_yonetici.gd"
 Kayit="*res://scripts/kayit.gd"
-MCPGameBridge="res://addons/godot_mcp/game_bridge/mcp_game_bridge.gd"
 
 [display]
 
@@ -39,7 +38,7 @@ window/stretch/scale_mode="integer"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+enabled=PackedStringArray()
 
 [godot_mcp]
 
