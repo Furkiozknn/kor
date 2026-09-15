@@ -68,6 +68,8 @@ var _lbl_ust: Label
 var _isi_cubuk: ColorRect
 var _isi_yazi: Label
 var _lbl_silah: Label
+var _dokum_cubuk: ColorRect
+var _dokum_yazi: Label
 var karanlik: CanvasLayer
 var _kart_katman: CanvasLayer
 var _bekleyen_kart := 0
@@ -104,7 +106,18 @@ func _ready() -> void:
     oyuncu.can_degisti.emit(oyuncu.can, oyuncu.maks_can)
     oyuncu.silah_degisti.connect(func(ad, _i):
         var ek := "   [Q]" if oyuncu.acik_silahlar.size() > 1 else ""
-        _lbl_silah.text = "◤ " + str(ad) + ek)
+        # Damgalar silahin YANINDA duruyor: hangi silaha yatirim yaptigin
+        # her an gorunur olmali, cunku silah degistirmek onlari geride birakir.
+        var dmg: Array = oyuncu.silah_damgalari()
+        var dmg_ek := ""
+        if dmg.size() > 0:
+            var adlar: Array = []
+            for a in dmg:
+                adlar.append(str(Silahlar.damga(str(a)).get("ad", a)))
+            dmg_ek = "  ·  " + " · ".join(adlar)
+        _lbl_silah.text = "◤ " + str(ad) + ek + dmg_ek)
+    oyuncu.dokum_degisti.connect(_dokum_tazele)
+    oyuncu.dokum_degisti.emit(0.0, false)
     oyuncu.silah_degisti.emit(oyuncu.silah(), oyuncu.silah_indeksi)
 
 ## Tarayici sekmesi degisince ya da pencere arkaya gecince oyun devam
@@ -284,6 +297,10 @@ func _process(delta: float) -> void:
     _lbl_ust.text = "%02d:%02d   SEVİYE %d   XP %d/%d   ÖLDÜRME %d%s%s" % [
         int(gecen) / 60, int(gecen) % 60, seviye, xp, xp_hedef, oldurulen, curuf_ek, mangal_ek]
     _xp_cubuk.size.x = 640.0 * clampf(float(xp) / maxf(float(xp_hedef), 1.0), 0.0, 1.0)
+    if _dokum_yazi != null and oyuncu.dokum_hazir():
+        _dokum_yazi.scale = Vector2.ONE * (1.0 + 0.06 * sin(gecen * 7.0))
+    elif _dokum_yazi != null:
+        _dokum_yazi.scale = Vector2.ONE
     if _ipucu != null and gecen > 25.0:
         _ipucu.modulate.a = maxf(_ipucu.modulate.a - delta * 0.5, 0.0)
         if _ipucu.modulate.a <= 0.0:
@@ -467,6 +484,17 @@ func _dalis_ogret() -> void:
     t.tween_property(l, "modulate:a", 0.0, 0.8)
     t.tween_callback(l.queue_free)
 
+## DOKUM cubugu. Dolunca renk degisip nabiz atiyor -- "hazir" bilgisi
+## yaziya degil HAREKETE bagli, her gorme tipinde okunur.
+func _dokum_tazele(oran: float, hazir: bool) -> void:
+    if _dokum_cubuk == null:
+        return
+    _dokum_cubuk.size.x = 120.0 * clampf(oran, 0.0, 1.0)
+    _dokum_cubuk.color = Tema.KOR if hazir else Color(0.55, 0.42, 0.30)
+    _dokum_yazi.text = "DÖKÜM [E]" if hazir else "DÖKÜM"
+    _dokum_yazi.add_theme_color_override("font_color",
+        Tema.KOR if hazir else Tema.YAZI_SONUK)
+
 ## Ekranin ortasinda kisa duyuru.
 func _duyuru(metin: String) -> void:
     var l := Tema.baslik(metin)
@@ -590,6 +618,28 @@ func _kart_havuzu() -> Array:
             "ikon": str(sl["ikon"]), "silah": i,
             "uygula": func(o): o.silah_ver(i),
         })
+    # DAMGA kartlari: ELDEKI silaha KALICI olarak yapisirlar.
+    #
+    # Havuza sadece eldeki silaha TAKILABILEN damgalar giriyor -- zaten
+    # takiliysa veya silah doluysa kart hic gorunmuyor. Boylece "aldim ama
+    # bir ise yaramadi" durumu olusmuyor.
+    #
+    # Kartin adi silahi da tasiyor ("DAMGA: DELİCİ -> ÇEKİÇ") cunku damga
+    # o silaha baglaniyor ve oyuncu neye yatirim yaptigini bilmeli.
+    if oyuncu.damga_takilabilir():
+        var eldeki: String = oyuncu.silah()
+        var takili: Array = oyuncu.silah_damgalari()
+        for anahtar in Silahlar.DAMGALAR.keys():
+            if anahtar in takili:
+                continue
+            var dm: Dictionary = Silahlar.DAMGALAR[anahtar]
+            liste.append({
+                "ad": "DAMGA: %s → %s" % [str(dm["ad"]), eldeki],
+                "aciklama": str(dm["not"]) + "  (kalıcı)",
+                "ikon": str(dm["ikon"]), "damga": anahtar,
+                "uygula": func(o): o.damga_tak(str(anahtar)),
+            })
+
     # Firina atilanlar bir daha gelmez
     var kalan: Array = []
     for k in liste:
@@ -820,6 +870,19 @@ func _hud_kur() -> void:
     _isi_yazi = Tema.sonuk("ISI")
     isi_satir.add_child(_isi_yazi)
 
+    # DOKUM sarji. Isi cubugunun altinda ve AYNI genislikte: ikisi de
+    # "birikiyor" diyor, biri tehlike biri firsat.
+    var dokum_satir := HBoxContainer.new()
+    dokum_satir.add_theme_constant_override("separation", Tema.BOSLUK_M)
+    kok.add_child(dokum_satir)
+    var dc := Tema.cubuk(120, 5, -1.0)
+    var dc_kok: Control = dc["kok"]
+    dc_kok.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+    dokum_satir.add_child(dc_kok)
+    _dokum_cubuk = dc["dolgu"]
+    _dokum_yazi = Tema.sonuk("DÖKÜM")
+    dokum_satir.add_child(_dokum_yazi)
+
     _lbl_silah = Tema.vurgu("")
     kok.add_child(_lbl_silah)
 
@@ -840,7 +903,7 @@ func _hud_kur() -> void:
     _hud.add_child(_build_kutu)
 
     # Ipucu satiri ogretici gurultusu: ilk 25 saniyeden sonra soner.
-    _ipucu = Tema.sonuk("WASD  SOL TIK ateş  SAĞ TIK kor  BOŞLUK dalış  Q silah  ESC duraklat")
+    _ipucu = Tema.sonuk("WASD  SOL TIK ateş  SAĞ TIK kor  BOŞLUK dalış  E döküm  Q silah  ESC duraklat")
     _ipucu.position = Vector2(10, 332)
     _ipucu.modulate = Color(1, 1, 1, 0.5)
     _hud.add_child(_ipucu)

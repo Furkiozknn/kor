@@ -11,6 +11,7 @@ const TEK_DOKU := preload("res://assets/sprites/oyuncu.png")
 signal can_degisti(can: int, maks: int)
 signal silah_degisti(ad: String, indeks: int)
 signal oldu
+signal dokum_degisti(oran: float, hazir: bool)
 
 const DALIS_SURE := 0.22
 const DALIS_HIZ := 430.0
@@ -68,6 +69,25 @@ var can := 6
 # Silahlar -- baslangicta sadece ilki acik, kartlar digerlerini aciyor
 var silah_indeksi := 0
 var acik_silahlar := [0]
+## Silah indeksi -> damga anahtarlari. KOSU BOYUNCA kalici.
+var damgalar := {}
+
+func silah_damgalari(i: int = -1) -> Array:
+    return damgalar.get(i if i >= 0 else silah_indeksi, [])
+
+func damga_takilabilir(i: int = -1) -> bool:
+    return silah_damgalari(i).size() < Silahlar.DAMGA_TAVANI
+
+## Damgayi ELDEKI silaha vurur. Ayni damga iki kez takilmaz.
+func damga_tak(anahtar: String) -> bool:
+    var i := silah_indeksi
+    var liste: Array = damgalar.get(i, [])
+    if liste.size() >= Silahlar.DAMGA_TAVANI or anahtar in liste:
+        return false
+    liste.append(anahtar)
+    damgalar[i] = liste
+    silah_degisti.emit(silah(), silah_indeksi)
+    return true
 
 # Kartlarla buyuyen degerler (silahin ustune carpan olarak biner)
 var atis_hizi_carpani := 1.0
@@ -201,10 +221,82 @@ func silah_gec(ileri: bool = true) -> void:
 func dalisityor() -> bool:
     return _dalis_kalan > 0.0
 
+## --- DOKUM: sarjli, tek kullanimlik ozel silah -----------------------
+##
+## Tur kalibi: "dolunca bas". Kor'da bundan iki yerde ayriliyoruz.
+##
+## 1. GUCU SARJA DEGIL ISINA BAGLI. Dolmus dokumu bosken atarsan zayif,
+##    tavana yakinken atarsan yikici. Yani "ne zaman basayim" sorusu
+##    "ne kadar riske girdim" sorusuyla ayni soru oluyor -- bekleme
+##    suresini saymak degil, isini yonetmek.
+## 2. KILIDI KIRAN TEK SEY. Dalis bile kirmiyor (isi.bosalt kilitliyken
+##    calismiyor). Asiri isindiysan dokum can simidin -- ama onu o an
+##    harcamis oluyorsun.
+##
+## Doldugunda ISI SIFIRLANIR: dokum ayni zamanda en buyuk dalis.
+const DOKUM_SURE := 42.0        # saniye, tam dolum
+const DOKUM_MENZIL := 58.0      # taban; isiyla buyur
+const DOKUM_MENZIL_ISI := 104.0 # tavanda eklenen menzil
+const DOKUM_HASAR := 7.0        # taban; isiyla 2,6 kata cikar
+
+var dokum_sarj := 0.0           # 0..1
+var dokum_kullanim := 0         # kac kez dokum yapildi (ozet icin)
+
+func dokum_hazir() -> bool:
+    return dokum_sarj >= 1.0
+
+func _dokum_guncelle(delta: float) -> void:
+    if dokum_sarj >= 1.0:
+        return
+    var onceki := dokum_sarj
+    dokum_sarj = minf(dokum_sarj + delta / DOKUM_SURE, 1.0)
+    if onceki < 1.0 and dokum_sarj >= 1.0:
+        SesYonetici.cal("seviye")
+        Hiss.sars(2.0)
+    dokum_degisti.emit(dokum_sarj, dokum_hazir())
+
+## Doner: dokum yapildi mi. Bot ve testler de bunu cagiriyor.
+func dokum_yap() -> bool:
+    if not dokum_hazir() or can <= 0:
+        return false
+    var oran := isi.oran()
+    var menzil := DOKUM_MENZIL + DOKUM_MENZIL_ISI * oran
+    var hasar := DOKUM_HASAR * (0.55 + 2.05 * oran)
+
+    for dus in get_tree().get_nodes_in_group("dusman"):
+        if not is_instance_valid(dus):
+            continue
+        var fark: Vector2 = dus.global_position - global_position
+        if fark.length() <= menzil:
+            dus.hasar_al(hasar, fark.normalized() * (150.0 + 90.0 * oran))
+
+    # Sonuk mangallari da yakar: dokum dokumhaneyi besler.
+    for y in get_tree().get_nodes_in_group("yapi"):
+        if y.turu() == "mangal" and not y.yanik                 and y.global_position.distance_to(global_position) <= menzil:
+            y.yak()
+
+    isi.kilitli = false          # KILIDI KIRAN TEK SEY
+    isi.deger = 0.0
+    dokum_sarj = 0.0
+    dokum_kullanim += 1
+    _dokunulmaz = maxf(_dokunulmaz, 0.45)   # dokum aninda kisa bagisiklik
+    Hiss.sars(9.0)
+    Hiss.dondur(0.14)
+    Hiss.patlama(get_parent(), global_position, Color(1.0, 0.72, 0.28),
+        70, menzil * 3.4, 3.0, 0.9)
+    SesYonetici.cal("kor_atisi")
+    var kl := get_tree().get_first_node_in_group("karanlik")
+    if kl != null:
+        kl.cakma(0.45, menzil * 2.6)
+    dokum_degisti.emit(dokum_sarj, false)
+    return true
+
 func _unhandled_key_input(olay: InputEvent) -> void:
     if not olay.is_pressed() or olay.is_echo():
         return
-    if olay.keycode == KEY_Q or olay.keycode == KEY_TAB:
+    if olay.keycode == KEY_E or olay.keycode == KEY_R:
+        dokum_yap()
+    elif olay.keycode == KEY_Q or olay.keycode == KEY_TAB:
         silah_gec(true)
     elif olay.keycode >= KEY_1 and olay.keycode <= KEY_4:
         var i: int = olay.keycode - KEY_1
@@ -225,6 +317,7 @@ func _physics_process(delta: float) -> void:
     _isi_sesleri()
     _dokunulmaz = maxf(_dokunulmaz - delta, 0.0)
     _dalis_bekleme = maxf(_dalis_bekleme - delta, 0.0)
+    _dokum_guncelle(delta)
     _atis_sayaci = maxf(_atis_sayaci - delta, 0.0)
     _kor_bekleme = maxf(_kor_bekleme - delta, 0.0)
     _namlu_parlama = maxf(_namlu_parlama - delta * 7.0, 0.0)
@@ -369,7 +462,7 @@ func _dalis_bitti() -> void:
             d.hasar_al(dalis_patlamasi, fark.normalized() * 120.0)
 
 func _ates_et(nisan: Vector2) -> void:
-    var s := Silahlar.al(silah_indeksi)
+    var s := Silahlar.damgali(silah_indeksi, silah_damgalari())
     _atis_sayaci = s["aralik"] / atis_hizi_carpani
     isi.ates_et(float(s["isi"]) * isi_carpani)
     var hasar: float = s["hasar"] * mermi_hasari
@@ -390,6 +483,8 @@ func _ates_et(nisan: Vector2) -> void:
         m.omur = s["omur"]
         m.delici = s["delici"]
         m.scale = Vector2.ONE * float(s["boy"])
+        if "kor_izi" in silah_damgalari():
+            m.kor_izi = true
         get_parent().add_child(m)
 
     velocity -= nisan * float(s["geri_tepme"])          # geri tepme

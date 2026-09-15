@@ -277,6 +277,17 @@ func _politika() -> void:
     var tehlike: bool = en_yakin != null and en_yakin_d < 30.0
     o.bot_dalis = tehlike or (not o.isi.kilitli and o.isi.oran() > 0.93 and yakin_sayi > 0)
 
+    # DOKUM. Tek kullanimlik ve gucu ISIYA bagli, o yuzden bot da sabirli
+    # oynuyor: sicaksan ve kalabalik varsa bas. Iki istisna --
+    #   * kilitliysen ve dibinde dusman varsa: dokum kilidi kiran tek sey,
+    #     burada can simidi
+    #   * can 2'ye dustuyse: beklemenin anlami kalmadi
+    if o.dokum_hazir():
+        var sicak: bool = o.isi.oran() > 0.55
+        var sikisti: bool = o.isi.kilitli and yakin_sayi >= 1
+        if (sicak and yakin_sayi >= 3) or sikisti or o.can <= 2:
+            o.dokum_yap()
+
 ## Temas menzilindeki dusman sayisi -- olumun asil sebebi bu.
 func _dipteki_dusman() -> int:
     if not is_instance_valid(_oyuncu):
@@ -307,6 +318,7 @@ func _kosu_bitir() -> void:
     _sonuclar.append({
         "sure": sure,
         "olduMu": _ana.bitti,
+        "kazandiMi": _ana.kazandi,
         "seviye": _ana.seviye,
         "oldurulen": _ana.oldurulen,
         "kilit_sayisi": _kilit_sayisi,
@@ -326,7 +338,8 @@ func _kosu_bitir() -> void:
     print("  kosu %2d: %5.1f sn  sv%-2d  %3d oldurme  kilit %d  isi %%%.0f  darbe %d (dk %.1f)  dipte %.1f  gorunen %.1f  %s" % [
         _kosu, sure, _ana.seviye, _ana.oldurulen, _kilit_sayisi,
         son["ort_isi"] * 100.0, son["darbe"], son["darbe_dk"], son["dip"],
-        son["gorunen"], "OLDU" if _ana.bitti else "sagkaldi"])
+        son["gorunen"],
+        "KAZANDI" if _ana.kazandi else ("OLDU" if _ana.bitti else "sagkaldi")])
     _ana.queue_free()
     _ana = null
 
@@ -343,12 +356,15 @@ func _rapor_yaz() -> void:
     var kilit_dk: Array = []
     var isilar: Array = []
     var olum := 0
+    var zafer := 0
     for s in _sonuclar:
         sureler.append(s["sure"])
         seviyeler.append(float(s["seviye"]))
         kilit_dk.append(s["kilit_dk"])
         isilar.append(s["ort_isi"])
-        if s["olduMu"]:
+        if s.get("kazandiMi", false):
+            zafer += 1
+        elif s["olduMu"]:
             olum += 1
 
     var satir: Array[String] = []
@@ -373,7 +389,7 @@ func _rapor_yaz() -> void:
         var s: Dictionary = _sonuclar[n]
         satir.append("| %d | %.1f sn | %d | %d | %d | %.1f | %%%.0f | %s |" % [
             n + 1, s["sure"], s["seviye"], s["oldurulen"], s["kilit_sayisi"],
-            s["kilit_dk"], s["ort_isi"] * 100.0, "öldü" if s["olduMu"] else "sağ kaldı"])
+            s["kilit_dk"], s["ort_isi"] * 100.0, ("**KAZANDI**" if s.get("kazandiMi", false) else ("öldü" if s["olduMu"] else "sağ kaldı"))])
     satir.append("")
     satir.append("## Dalga eğrisi (ilk koşunun zaman serisi)")
     satir.append("")
@@ -397,7 +413,7 @@ func _rapor_yaz() -> void:
         etiket if etiket != "" else "varsayilan", _ortanca(sureler), _ortanca(seviyeler),
         _ortanca(kilit_dk), _ortanca(isilar) * 100.0, _ortanca(darbeler),
         _ortanca(dipler), olum, _sonuclar.size()])
-    print("ORTANCA: %.1f sn hayatta, seviye %.0f, kilit/dk %.1f, ort isi %%%.0f  (%d/%d oldu)" % [
+    print("ORTANCA: %.1f sn hayatta, seviye %.0f, kilit/dk %.1f, ort isi %%%.0f  (%d/%d oldu, %d KAZANDI)" % [
         _ortanca(sureler), _ortanca(seviyeler), _ortanca(kilit_dk),
-        _ortanca(isilar) * 100.0, olum, _sonuclar.size()])
+        _ortanca(isilar) * 100.0, olum, _sonuclar.size(), zafer])
     print("rapor: %s" % RAPOR)

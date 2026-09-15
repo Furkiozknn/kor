@@ -92,7 +92,20 @@ func _oyuncu_yaricapi() -> float:
     var i = oyuncu.isi
     if i.kilitli:
         return tavan_yaricap * kilit_parlama * gorus_carpani
-    return lerpf(taban_yaricap, tavan_yaricap, i.oran()) * gorus_carpani
+    # EGRI DOGRUSAL DEGIL. Isinin ilk yarisi gorusun cogunu veriyor,
+    # son yarisi cok az ekliyor.
+    #
+    # Neden: isi artik yavas doluyor (kilide varmak ~3 sn, onceden 1,6).
+    # Dogrusal egriyle bu "oyuncu kosunun cogunu kor gecirir" demek
+    # oluyordu -- olculdu, hayatta kalma 660 -> 572 sn'ye dustu.
+    #
+    # Ustel egri ikisini birden veriyor: dunya erken aciliyor AMA tavana
+    # tirmanmak hala 3 saniye suruyor. Yan fayda tasarima daha da uygun:
+    # tavana yakin bolgede gorus neredeyse hic artmadigi icin asiri
+    # isinmak artik "daha iyi gormek icin" yapilmiyor -- sadece dokum
+    # gucu, tavlama ve kizgin bolge hasari icin yapiliyor. Yani BILINCLI
+    # bir karar, farkinda olmadan surüklenilen bir yer degil.
+    return lerpf(taban_yaricap, tavan_yaricap, pow(i.oran(), 0.55)) * gorus_carpani
 
 ## Kısa süreli parlama (kor atışı gibi) -- görüşü bir anlığına açar.
 func cakma(sure: float = 0.25, yaricap: float = 240.0) -> void:

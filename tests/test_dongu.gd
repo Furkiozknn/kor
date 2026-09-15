@@ -282,6 +282,55 @@ func _process(_delta: float) -> bool:
     oyuncu._dokunulmaz = 0.0
     _can_koru = true
 
+    # DAMGA: silaha KALICI yapisir, tavani var, silah degisince TASINMAZ
+    oyuncu.damgalar.clear()
+    oyuncu.silah_indeksi = 0
+    assert(oyuncu.silah_damgalari().size() == 0, "damga bos baslamali")
+    assert(oyuncu.damga_tak("delici"), "damga takilmali")
+    assert(not oyuncu.damga_tak("delici"), "ayni damga iki kez takilmamali")
+    assert(oyuncu.damga_tak("catal") and oyuncu.damga_tak("soguk_namlu"),
+        "tavana kadar damga takilabilmeli")
+    assert(not oyuncu.damga_takilabilir(), "tavan dolunca takilamamali")
+    assert(not oyuncu.damga_tak("agir_dokum"), "tavan dolunca damga eklenmemeli")
+
+    # Damga SILAHA bagli: baska silaha gecince gelmiyor.
+    # NOT: silah_ver() kalici olarak silah acar ve sonraki kontrolleri
+    # bozar -- burada sadece indeks degistiriliyor, envanter degil.
+    var silah_yedek: int = oyuncu.silah_indeksi
+    oyuncu.silah_indeksi = 1
+    assert(oyuncu.silah_damgalari().size() == 0, "damga silaha ozel olmali")
+    oyuncu.silah_indeksi = silah_yedek
+    assert(oyuncu.silah_damgalari().size() == 3, "eski silahin damgalari durmali")
+
+    # Damgalar silahin degerlerini GERCEKTEN degistiriyor mu
+    var ham: Dictionary = _ana.Silahlar.al(0)
+    var dmg: Dictionary = _ana.Silahlar.damgali(0, ["delici", "catal", "soguk_namlu"])
+    assert(dmg["delici"] and not ham["delici"], "delici damgasi islemedi")
+    assert(int(dmg["adet"]) == int(ham["adet"]) + 1, "catal damgasi islemedi")
+    assert(float(dmg["isi"]) < float(ham["isi"]), "soguk namlu damgasi islemedi")
+    var agir: Dictionary = _ana.Silahlar.damgali(0, ["agir_dokum"])
+    assert(float(agir["hasar"]) > float(ham["hasar"]) and float(agir["hiz"]) < float(ham["hiz"]),
+        "agir dokum damgasi islemedi")
+    oyuncu.damgalar.clear()
+
+    # DOKUM: sarj dolunca TEK kullanim, gucu ISIYA bagli, kilidi kirar
+    _can_koru = false
+    oyuncu.dokum_sarj = 0.0
+    assert(not oyuncu.dokum_hazir(), "dokum bos baslamali")
+    assert(not oyuncu.dokum_yap(), "dolmadan dokum yapilamamali")
+    oyuncu._dokum_guncelle(oyuncu.DOKUM_SURE)
+    assert(oyuncu.dokum_hazir(), "sure dolunca dokum hazir olmali")
+
+    # Kilitliyken bile calismali -- kilidi kiran TEK sey
+    oyuncu.isi.kilitle()
+    assert(not oyuncu.isi.bosalt(), "dalis kilidi kirmamali (on kosul)")
+    assert(oyuncu.dokum_yap(), "dokum kilitliyken de yapilabilmeli")
+    assert(not oyuncu.isi.kilitli, "dokum kilidi kirmali")
+    assert(is_zero_approx(oyuncu.isi.deger), "dokum isiyi sifirlamali")
+    assert(not oyuncu.dokum_hazir(), "dokum TEK kullanimlik olmali")
+    assert(not oyuncu.dokum_yap(), "bosalmis dokum tekrar calismamali")
+    _can_koru = true
+
     # FIRINA AT: yakilan kart kosu boyunca bir daha gelmemeli
     var havuz_once: int = _ana._kart_havuzu().size()
     var kurban_kart: Dictionary = _ana._kart_havuzu()[0]
@@ -405,8 +454,13 @@ func _process(_delta: float) -> bool:
     assert(oyuncu.isi.deger < isi_once, "kor atisi isiyi harcamali")
     assert(not oyuncu.kor_atabilir(), "kor atisindan hemen sonra tekrar atilamaz")
 
-    # Silahlar: baslangicta tek silah, kart acinca gecis calismali
-    assert(oyuncu.acik_silahlar.size() == 1, "baslangicta tek silah olmali")
+    # Silahlar: kart acinca gecis calismali.
+    # ON KOSULU KENDI KURUYOR: onceden bir onceki bolumun hangi karti
+    # sectigine bagliydi ve havuza kart eklenince cekilis degisip test
+    # kiriliyordu. Test bolumleri birbirinin durumuna guvenmemeli.
+    oyuncu.acik_silahlar = [0]
+    oyuncu.silah_indeksi = 0
+    assert(oyuncu.acik_silahlar.size() == 1, "on kosul: tek silah")
     var ilk_silah: int = oyuncu.silah_indeksi
     oyuncu.silah_gec(true)
     assert(oyuncu.silah_indeksi == ilk_silah, "tek silahla gecis olmamali")
@@ -473,4 +527,13 @@ func _oyuncu_ozeti(o) -> Array:
         o.isi.tavan, o.isi.soguma_hizi, o.isi_carpani, o.hiz, o.atis_hizi_carpani,
         o.mermi_hasari, o.ek_mermi, o.ek_yayilma, o.maks_can, o.asiri_isi_carpani,
         o.dalis_patlamasi, o.miknatis_menzili(), o.kor_carpani, o.kor_maliyet, o.yayilim_dps, o.yayilim_menzil,
-        o.acik_silahlar.size(), o.silah_indeksi]
+        o.acik_silahlar.size(), o.silah_indeksi, _damga_imzasi(o)]
+
+## Butun silahlarin damgalari tek bir metne: ozet bunu gorunce damga
+## kartlari da "degisiklik yapti" sayiliyor.
+func _damga_imzasi(o) -> String:
+    var parcalar: Array = []
+    for i in o.damgalar.keys():
+        parcalar.append("%d:%s" % [i, ",".join(o.damgalar[i])])
+    parcalar.sort()
+    return "|".join(parcalar)

@@ -7,6 +7,10 @@ var hasar := 1.0
 var hiz := 265.0
 var omur := 1.1
 var delici := false      # kor atisi ve cekic dusmani delip gecer
+## KOR IZI damgasi: vurus noktasinda kucuk bir kor patlamasi birakir.
+var kor_izi := false
+const KOR_IZI_MENZIL := 24.0
+const KOR_IZI_PAY := 0.55      # ana hasarin bu kadari, cevredeki herkese
 
 var _kalan := 0.0
 
@@ -55,6 +59,8 @@ func _physics_process(delta: float) -> void:
 func _carpti(govde: Node2D) -> void:
     if govde.is_in_group("dusman"):
         govde.hasar_al(hasar, yon * (26.0 + hasar * 7.0))
+        if kor_izi:
+            _kor_izi_patlat(govde)
         if delici:
             return
         _son(true)
@@ -68,3 +74,15 @@ func _son(carpma: bool) -> void:
         Hiss.patlama(get_parent(), global_position, Color(1.0, 0.8, 0.45),
             5, 90.0, scale.x * 1.6, 0.22)
     queue_free()
+
+
+## Vurusun etrafina kucuk bir kor patlamasi. Vurulan dusmana IKINCI kez
+## hasar vermiyor -- yoksa damga tek hedefte de hasar carpani olurdu ve
+## "cevreye yayilir" vaadini tutmazdi.
+func _kor_izi_patlat(vurulan: Node2D) -> void:
+    Hiss.patlama(get_parent(), global_position, Color(1.0, 0.55, 0.16), 8, 70.0, 1.5, 0.35)
+    for d in get_tree().get_nodes_in_group("dusman"):
+        if d == vurulan or not is_instance_valid(d):
+            continue
+        if d.global_position.distance_to(global_position) <= KOR_IZI_MENZIL:
+            d.hasar_al(hasar * KOR_IZI_PAY, (d.global_position - global_position).normalized() * 40.0)

@@ -152,6 +152,12 @@ func _process(_delta: float) -> bool:
         _ana.oyuncu._kor_at(Vector2.RIGHT)
     if _kare == 256:
         _ana.oyuncu._ates_et(Vector2.RIGHT.rotated(-0.5))
+    if _kare == 100 and not _gorus_modu:
+        var o2 = _ana.oyuncu
+        o2.dokum_sarj = 1.0
+        o2.dokum_degisti.emit(1.0, true)
+        o2.damga_tak("delici")
+        o2.damga_tak("kor_izi")
     if _kare == 235:
         # Bes turu de yan yana koy ki hepsi tek karede gorunsun
         for t in 6:
