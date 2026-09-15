@@ -130,7 +130,7 @@ func _duraklat_degis() -> void:
 ## Duraklatma ve olum ekrani ayni govdeyi kullaniyor.
 func _panel_kur(baslik: String, satirlar: Array, alt: String) -> CanvasLayer:
     var k := CanvasLayer.new()
-    k.layer = 4
+    k.layer = 5
     k.process_mode = Node.PROCESS_MODE_ALWAYS
     add_child(k)
     var fon := ColorRect.new()
@@ -562,7 +562,7 @@ func _kartlari_ac() -> void:
     var secilen := havuz.slice(0, 3)
 
     _kart_katman = CanvasLayer.new()
-    _kart_katman.layer = 3
+    _kart_katman.layer = 4
     _kart_katman.process_mode = Node.PROCESS_MODE_ALWAYS
     add_child(_kart_katman)
 
@@ -730,7 +730,10 @@ func _vinyet_kur() -> void:
 func _hud_kur() -> void:
     _vinyet_kur()
     _hud = CanvasLayer.new()
-    _hud.layer = 2          # karanlik 1'de, HUD onun ustunde
+    # KATMAN SIRASI (tek yerde belgeli, cakisma olmasin):
+    #   -1 vinyet · 1 karanlik · 2 parilti (dusman cekirdekleri) ·
+    #    3 HUD · 4 kart ekrani · 5 duraklatma/olum paneli · 90 gelistirici
+    _hud.layer = 3
     add_child(_hud)
 
     # XP seridi: ekranin en ust kenarinda 2 px. Surekli bakilacak bir sey

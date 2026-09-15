@@ -36,6 +36,12 @@ var gorus_carpani := 1.0              # kart: görüş menzili
 var _ekran: ColorRect
 var _mat: ShaderMaterial
 var _yumusak_yaricap := 0.0
+## Karanligin USTUNDE cizilen katman. Perdeye ragmen gorunur.
+## Olculdu: perdenin altinda karanliktaki cekirdek rgb(9,14,21),
+## bos zemin rgb(3,3,8) -- yani hic gorunmuyordu.
+var parilti: CanvasLayer
+## Son karede kurulan isik listesi; aydinlik() bunu okuyor.
+var _son_isiklar: Array[Vector3] = []
 
 func _ready() -> void:
     add_to_group("karanlik")
@@ -49,6 +55,9 @@ func _ready() -> void:
     _mat.set_shader_parameter("ekran_boyu", g)
     _ekran.material = _mat
     add_child(_ekran)
+    parilti = CanvasLayer.new()
+    parilti.layer = 2                      # karanlik 1, bu 2
+    get_parent().add_child.call_deferred(parilti)
 
 ## Işık listesi her karede yeniden kuruluyor: oyuncu + mangallar + geçici
 ## parlamalar (namlu alevi, kor atışı). Sabit maliyet, tek geçiş.
@@ -56,6 +65,8 @@ func _process(delta: float) -> void:
     if not is_instance_valid(oyuncu):
         return
     var kt := get_viewport().get_canvas_transform()
+    if parilti != null:
+        parilti.transform = kt
 
     var hedef := _oyuncu_yaricapi()
     # Görüş anında zıplamasın; ısı düşünce karanlık üstüne kapanıyormuş gibi
@@ -75,6 +86,7 @@ func _process(delta: float) -> void:
 
     _mat.set_shader_parameter("isik_sayisi", liste.size())
     _mat.set_shader_parameter("isiklar", liste)
+    _son_isiklar = liste
 
 func _oyuncu_yaricapi() -> float:
     var i = oyuncu.isi
@@ -89,3 +101,14 @@ func cakma(sure: float = 0.25, yaricap: float = 240.0) -> void:
     _yumusak_yaricap = maxf(_yumusak_yaricap, yaricap)
     t.tween_interval(sure)
     t.tween_callback(func(): _yumusak_yaricap = minf(_yumusak_yaricap, maxf(eski, _oyuncu_yaricapi())))
+
+
+## Bu dunya noktasinda aydinlik ne kadar? 0 = zifiri, 1 = tam isik.
+func aydinlik(p: Vector2) -> float:
+    var sp: Vector2 = get_viewport().get_canvas_transform() * p
+    var en := 0.0
+    for l in _son_isiklar:
+        if l.z <= 0.0:
+            continue
+        en = maxf(en, 1.0 - smoothstep(l.z * 0.45, l.z, sp.distance_to(Vector2(l.x, l.y))))
+    return en

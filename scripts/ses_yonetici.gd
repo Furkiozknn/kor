@@ -108,6 +108,11 @@ func yukle_klasorden() -> int:
 
 ## Sesi calar. Bekleme suresi dolmadiysa sessizce atlar — cagiran taraf
 ## kosul yazmak zorunda kalmasin diye bool dondurur ama kullanmak sart degil.
+## Ses KENDI rastgele akisini kullanir: bekleme kontrolu duvar saatine bagli
+## oldugu icin global akistan cekilirse cekilis SAYISI makine hizina gore
+## degisiyor ve butun oyun deterministligini kaybediyor (olculdu).
+var _rng := RandomNumberGenerator.new()
+
 func cal(ad: String) -> bool:
     var akis: AudioStream = _sesler.get(ad)
     if akis == null:
@@ -126,7 +131,7 @@ func cal(ad: String) -> bool:
     p.stream = akis
     p.volume_db = float(ayar.get("ses", -6.0))   # efekt_db Master bus'ta
     var sapma: float = ayar.get("perde", 0.08)
-    p.pitch_scale = 1.0 + randf_range(-sapma, sapma)
+    p.pitch_scale = 1.0 + _rng.randf_range(-sapma, sapma)
     p.play()
     return true
 

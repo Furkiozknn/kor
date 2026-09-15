@@ -16,6 +16,9 @@ uniform vec3 isiklar[TAVAN];
 uniform float yumusaklik : hint_range(0.05, 1.0) = 0.55;
 uniform float karanlik : hint_range(0.0, 1.0) = 0.90;
 uniform vec3 golge_rengi : source_color = vec3(0.015, 0.015, 0.035);
+// Isik artik sadece karanligi SILMIYOR, kendi rengini de veriyor.
+uniform vec3 isik_rengi : source_color = vec3(1.0, 0.66, 0.34);
+uniform float isik_gucu : hint_range(0.0, 0.6) = 0.30;
 
 void fragment() {
     vec2 p = SCREEN_UV * ekran_boyu;
@@ -33,5 +36,8 @@ void fragment() {
         float a = 1.0 - smoothstep(r * (1.0 - yumusaklik), r, d);
         aydinlik = max(aydinlik, a);
     }
-    COLOR = vec4(golge_rengi, karanlik * (1.0 - aydinlik));
+    // Ustel egri: sadece isik havuzunun MERKEZI sicak olsun, kenari notr.
+    vec3 renk = mix(golge_rengi, isik_rengi, pow(aydinlik, 1.7));
+    float a = karanlik * (1.0 - aydinlik) + isik_gucu * pow(aydinlik, 1.7);
+    COLOR = vec4(renk, a);
 }

@@ -147,7 +147,11 @@ func _ready() -> void:
     _cekirdek.material = Hiss.ekleme_materyali()
     _cekirdek.z_index = -1
     _cekirdek.scale = Vector2.ONE * (_yaricap / 16.0)
-    add_child(_cekirdek)
+    var _kl := get_tree().get_first_node_in_group("karanlik")
+    if _kl != null and _kl.parilti != null:
+        _kl.parilti.add_child(_cekirdek)      # karanligin USTUNDE
+    else:
+        add_child(_cekirdek)
     var s := CircleShape2D.new()   # her ornek kendi seklini tasisin
     s.radius = _yaricap
     _carpisma.shape = s
@@ -164,8 +168,15 @@ func _physics_process(delta: float) -> void:
         # Nabzi ALFA'ya degil OLCEK'e koyuyoruz -- hareket hicbir gorme
         # tipinde kaybolmaz.
         var n := 0.82 + 0.34 * sin(Time.get_ticks_msec() / 420.0 + position.x)
-        _cekirdek.scale = Vector2.ONE * (_yaricap / 16.0) * n
-        _cekirdek.modulate.a = 0.42 + 0.22 * n
+        _cekirdek.global_position = global_position
+        # KARANLIKTA parla, isikta cekil: isikta sprite zaten okunuyor,
+        # karanlikta gorunen TEK sey cekirdek olmali.
+        var _kara := get_tree().get_first_node_in_group("karanlik")
+        var golge := 1.0
+        if _kara != null and _kara.has_method("aydinlik"):
+            golge = 1.0 - _kara.aydinlik(global_position)
+        _cekirdek.scale = Vector2.ONE * (_yaricap / 16.0) * n * lerpf(1.0, 2.1, golge)
+        _cekirdek.modulate.a = lerpf(0.34, 0.95, golge) * (0.82 + 0.18 * n)
     if _dogus > 0.0:
         _dogus = maxf(_dogus - delta * 4.5, 0.0)
         var b := 1.0 - _dogus
@@ -295,3 +306,8 @@ func hasar_al(miktar: float, itme: Vector2 = Vector2.ZERO) -> void:
             14 + int(xp_degeri) * 6, 130.0, 2.0, 0.5)
         Hiss.sars(0.8 + float(xp_degeri) * 0.3)
         queue_free()
+
+
+func _exit_tree() -> void:
+    if is_instance_valid(_cekirdek) and _cekirdek.get_parent() != self:
+        _cekirdek.queue_free()
