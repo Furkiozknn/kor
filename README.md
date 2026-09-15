@@ -20,10 +20,16 @@ Arena karanlık. Görüş yarıçapını **tek başına ısın** belirliyor:
 |---|---|---|
 | soğuk | 40 px | neredeyse körsün, nereye ateş ettiğini bilmiyorsun |
 | sıcak | 300 px | arena açılır, sürüyü görürsün — **ama kilide yaklaşırsın** |
-| kilitli | 26 px | hem silahsız hem kör, iki katmanlı ceza |
+| kilitli | 336 px | her şeyi görürsün, hiçbir şey yapamazsın |
+
+Eğri doğrusal değil: ısının **ilk yarısı görüşün çoğunu** veriyor. Yani
+tavana tırmanmak "daha iyi görmek için" yapılmaz — döküm gücü, tavlama ve
+kızgın bölge hasarı için yapılır. Bilinçli bir karar, sürüklenilen bir yer değil.
 
 Silahın ısınır; tavana varırsan iki saniye kilitlenir ve **dalış o kilidi
-kırmaz.** Dalış ısıyı boşaltır → ekran kararır: **güvenliği görüşle ödersin.**
+kırmaz.** Kilitliyken görüş *daralmaz* — en geniş halindedir: en parlak,
+en kırılgan ve en savunmasız anındasın, düşmanlar ısını sezip hızlanır.
+Dalış ısıyı boşaltır → ekran kararır: **güvenliği görüşle ödersin.**
 
 Bu tek kural türün iki bilinen kusurunu birden kapatıyor: durup izlemek
 mümkün değil (görmek için ısınmak gerek), ve ekran hiçbir zaman okunamaz
@@ -54,9 +60,10 @@ Siperler dekor değil, ısı ekonomisinin parçası:
 | Sol tık (basılı) | ateş — fareye nişan alır |
 | Sağ tık | **kor atışı** — biriken ısıyı delici akkor mermiye çevirir |
 | `Boşluk` | dalış (ısıyı boşaltır, dokunulmazlık verir) |
+| `E` | **döküm** — şarjlı, tek kullanımlık; gücü ısına bağlı, kilidi kıran tek şey |
 | `Q` / `1-4` | silah değiştir |
 | `ESC` | duraklat |
-| `F11` tam ekran · `C` künye | menüde |
+| `F11` tam ekran · `C` künye · `G` görevler · `D` günün dökümü | menüde |
 
 ## Koşu
 
@@ -115,16 +122,60 @@ Beğenmediğin kartı **fırına atabilirsin** (koşu başına 3 hak): yakılan 
 o koşu boyunca bir daha gelmez. Türün en yaygın şikâyeti "yapmak istediğim
 şeyi hiç göremedim" idi; VS'in Banish'i bunu yarım çözüyor, bizde kalıcı.
 
+## Silaha yapışan özellikler: DAMGA
+
+Türde alışılmış kalıp geçici güçlendirmedir — 20 saniye sürer, biter,
+unutulur. Kor'da tersi: bir damga vurduğun silahta **koşu boyunca kalır.**
+
+Tasarım sonucu şu: damgalar *silaha* bağlandığı için silah değiştirmek
+bedava olmaktan çıkıyor. Çekicine üç damga vurduysan `Q`'ya basmak "başka
+bir namlu" değil, **biriktirdiğin her şeyi geride bırakmak** demek.
+
+Altı damga (delici, çatal, soğuk namlu, ağır döküm, uzun namlu, kor izi),
+silah başına en fazla üç. Havuza yalnızca eldeki silaha *takılabilen*
+damgalar girer — "aldım ama işe yaramadı" durumu oluşmaz.
+
+## DÖKÜM — şarjlı, tek kullanımlık
+
+Tür kalıbı "dolunca bas". İki yerde ondan ayrılıyor:
+
+1. **Gücü şarja değil ısına bağlı.** Boşken zayıf, tavana yakınken yıkıcı.
+   "Ne zaman basayım" sorusu "ne kadar riske girdim" sorusuyla aynı soru.
+2. **Kilidi kıran tek şey.** Dalış bile kırmaz. Aşırı ısındıysan döküm can
+   simidin — ama onu o an harcamış olursun.
+
+Menzilindeki sönük mangalları da yakar: döküm dökümhaneyi besler.
+
+## Görevler — içerik parayla değil ustalıkla açılır
+
+Türün en nefret edilen kalıbı "yeterince yükseltme açana kadar 10-15 koşu
+boyunca güçsüz hissetmek". Para biriktirmek onu doğurur, görev doğurmaz —
+çünkü görevi **oynayarak** geçersin.
+
+Beş görev ve hiçbiri **güç** vermez, hepsi **seçenek** açar: başlangıç
+silahı, +1 kart yakma hakkı, döküm ön yüklemesi. İkisi doğrudan ısı
+ekonomisinin iki ucunu öğretir (KÖRÜK sıcak, KARANLIĞA ALIŞ soğuk).
+
+## Günün dökümü
+
+Her gün tek tohum, UTC tarihten üretiliyor: dünyanın her yerinde aynı gün
+aynı dökümhane. Sunucu gerekmiyor çünkü kıyas zemini **tohum**. Gün
+değişince günlük en iyi ve deneme sayacı sıfırlanır.
+
 ## Meta ilerleme: fırın kademesi
 
 Koşu sonunda **cüruf** kazanırsın (öldürme × kademe çarpanı). Kalıcı gelişim
 **güç değil seçenek** verir — ısı baskısını azaltan hiçbir şey kalıcı değil,
 yoksa oyunun çekirdeği söner.
 
-Fırın kademesi 0-3 gönüllü zorluktur ve **Kor'un kendi dilini** kullanır:
-zorluğu artırmanın yolu fırını daha çok yakmaktır. Körük (ısı %25 hızlı),
-sıkışan valf (kilit 3 sn), dökümhane uyanık (düşman %15 güçlü). Her kademe
-cüruf kazancını çarpar.
+Fırın kademesi 0-3 gönüllü zorluktur ve her basamak **ısının bir ödülünü**
+kapatır: kuru mıknatıs (çekim ısıyla büyümez), çatlak pota (döküm artık
+kilidi kırmaz), soğuk demir + dar göz (hasar bonusu yok, görüş %20 dar).
+Her basamak ayrıca düşmanları güçlendirir ve cüruf çarpanını üsteller.
+
+Bu ilk hali değil: ölçüm merdivenin **ters çalıştığını** gösterdi (kademe 2
+oyunu kolaylaştırıyor ve en çok ödüyordu). Sebep, üç değiştiricinin de
+ısının *birikim hızına* dokunmasıydı — ama Kor'da ısı ceza değil **ödül**.
 
 ## Erişilebilirlik
 
@@ -136,6 +187,23 @@ Bilgi hiçbir yerde *sadece* renge yüklenmiyor:
   tipinde kaybolmaz.
 - Isı tehlikesi üç kanaldan: doluluk, eşik çizgisi, ve eşik üstünde yanıp
   sönme.
+- Karanlıkta düşmanın görünen tek parçası **çekirdeği**, ve yedi tür
+  **dört tepki grubuna** ayrılıyor: nabız hızı, genliği ve çekirdek adedi.
+  İkisi de renk tonundan bağımsız.
+
+Ayarlardan kapatılabilenler (menüde `HAREKET` satırı):
+
+| ayar | neden |
+|---|---|
+| sarsıntı tam / yarı / kapalı | 12 dakikalık koşuda ~800 öldürme var; hareket duyarlılığı bir bariyer |
+| vuruş donması açık/kapalı | her öldürmede `Engine.time_scale` 0,05'e düşüyordu |
+| oto ateş açık/kapalı | 12 dakika sol tuş basılı tutmak fiziksel yük — nişan yine oyuncuda |
+
+Dokunulmazlık yanıp sönmesi **5,9 Hz**: fotosensitif nöbet eşiğinin
+(3-60 Hz) yoğun bandının dışında.
+
+Oyun **Türkçe ve İngilizce**. Çeviri anahtarları Türkçe metinlerin
+kendisi, yani çeviri dosyası olmasa bile oyun Türkçe çalışmaya devam eder.
 
 ## Çalıştırma ve doğrulama
 
@@ -146,7 +214,8 @@ build/windows/kor.exe               # derlenmiş sürüm
 bash tests/dogrula.sh               # TAM DOGRULAMA -- her sey burada
 ```
 
-`dogrula.sh` import + iki test + botlu koşu + menü çalıştırır ve **herhangi
+`dogrula.sh` sekiz adım çalıştırır — import, ısı, ses, döngü, botlu koşu,
+koşu akışı, arayüz taşma, dil kapsamı, menü — ve **herhangi
 bir** `ERROR` / `Assertion` / `Parse` satırını başarısızlık sayar. Dar filtre
 kullanmaz: geçmişte `grep TAMAM` ile bakarken bir fizik akışı hatası gizli
 kalmıştı.
@@ -217,7 +286,12 @@ Karanlık mekaniği `PointLight2D` kullanmıyor: tek tam ekran quad + shader,
 | `scripts/tema.gd` | görsel dil — tek yerden |
 | `scripts/hiss.gd` | oyun hissi: sarsıntı, donma, parçacık havuzu |
 | `scripts/kayit.gd` | kalıcı kayıt, cüruf, fırın kademesi, ayarlar |
+| `scripts/silahlar.gd` | silah tablosu + DAMGA tanımları |
+| `scripts/gorevler.gd` | görev sistemi — içerik ustalıkla açılır |
+| `scripts/ses_yonetici.gd` | ses havuzu, katmanlı müzik, ayrı efekt bus'ı |
 | `scripts/gelistirici.gd` | F1-F9 geliştirici katmanı (sadece debug) |
+| `build/dil/` | çeviri araçları: dize çıkarıcı + tablo birleştirici |
+| `build/ses/` | eksik ses olaylarının deterministik üreticisi |
 
 ## Varlıklar
 

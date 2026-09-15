@@ -28,6 +28,7 @@ calistir "isi testi"     timeout 60  godot --headless --script res://tests/test_
 calistir "ses testi"     timeout 60  godot --headless --script res://tests/test_ses.gd
 calistir "dongu testi"   timeout 120 godot --headless --script res://tests/test_dongu.gd
 calistir "botlu kosu"    timeout 150 godot --headless --fixed-fps 60 --script res://tests/denge.gd -- --kosu 1 --sure 90
+calistir "kosu akisi"    timeout 120 godot --headless --script res://tests/test_akis.gd
 calistir "arayuz tasma" timeout 120 godot --script res://tests/test_arayuz.gd
 calistir "dil kapsami" node build/dil/dizeleri-cikar.mjs --kontrol
 calistir "menu"          timeout 90  godot --script res://tests/ekran_al.gd -- --menu
