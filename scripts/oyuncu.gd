@@ -45,7 +45,17 @@ const ORS_CARPAN := 2.6
 # isi = gorus = alan hasari.
 const YAYILIM_TICK := 0.22
 const KOR_BEKLEME := 0.5
-const KIRILGANLIK := 0.6   # sicakken alinan hasar carpani
+## KIZGIN BOLGE. Isi bu esigin ustundeyken hem daha cok vuruyorsun
+## (asiri_isi_carpani, satir ~348) hem daha cok yiyorsun. Tek esik, iki
+## yone de calisiyor: "%70 ustunde her sey iki katI" akilda kalan bir kural.
+##
+## ONCEDEN: `ceil(miktar * (1 + 0.6 * isi.oran()))` yaziyordu. ceil()
+## yuzunden mekanik KADEMELI DEGIL IKILIYDI -- isi %1'de temas hasari
+## 1'den 2'ye cikiyor ve %100'e kadar hic degismiyordu. Oyuncu neredeyse
+## her zaman %0'in ustunde oldugu icin efektif can 6 degil 3'tu, ve bu
+## "sicak oynamak olduruyor" seklinde yanlis olculuyordu.
+const KIZGIN_ESIK := 0.70
+const KIZGIN_HASAR := 2.0  # kizgin bolgede alinan hasar carpani
 
 @export var hiz := 115.0
 @export var ivme := 1200.0
@@ -500,7 +510,7 @@ func hasar_al(miktar: float) -> void:
     # Kizgin metal yumusaktir. %70 ustundeki hasar bonusu boylece gercek bir
     # KUMAR oluyor: daha cok vuruyorsun ama daha cok yiyorsun. Onceden bedavaydi.
     _tavlanma_temiz = false      # tavlama bozuldu: kilitte darbe yedin
-    can -= int(ceilf(miktar * (1.0 + KIRILGANLIK * isi.oran())))
+    can -= int(ceilf(miktar * (KIZGIN_HASAR if isi.oran() > KIZGIN_ESIK else 1.0)))
     _dokunulmaz = VURULMA_DOKUNULMAZLIK
     can_degisti.emit(can, maks_can)
     SesYonetici.cal("oyuncu_hasar")

@@ -254,6 +254,34 @@ func _process(_delta: float) -> bool:
     # Kalici gelisim GUC vermemeli: kademe sadece zorlugu artirir
     assert(not kyt.acik("kalici_hasar"), "kalici guc yukseltmesi olmamali")
 
+    # KIZGIN BOLGE: hasar carpani KADEMELI DEGIL ESIKLI olmali.
+    # Onceden `ceil(miktar * (1 + 0.6 * oran))` yaziyordu; ceil() yuzunden
+    # isi %1'de bile hasar 1'den 2'ye ciktigi icin mekanik gizlice ikiliydi
+    # ve efektif can 6 yerine 3'tu. Bu test o sinifi kapatiyor: esigin
+    # ALTINDA hasar ham degerinde, USTUNDE tam iki katI.
+    _can_koru = false
+    oyuncu._dokunulmaz = 0.0
+    for olcum in [
+        {"oran": 0.00, "bekle": 1}, {"oran": 0.05, "bekle": 1},
+        {"oran": 0.50, "bekle": 1}, {"oran": 0.69, "bekle": 1},
+        {"oran": 0.85, "bekle": 2}, {"oran": 1.00, "bekle": 2},
+    ]:
+        oyuncu.isi.kilitli = false
+        oyuncu.isi.deger = oyuncu.isi.tavan * float(olcum["oran"])
+        oyuncu.maks_can = 20
+        oyuncu.can = 20
+        oyuncu._dokunulmaz = 0.0
+        oyuncu.hasar_al(1.0)
+        var yenen: int = 20 - oyuncu.can
+        assert(yenen == int(olcum["bekle"]),
+            "isi %%%.0f'de hasar %d olmali, %d oldu" % [float(olcum["oran"]) * 100.0, int(olcum["bekle"]), yenen])
+    oyuncu.isi.kilitli = false
+    oyuncu.isi.deger = 0.0
+    oyuncu.maks_can = 6
+    oyuncu.can = 6
+    oyuncu._dokunulmaz = 0.0
+    _can_koru = true
+
     # FIRINA AT: yakilan kart kosu boyunca bir daha gelmemeli
     var havuz_once: int = _ana._kart_havuzu().size()
     var kurban_kart: Dictionary = _ana._kart_havuzu()[0]
