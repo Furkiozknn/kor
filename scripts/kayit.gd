@@ -28,6 +28,11 @@ const VARSAYILAN := {
 	"en_iyi_sure": 0.0,
 	"en_iyi_oldurme": 0,
 	"en_iyi_curuf": 0,
+	# GUNUN DOKUMU: her gun tek tohum. Gun degisince en iyi ve deneme
+	# sayaci sifirlanir -- "bugunku sen" ile yarisiyorsun.
+	"gun_kodu": "",
+	"gun_en_iyi": 0,
+	"gun_deneme": 0,
 	"ayarlar": {
 		"ses_ana": 0.0,
 		"ses_efekt": -6.0,
@@ -103,6 +108,43 @@ func curuf() -> int:
 ## Tek bir kosuda elde edilen en yuksek dokum -- oyunun skoru.
 func en_iyi_curuf() -> int:
 	return int(_veri.get("en_iyi_curuf", 0))
+
+## GUNUN DOKUMU. Tohum UTC tarihten uretiliyor: dunyanin her yerinde
+## ayni gun ayni dokumhane. Sunucu gerekmiyor -- kiyas zemini TOHUM.
+static func gun_kodu_bugun() -> String:
+	var g := Time.get_date_dict_from_system(true)
+	return "%04d-%02d-%02d" % [g["year"], g["month"], g["day"]]
+
+## Gunun tohumu. seed() bunu aliyor; ayni gun = ayni arena, ayni dalga
+## sirasi, ayni kart teklifleri.
+static func gun_tohumu() -> int:
+	return abs(hash("kor-" + gun_kodu_bugun()))
+
+## Gun degistiyse gunluk sayaclari sifirla. Her okumadan once cagriliyor.
+func _gun_tazele() -> void:
+	var bugun := gun_kodu_bugun()
+	if str(_veri.get("gun_kodu", "")) != bugun:
+		_veri["gun_kodu"] = bugun
+		_veri["gun_en_iyi"] = 0
+		_veri["gun_deneme"] = 0
+
+func gun_en_iyi() -> int:
+	_gun_tazele()
+	return int(_veri.get("gun_en_iyi", 0))
+
+func gun_deneme() -> int:
+	_gun_tazele()
+	return int(_veri.get("gun_deneme", 0))
+
+## Gunluk kosu bitti. Doner: {"en_iyi": int, "deneme": int, "rekor": bool}
+func gun_bitti(curuf: int) -> Dictionary:
+	_gun_tazele()
+	_veri["gun_deneme"] = int(_veri.get("gun_deneme", 0)) + 1
+	var rekor := curuf > int(_veri.get("gun_en_iyi", 0))
+	if rekor:
+		_veri["gun_en_iyi"] = curuf
+	kaydet()
+	return {"en_iyi": int(_veri["gun_en_iyi"]), "deneme": int(_veri["gun_deneme"]), "rekor": rekor}
 
 func curuf_ekle(miktar: int) -> int:
 	_veri["curuf"] = curuf() + miktar

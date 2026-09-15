@@ -49,6 +49,12 @@ var oldurulen := 0
 var bitti := false
 var kazandi := false
 var firin_kademesi := 0
+## GUNUN DOKUMU. Menu, Engine meta alani ile isaretliyor: sahne degisiminde
+## parametre gecirmenin en temiz yolu bu (change_scene_to_file argüman almaz),
+## ve KAYDA yazmadigi icin yarim kalan bir bayrak sonraki kosuyu kirletmiyor.
+var gunun_dokumu := false
+var gun_sonuc := {}
+
 var kazanilan_curuf := 0
 var evre_adi := ""
 
@@ -104,6 +110,12 @@ static func _dil() -> String:
 
 func _ready() -> void:
     TranslationServer.set_locale(_dil())
+    # GUNUN DOKUMU: tohum arena kurulmadan ONCE sabitlenmeli, yoksa
+    # yerlesim/dalga/kart sirasi gune degil rastgeleye baglanir.
+    gunun_dokumu = bool(Engine.get_meta("kor_gunun_dokumu", false))
+    Engine.set_meta("kor_gunun_dokumu", false)
+    if gunun_dokumu:
+        seed(Kayit.gun_tohumu())
     gorevler.kosu_basla()
     SesYonetici.yukle_klasorden()
     SesYonetici.muzik_katmanli_cal()
@@ -253,6 +265,14 @@ func _ozet_satirlari(olum: bool) -> Array:
     s.append("")
     s.append(tr("DÖKÜM  %d   (en iyi %d)%s") % [kazanilan_curuf, Kayit.en_iyi_curuf(),
         "   ·   fırın kademesi %d" % firin_kademesi if firin_kademesi > 0 else ""])
+    if gunun_dokumu:
+        # Gunluk kosuda kiyas zemini BUGUNKU SEN. Deneme sayisini gizlemek
+        # yerine gosteriyoruz: kazanma orani ~%8 oldugu icin tek denemeli
+        # bir gunluk oyuncularin cogunu her gun kaybettirirdi.
+        var _r := tr("   ★ GÜNÜN REKORU") if bool(gun_sonuc.get("rekor", false)) else ""
+        s.append(tr("GÜNÜN DÖKÜMÜ %s   ·   bugünkü en iyin %d   ·   bugün %d. koşun%s") % [
+            Kayit.gun_kodu_bugun(), int(gun_sonuc.get("en_iyi", Kayit.gun_en_iyi())),
+            int(gun_sonuc.get("deneme", Kayit.gun_deneme())), _r])
     if olum:
         s.append("")
         s.append(tr("dakikada %.1f oldurme    seviye basina %.0f sn") % [
@@ -363,6 +383,14 @@ func _firin_kademesi_uygula() -> void:
     # alinmadiysa bonusu kapatmak HICBIR SEY YAPMIYORDU. Olcumde de
     # oyle cikti (605 sn, kademe 0'in 590'indan farksiz). Kademe
     # degistiricisi KOSULSUZ isirmali.
+    # Her kademe ayrica dusman gucunu artiriyor. Gerekce: isi ekonomisine
+    # dokunan degistiriciler INSAN oyuncu icin isiriyor ama botun politikasi
+    # onlari kullanmadigi icin olcumde gorunmuyorlar (bot neredeyse hic
+    # kilitlenmiyor, kupleri pasif topluyor). Olcumde k0/k1/k2 sirasi iki
+    # kez TERS cikti ve bu bir tuning sorunu degil, botun goremedigi bir
+    # eksen. Guc carpani POLITIKADAN BAGIMSIZ isiriyor, yani merdiven
+    # yapisi geregi monoton oluyor; isi degistiricileri de kimligi tasiyor.
+    guc_carpani *= pow(1.14, k)
     if k >= 1:
         oyuncu.miknatis_isiya_bagli = false  # KURU MIKNATIS: cekim isiyla buyumez
     if k >= 2:
@@ -1089,6 +1117,8 @@ func _kosu_kazanildi() -> void:
     gorevler.kazandi()
     bitti = true
     kazanilan_curuf = Kayit.kosu_bitti(gecen, oldurulen)
+    if gunun_dokumu:
+        gun_sonuc = Kayit.gun_bitti(kazanilan_curuf)
     acilan_gorevler = gorevler.kosu_bitti()
     SesYonetici.muzik_dur()
     SesYonetici.cal("kosu_bitti")
@@ -1100,6 +1130,8 @@ func _kosu_kazanildi() -> void:
 func _oyun_bitti() -> void:
     bitti = true
     kazanilan_curuf = Kayit.kosu_bitti(gecen, oldurulen)
+    if gunun_dokumu:
+        gun_sonuc = Kayit.gun_bitti(kazanilan_curuf)
     acilan_gorevler = gorevler.kosu_bitti()
     # Acik modal kalmasin: olum her seyin ustunde
     for katman in [_kart_katman, _duraklat_katman]:

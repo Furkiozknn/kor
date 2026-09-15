@@ -17,9 +17,9 @@ const OYUN := "res://scenes/level.tscn"
 ## Her kademe isinin bir ODULUNU kapatiyor, birikim hizina dokunmuyor.
 const KADEMELER := [
     "kapalı",
-    "kuru mıknatıs — çekim ısıyla büyümez",
-    "çatlak pota — döküm kilidi kırmaz",
-    "soğuk demir + dar göz — hasar bonusu yok, görüş %20 dar",
+    "kuru mıknatıs — çekim ısıyla büyümez, düşman %14 güçlü",
+    "çatlak pota — döküm kilidi kırmaz, düşman %30 güçlü",
+    "soğuk demir + dar göz — hasar yok, görüş dar, düşman %48 güçlü",
 ]
 
 var _isik: Array[Vector3] = []
@@ -213,14 +213,37 @@ func _arayuz_kur() -> void:
     kutu.add_child(hrk)
 
     var bosluk3 := Control.new()
-    bosluk3.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
+    bosluk3.custom_minimum_size = Vector2(0, Tema.BOSLUK_S)
     kutu.add_child(bosluk3)
+
+    # Iki kosu tipi yan yana. GUNUN DOKUMU ayni gun icinde herkese AYNI
+    # dokumhaneyi veriyor; kiyas zemini tohum oldugu icin sunucu gerekmiyor.
+    var kosu_satiri := HBoxContainer.new()
+    kosu_satiri.add_theme_constant_override("separation", Tema.BOSLUK_M)
 
     var basla := Button.new()
     basla.text = "  BAŞLA      [Enter]"
     basla.custom_minimum_size = Vector2(196, 30)
     basla.pressed.connect(_basla)
-    kutu.add_child(basla)
+    kosu_satiri.add_child(basla)
+
+    var gunluk := Button.new()
+    gunluk.text = tr("  GÜNÜN DÖKÜMÜ   [D]")
+    gunluk.custom_minimum_size = Vector2(196, 30)
+    gunluk.tooltip_text = tr("Bugün herkes aynı dökümhanede oynuyor")
+    gunluk.pressed.connect(_gunluk_basla)
+    kosu_satiri.add_child(gunluk)
+    kutu.add_child(kosu_satiri)
+
+    var gun_en := Kayit.gun_en_iyi()
+    var gun_dn := Kayit.gun_deneme()
+    if gun_dn > 0:
+        kutu.add_child(Tema.sonuk(tr("bugünkü en iyin %d   ·   %d koşu") % [gun_en, gun_dn]))
+    else:
+        kutu.add_child(Tema.sonuk(tr("bugünün dökümhanesi henüz denenmedi")))
+    var bosluk4 := Control.new()
+    bosluk4.custom_minimum_size = Vector2(0, Tema.BOSLUK_S)
+    kutu.add_child(bosluk4)
     basla.grab_focus()
     _kademe_tazele()
     _ses_tazele()
@@ -234,8 +257,8 @@ func _arayuz_kur() -> void:
     alt.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
     alt.offset_left = Tema.BOSLUK_M
     alt.offset_right = -Tema.BOSLUK_M
-    alt.offset_top = -58
-    alt.offset_bottom = -34
+    alt.offset_top = -50
+    alt.offset_bottom = -28
     alt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     alt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     alt.modulate = Color(1, 1, 1, 0.55)
@@ -243,8 +266,8 @@ func _arayuz_kur() -> void:
     alt2.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
     alt2.offset_left = Tema.BOSLUK_M
     alt2.offset_right = -Tema.BOSLUK_M
-    alt2.offset_top = -34
-    alt2.offset_bottom = -10
+    alt2.offset_top = -28
+    alt2.offset_bottom = -6
     alt2.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     alt2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     alt2.modulate = Color(1, 1, 1, 0.55)
@@ -350,6 +373,8 @@ func _unhandled_key_input(olay: InputEvent) -> void:
         _basla()
     elif k == KEY_C:
         _kunye_degis()
+    elif k == KEY_D:
+        _gunluk_basla()
     elif k == KEY_G:
         _gorev_degis()
     elif k == KEY_F11:
@@ -408,6 +433,13 @@ func _tam_ekran_degis() -> void:
     Kayit.ayar_yaz("tam_ekran", tam)
     DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if tam
         else DisplayServer.WINDOW_MODE_WINDOWED)
+
+## GUNUN DOKUMU. Bayrak KAYDA degil Engine metasina yaziliyor: kayda
+## yazsak yarim kalan bir kosu sonraki serbest kosuyu da gunluk yapardi.
+func _gunluk_basla() -> void:
+    Engine.set_meta("kor_gunun_dokumu", true)
+    _basla()
+
 
 func _basla() -> void:
     SesYonetici.cal("kart_sec")
