@@ -246,19 +246,36 @@ func _panel_kur(baslik: String, satirlar: Array, alt: String) -> CanvasLayer:
     var sarmal := PanelContainer.new()
     sarmal.theme = Tema.tema()
     sarmal.position = Vector2(56, 52)
+    # TASMA. Panel sabit konumdan ASAGI SINIRSIZ buyuyordu: kazanilan bir
+    # kosuda 5 kart + paylasim kutusu ekranin altini asiyor, "koşuyu
+    # kopyala" kirpiliyor ve "R yeniden başla · ESC menü" HIC gorunmuyordu
+    # (ekran goruntusuyle gorduk). Yukseklik ekrana sabitlendi; ORTA bolum
+    # kaydirilabilir, baslik ve alt ipucu kaydirmanin DISINDA -- yani cikis
+    # tuslari her zaman gorunur.
     sarmal.custom_minimum_size = Vector2(528, 0)
+    sarmal.size = Vector2(528, 296)
     sarmal.add_theme_stylebox_override("panel",
         Tema.kutu(Tema.GOVDE, Tema.KENAR_KOR, 1, Tema.BOSLUK_L))
     k.add_child(sarmal)
 
-    var kutu := VBoxContainer.new()
-    kutu.add_theme_constant_override("separation", Tema.BOSLUK_S)
-    sarmal.add_child(kutu)
-    kutu.add_child(Tema.baslik(baslik))
+    var dis := VBoxContainer.new()
+    dis.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    sarmal.add_child(dis)
+    dis.add_child(Tema.baslik(baslik))
     var ayrac := ColorRect.new()
     ayrac.color = Tema.KENAR
     ayrac.custom_minimum_size = Vector2(0, 1)
-    kutu.add_child(ayrac)
+    dis.add_child(ayrac)
+
+    var kaydir := ScrollContainer.new()
+    kaydir.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+    kaydir.size_flags_vertical = Control.SIZE_EXPAND_FILL
+    dis.add_child(kaydir)
+
+    var kutu := VBoxContainer.new()
+    kutu.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    kutu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    kaydir.add_child(kutu)
     for satir in satirlar:
         var m := str(satir)
         if m == "":
@@ -276,10 +293,12 @@ func _panel_kur(baslik: String, satirlar: Array, alt: String) -> CanvasLayer:
     # godot#81252), o yuzden ONCE secilebilir kutu: her zaman calisir.
     # Kopyalama dugmesi onun USTUNE geliyor; basarisiz olursa metin
     # zaten orada duruyor ve elle secilebiliyor.
+    # Paylasim kutusu ve KOPYALA dugmesi kaydirmanin DISINDA: oyunun
+    # paylasim ozelligi kaydirma cubugunun arkasinda kalmamali.
     if bitti:
         var b3 := Control.new()
         b3.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
-        kutu.add_child(b3)
+        dis.add_child(b3)
         var metin := _paylasim_metni()
         var kutucuk := RichTextLabel.new()
         kutucuk.bbcode_enabled = false
@@ -288,14 +307,14 @@ func _panel_kur(baslik: String, satirlar: Array, alt: String) -> CanvasLayer:
         kutucuk.scroll_active = false
         kutucuk.text = metin
         kutucuk.add_theme_color_override("default_color", Tema.YAZI_SONUK)
-        kutu.add_child(kutucuk)
+        dis.add_child(kutucuk)
         var kopyala := Button.new()
         kopyala.text = tr("koşuyu kopyala")
         kopyala.pressed.connect(func():
             DisplayServer.clipboard_set(metin)
             kopyala.text = tr("kopyalandı"))
-        kutu.add_child(kopyala)
-    kutu.add_child(Tema.vurgu(alt))
+        dis.add_child(kopyala)
+    dis.add_child(Tema.vurgu(alt))
     return k
 
 ## Panel satiri: uzun kart aciklamalari paneli tasmasin diye sarilir.
@@ -319,7 +338,7 @@ func _ozet_satirlari(olum: bool) -> Array:
     s.append(tr("sure %02d:%02d    seviye %d    oldurme %d") % [
         int(gecen) / 60, int(gecen) % 60, seviye, oldurulen])
     for g in acilan_gorevler:
-        s.append(tr("✓ GÖREV TAMAM: %s — %s") % [g["ad"], g["odul"]])
+        s.append(tr("✓ GÖREV TAMAM: %s — %s") % [tr(str(g["ad"])), tr(str(g["odul"]))])
     s.append(tr("dokumhane %d/%d mangal yandi%s") % [yakilan_mangal, toplam_mangal,
         tr("    — HEPSI") if yakilan_mangal >= toplam_mangal and toplam_mangal > 0 else ""])
     s.append(tr("silah %s    acik %d/4") % [tr(oyuncu.silah()), oyuncu.acik_silahlar.size()])
@@ -331,10 +350,11 @@ func _ozet_satirlari(olum: bool) -> Array:
         for ad in alinan_kartlar:
             var b: Dictionary = alinan_kartlar[ad]
             var sayi: int = int(b["sayi"])
-            s.append("  %s%s   %s" % [ad, (" x%d" % sayi) if sayi > 1 else "", b["aciklama"]])
+            s.append("  %s%s   %s" % [tr(str(ad)), (" x%d" % sayi) if sayi > 1 else "",
+                tr(str(b["aciklama"]))])
     s.append("")
     s.append(tr("DÖKÜM  %d   (en iyi %d)%s") % [kazanilan_curuf, Kayit.en_iyi_curuf(),
-        "   ·   fırın kademesi %d" % firin_kademesi if firin_kademesi > 0 else ""])
+        ("   ·   " + tr("fırın kademesi %d")) % firin_kademesi if firin_kademesi > 0 else ""])
     if gunun_dokumu:
         # Gunluk kosuda kiyas zemini BUGUNKU SEN. Deneme sayisini gizlemek
         # yerine gosteriyoruz: kazanma orani ~%8 oldugu icin tek denemeli
@@ -637,7 +657,7 @@ func _patron_dog() -> void:
     _patron = p
     Hiss.sars(5.0)
     SesYonetici.cal("patron_uyandi")
-    _duyuru("%s UYANDI" % _patron_adi())
+    _duyuru(tr("%s UYANDI") % tr(_patron_adi()))
 
 ## Mangal yakmak kalici bir kazanim: arena aydinlanir, yeni bir isi kaynagi
 ## acilir. Odulu XP degil -- odul haritanin kendisi. Ustune kucuk bir XP
@@ -660,7 +680,7 @@ func _patron_yenildi() -> void:
     gorevler.patron_dustu()
     tavan_artis *= 1.08
     guc_carpani *= 1.10
-    _duyuru("%s DÜŞTÜ" % _patron_adi())
+    _duyuru(tr("%s DÜŞTÜ") % tr(_patron_adi()))
     for n in 6:
         _kup_dus(oyuncu.global_position + Vector2(randf_range(-40, 40), randf_range(-40, 40)), 5)
 
