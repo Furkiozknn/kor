@@ -23,6 +23,8 @@ var _zafer_modu := "--zafer" in OS.get_cmdline_user_args()
 ##   2-gorus   ates edildi, isi yukseldi, dunya acildi
 ##   3-yanik   sicakken mangala gidildi ve yakildi
 var _acilis_modu := "--acilis" in OS.get_cmdline_user_args()
+## Ingilizce cekim: ceviri gercekten yerine oturuyor mu, tasma var mi.
+var _ingilizce := "--en" in OS.get_cmdline_user_args()
 var _perf_ornek: Array = []
 var _son_usec: int = 0
 
@@ -34,7 +36,13 @@ func _initialize() -> void:
     _ana = load(yol).instantiate()
     root.add_child(_ana)
 
+
 func _process(_delta: float) -> bool:
+    # DIKKAT: sahnenin _ready()'si kayitli dili uyguluyor ve _initialize'dan
+    # SONRAKI karede calisiyor -- yani orada set etmek is gormuyor, eziliyor.
+    # Her karede yeniden uygulaniyor; kullanicinin kayitli ayarina dokunmadan.
+    if _ingilizce and TranslationServer.get_locale() != "en":
+        TranslationServer.set_locale("en")
     if _acilis_modu:
         return _acilis()
     if _zafer_modu:
@@ -120,7 +128,7 @@ func _process(_delta: float) -> bool:
             return false
         RenderingServer.force_draw()
         root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-menu.png")
-        print("menu: kor-menu.png")
+        print("menu: kor-menu.png  locale=%s  ingilizce=%s" % [TranslationServer.get_locale(), _ingilizce])
         return true
 
     _kare += 1

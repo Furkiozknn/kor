@@ -33,8 +33,21 @@ const Gorevler := preload("res://scripts/gorevler.gd")
 var _sarsinti_dugme: Button
 var _donma_dugme: Button
 var _oto_dugme: Button
+var _dil_dugme: Button
+
+## Dil: kayitli ayar, ama komut satiri --en ile zorlanabiliyor.
+## Gerekce: tr() ile bicimlenen dizeler SET ANINDA pisiyor ve sonradan
+## locale degisince guncellenmiyor (oyunda sorun degil, cunku dil degisimi
+## sahneyi yeniden yukluyor). Ekran goruntusu aracinin dogru dili
+## gorebilmesi icin locale sahne KURULMADAN once belli olmali.
+static func _dil() -> String:
+    if "--en" in OS.get_cmdline_user_args():
+        return "en"
+    var k := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("Kayit")
+    return str(k.ayar("dil", "tr")) if k != null else "tr"
 
 func _ready() -> void:
+    TranslationServer.set_locale(_dil())
     _zemin_kur()
     _karanlik_kur()
     _oyuncu_kur()
@@ -129,9 +142,9 @@ func _arayuz_kur() -> void:
 
     # Kalici durum: curuf ve rekor
     var rekor: float = float(Kayit._veri.get("en_iyi_sure", 0.0))
-    var durum := "CÜRUF %d" % Kayit.curuf()
+    var durum := tr("CÜRUF %d") % Kayit.curuf()
     if rekor > 0.0:
-        durum += "     en iyi %02d:%02d" % [int(rekor) / 60, int(rekor) % 60]
+        durum += tr("     en iyi %02d:%02d") % [int(rekor) / 60, int(rekor) % 60]
     kutu.add_child(Tema.vurgu(durum))
 
     # FIRIN KADEMESI -- gonullu zorluk, Kor'un kendi diliyle. Her kademe
@@ -188,6 +201,12 @@ func _arayuz_kur() -> void:
     _oto_dugme.custom_minimum_size = Vector2(112, 20)
     _oto_dugme.pressed.connect(_oto_degis)
     hrk.add_child(_oto_dugme)
+    # DIL. Anahtarlar Turkce metinlerin kendisi oldugu icin "tr" secildiginde
+    # ceviri tablosu devreden cikiyor ve oyun kaynaktaki metinleri gosteriyor.
+    _dil_dugme = Button.new()
+    _dil_dugme.custom_minimum_size = Vector2(72, 20)
+    _dil_dugme.pressed.connect(_dil_degis)
+    hrk.add_child(_dil_dugme)
     kutu.add_child(hrk)
 
     var bosluk3 := Control.new()
@@ -207,17 +226,26 @@ func _arayuz_kur() -> void:
     # Tek satira sigmiyordu (93 karakter, 640 piksel) -- son iki ipucu
     # ekran disinda kaliyordu. Iki satir + tam genislikte ortalama: sabit
     # koordinat yok, yazi tipi degisse de kesilmez.
-    var alt := Tema.sonuk("WASD hareket · SOL TIK ateş · SAĞ TIK kor · BOŞLUK dalış
-E döküm · Q silah · G görevler · F11 tam ekran · C künye")
+    var alt := Tema.sonuk("WASD hareket · SOL TIK ateş · SAĞ TIK kor · BOŞLUK dalış")
+    var alt2 := Tema.sonuk("E döküm · Q silah · G görevler · F11 tam ekran · C künye")
     alt.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
     alt.offset_left = Tema.BOSLUK_M
     alt.offset_right = -Tema.BOSLUK_M
-    alt.offset_top = -50
-    alt.offset_bottom = -Tema.BOSLUK_L
+    alt.offset_top = -58
+    alt.offset_bottom = -34
     alt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
     alt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     alt.modulate = Color(1, 1, 1, 0.55)
     k.add_child(alt)
+    alt2.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+    alt2.offset_left = Tema.BOSLUK_M
+    alt2.offset_right = -Tema.BOSLUK_M
+    alt2.offset_top = -34
+    alt2.offset_bottom = -10
+    alt2.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    alt2.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    alt2.modulate = Color(1, 1, 1, 0.55)
+    k.add_child(alt2)
 
 ## Sarsinti uc kademe: tam / yari / kapali. Yari kademe onemli -- cogu
 ## oyuncu sarsintiyi sevmiyor ama tamamen kapatinca vurus hissi kayboluyor.
@@ -241,6 +269,15 @@ func _donma_degis() -> void:
     SesYonetici.cal("kart_sec")
     _hareket_tazele()
 
+## Dil degisimi sahneyi yeniden kuruyor: kurulmus Label'larin metni
+## otomatik guncellenmiyor (bircogu tr() ile bir kez bicimlenmis).
+func _dil_degis() -> void:
+    var yeni := "en" if str(Kayit.ayar("dil", "tr")) == "tr" else "tr"
+    Kayit.ayar_yaz("dil", yeni)
+    Kayit.kaydet()
+    TranslationServer.set_locale(yeni)
+    get_tree().reload_current_scene()
+
 func _oto_degis() -> void:
     Kayit.ayar_yaz("otomatik_ates", not bool(Kayit.ayar("otomatik_ates", false)))
     SesYonetici.cal("kart_sec")
@@ -251,6 +288,8 @@ func _hareket_tazele() -> void:
         return
     if _oto_dugme != null:
         _oto_dugme.text = "oto ateş açık" if bool(Kayit.ayar("otomatik_ates", false)) else "oto ateş kapalı"
+    if _dil_dugme != null:
+        _dil_dugme.text = "TÜRKÇE" if str(Kayit.ayar("dil", "tr")) == "tr" else "ENGLISH"
     var su := float(Kayit.ayar("sarsinti", 1.0))
     var i := 0
     for n in SARSINTI_KADEME.size():
@@ -268,7 +307,7 @@ func _kademe_tazele() -> void:
     if _kademe_yazi == null:
         return
     var k: int = clampi(Kayit.kademe(), 0, KADEMELER.size() - 1)
-    _kademe_yazi.text = "  %s   (cüruf x%.2f)" % [KADEMELER[k], Kayit.kademe_carpani()]
+    _kademe_yazi.text = tr("  %s   (cüruf x%.2f)") % [tr(str(KADEMELER[k])), Kayit.kademe_carpani()]
 
 func _ses_degis(anahtar: String, delta_db: float, varsayilan: float) -> void:
     var d: float = clampf(float(Kayit.ayar(anahtar, varsayilan)) + delta_db, -40.0, 6.0)
@@ -414,15 +453,15 @@ func _gorev_degis() -> void:
         var acik: bool = Kayit.acik(str(g["kod"]))
         if acik:
             acik_sayi += 1
-        var l := Tema.vurgu("✓  %s" % g["ad"]) if acik else Tema.govde("·  %s" % g["ad"])
+        var l := Tema.vurgu(tr("✓  %s") % tr(str(g["ad"]))) if acik else Tema.govde(tr("·  %s") % tr(str(g["ad"])))
         l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         kutu.add_child(l)
-        var alt := Tema.sonuk("     %s  →  %s" % [
-            "AÇILDI" if acik else str(g["aciklama"]), str(g["odul"])])
+        var alt := Tema.sonuk(tr("     %s  →  %s") % [
+            tr("AÇILDI") if acik else tr(str(g["aciklama"])), tr(str(g["odul"]))])
         alt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         kutu.add_child(alt)
 
     var bosluk2 := Control.new()
     bosluk2.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
     kutu.add_child(bosluk2)
-    kutu.add_child(Tema.sonuk("%d/%d açıldı   ·   G kapat" % [acik_sayi, Gorevler.LISTE.size()]))
+    kutu.add_child(Tema.sonuk(tr("%d/%d açıldı   ·   G kapat") % [acik_sayi, Gorevler.LISTE.size()]))

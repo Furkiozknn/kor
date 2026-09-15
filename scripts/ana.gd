@@ -94,7 +94,15 @@ var _xp_cubuk: ColorRect
 var _ipucu: Label
 var _duraklat_katman: CanvasLayer
 
+## Bkz. menu.gd _dil(): komut satiri --en ile zorlanabiliyor.
+static func _dil() -> String:
+    if "--en" in OS.get_cmdline_user_args():
+        return "en"
+    var k := (Engine.get_main_loop() as SceneTree).root.get_node_or_null("Kayit")
+    return str(k.ayar("dil", "tr")) if k != null else "tr"
+
 func _ready() -> void:
+    TranslationServer.set_locale(_dil())
     gorevler.kosu_basla()
     _firin_kademesi_uygula()
     SesYonetici.yukle_klasorden()
@@ -124,7 +132,7 @@ func _ready() -> void:
             for a in dmg:
                 adlar.append(str(Silahlar.damga(str(a)).get("ad", a)))
             dmg_ek = "  ·  " + " · ".join(adlar)
-        _lbl_silah.text = "◤ " + str(ad) + ek + dmg_ek)
+        _lbl_silah.text = "◤ " + tr(str(ad)) + ek + dmg_ek)
     oyuncu.dokum_degisti.connect(_dokum_tazele)
     oyuncu.dokum_degisti.emit(0.0, false)
     oyuncu.silah_degisti.emit(oyuncu.silah(), oyuncu.silah_indeksi)
@@ -222,13 +230,13 @@ func _panel_yazi(metin: String, boy: int, renk: Color) -> Label:
 ## yaptigini gorsun.
 func _ozet_satirlari(olum: bool) -> Array:
     var s: Array = []
-    s.append("sure %02d:%02d    seviye %d    oldurme %d" % [
+    s.append(tr("sure %02d:%02d    seviye %d    oldurme %d") % [
         int(gecen) / 60, int(gecen) % 60, seviye, oldurulen])
     for g in acilan_gorevler:
-        s.append("★ GÖREV TAMAM: %s — %s" % [g["ad"], g["odul"]])
-    s.append("dokumhane %d/%d mangal yandi%s" % [yakilan_mangal, toplam_mangal,
-        "    — HEPSI" if yakilan_mangal >= toplam_mangal and toplam_mangal > 0 else ""])
-    s.append("silah %s    acik %d/4" % [oyuncu.silah(), oyuncu.acik_silahlar.size()])
+        s.append(tr("★ GÖREV TAMAM: %s — %s") % [g["ad"], g["odul"]])
+    s.append(tr("dokumhane %d/%d mangal yandi%s") % [yakilan_mangal, toplam_mangal,
+        tr("    — HEPSI") if yakilan_mangal >= toplam_mangal and toplam_mangal > 0 else ""])
+    s.append(tr("silah %s    acik %d/4") % [oyuncu.silah(), oyuncu.acik_silahlar.size()])
     s.append("")
     if alinan_kartlar.is_empty():
         s.append("kart alinmadi")
@@ -239,11 +247,11 @@ func _ozet_satirlari(olum: bool) -> Array:
             var sayi: int = int(b["sayi"])
             s.append("  %s%s   %s" % [ad, (" x%d" % sayi) if sayi > 1 else "", b["aciklama"]])
     s.append("")
-    s.append("CÜRUF  +%d   (toplam %d)%s" % [kazanilan_curuf, Kayit.curuf(),
+    s.append(tr("CÜRUF  +%d   (toplam %d)%s") % [kazanilan_curuf, Kayit.curuf(),
         "   ·   fırın kademesi %d" % firin_kademesi if firin_kademesi > 0 else ""])
     if olum:
         s.append("")
-        s.append("dakikada %.1f oldurme    seviye basina %.0f sn" % [
+        s.append(tr("dakikada %.1f oldurme    seviye basina %.0f sn") % [
             oldurulen / maxf(gecen / 60.0, 0.01), gecen / maxf(float(seviye), 1.0)])
     return s
 
@@ -300,7 +308,7 @@ func _process(delta: float) -> void:
     # MANGAL sayaci sadece SONUK mangal kaldiysa gorunuyor: bu bir hedef
     # gostergesi, bir istatistik degil. Hepsi yaninca kendini siliyor --
     # HUD'da isi bitmis bir eleman durmasin.
-    _lbl_ust.text = "%02d:%02d" % [int(gecen) / 60, int(gecen) % 60]
+    _lbl_ust.text = tr("%02d:%02d") % [int(gecen) / 60, int(gecen) % 60]
     var alt: Array = ["sv%d" % seviye, "×%d" % oldurulen]
     if oldurulen > 0:
         alt.append("+%d" % Kayit.kosu_curufu(oldurulen))
@@ -507,7 +515,7 @@ func _dokum_tazele(oran: float, hazir: bool) -> void:
         return
     _dokum_cubuk.size.x = 120.0 * clampf(oran, 0.0, 1.0)
     _dokum_cubuk.color = Tema.KOR if hazir else Color(0.55, 0.42, 0.30)
-    _dokum_yazi.text = "DÖKÜM [E]" if hazir else "DÖKÜM"
+    _dokum_yazi.text = tr("DÖKÜM [E]") if hazir else tr("DÖKÜM")
     _dokum_yazi.add_theme_color_override("font_color",
         Tema.KOR if hazir else Tema.YAZI_SONUK)
 
@@ -555,7 +563,7 @@ func _dusman_oldu(poz: Vector2, kazanc: int) -> void:
     # Seviye araligi sv12'de 243 saniyeye ciktigi icin kosunun ikinci
     # yarisi sessizlesiyor. Bunlar o sessizligi dolduran ucuz ritim.
     if oldurulen in KILOMETRE_TASLARI:
-        _duyuru("%d KÜL" % oldurulen)
+        _duyuru(tr("%d KÜL") % oldurulen)
         Hiss.sars(2.4)
         SesYonetici.cal("seviye")
     _kup_dus(poz, kazanc)
@@ -639,7 +647,7 @@ func _kart_havuzu() -> Array:
             continue
         var sl: Dictionary = Silahlar.LISTE[i]
         liste.append({
-            "ad": "SİLAH: " + str(sl["ad"]),
+            "ad": tr("SİLAH: ") + tr(str(sl["ad"])),
             "aciklama": "%s
 %s" % [str(sl["not"]), Silahlar.isi_profili(i, oyuncu.isi.tavan)],
             "ikon": str(sl["ikon"]), "silah": i,
@@ -661,8 +669,8 @@ func _kart_havuzu() -> Array:
                 continue
             var dm: Dictionary = Silahlar.DAMGALAR[anahtar]
             liste.append({
-                "ad": "DAMGA: %s → %s" % [str(dm["ad"]), eldeki],
-                "aciklama": str(dm["not"]) + "  (kalıcı)",
+                "ad": tr("DAMGA: %s → %s") % [str(dm["ad"]), eldeki],
+                "aciklama": tr(str(dm["not"])) + tr("  (kalıcı)"),
                 "ikon": str(dm["ikon"]), "damga": anahtar,
                 "uygula": func(o): o.damga_tak(str(anahtar)),
             })
@@ -716,7 +724,7 @@ func _kartlari_ac() -> void:
 
     var ust := HBoxContainer.new()
     ust.add_theme_constant_override("separation", Tema.BOSLUK_M)
-    ust.add_child(Tema.baslik("SEVİYE %d" % seviye))
+    ust.add_child(Tema.baslik(tr("SEVİYE %d") % seviye))
     var bosluk := Control.new()
     bosluk.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     ust.add_child(bosluk)
@@ -728,7 +736,7 @@ func _kartlari_ac() -> void:
     for k in secilen:
         kutu.add_child(_kart_satiri(k))
     if yakma_hakki > 0:
-        var ipucu := Tema.sonuk("sağdaki ateşe basarak bir kartı fırına atabilirsin — kalan %d" % yakma_hakki)
+        var ipucu := Tema.sonuk(tr("sağdaki ateşe basarak bir kartı fırına atabilirsin — kalan %d") % yakma_hakki)
         ipucu.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         kutu.add_child(ipucu)
 

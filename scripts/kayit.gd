@@ -35,6 +35,7 @@ const VARSAYILAN := {
 		"sarsinti": 1.0,
 		"donma": true,
 		"otomatik_ates": false,
+		"dil": "tr",
 	},
 }
 
