@@ -879,7 +879,7 @@ func _kart_havuzu() -> Array:
         liste.append({
             "ad": tr("SİLAH: ") + tr(str(sl["ad"])),
             "aciklama": "%s
-%s" % [str(sl["not"]), Silahlar.isi_profili(i, oyuncu.isi.tavan)],
+%s" % [tr(str(sl["not"])), Silahlar.isi_profili(i, oyuncu.isi.tavan)],
             "ikon": str(sl["ikon"]), "silah": i,
             "uygula": func(o): o.silah_ver(i),
         })

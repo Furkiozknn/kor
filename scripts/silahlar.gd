@@ -54,7 +54,9 @@ const LISTE := [
 static func isi_profili(i: int, tavan: float = 100.0) -> String:
     var s := al(i)
     var sn_isi: float = float(s["isi"]) / float(s["aralik"])
-    return "%.0f ısı/sn · ~%.1f sn'de kilit" % [sn_isi, tavan / sn_isi]
+    # tr() ORNEK metodu, bu fonksiyon static -- TranslationServer static-guvenli.
+    # (tr() denendi: "Cannot call non-static function" ile derlenmedi.)
+    return TranslationServer.translate("%.0f ısı/sn · ~%.1f sn'de kilit") % [sn_isi, tavan / sn_isi]
 
 static func al(i: int) -> Dictionary:
     return LISTE[clampi(i, 0, LISTE.size() - 1)]
