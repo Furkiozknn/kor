@@ -191,7 +191,7 @@ func _ozet_satirlari(olum: bool) -> Array:
             var sayi: int = int(b["sayi"])
             s.append("  %s%s   %s" % [ad, (" x%d" % sayi) if sayi > 1 else "", b["aciklama"]])
     s.append("")
-    s.append("CÜRÜF  +%d   (toplam %d)%s" % [kazanilan_curuf, Kayit.curuf(),
+    s.append("CÜRUF  +%d   (toplam %d)%s" % [kazanilan_curuf, Kayit.curuf(),
         "   ·   fırın kademesi %d" % firin_kademesi if firin_kademesi > 0 else ""])
     if olum:
         s.append("")

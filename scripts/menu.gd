@@ -129,7 +129,7 @@ func _arayuz_kur() -> void:
 
     # Kalici durum: curuf ve rekor
     var rekor: float = float(Kayit._veri.get("en_iyi_sure", 0.0))
-    var durum := "CÜRÜF %d" % Kayit.curuf()
+    var durum := "CÜRUF %d" % Kayit.curuf()
     if rekor > 0.0:
         durum += "     en iyi %02d:%02d" % [int(rekor) / 60, int(rekor) % 60]
     kutu.add_child(Tema.vurgu(durum))
@@ -183,8 +183,18 @@ func _arayuz_kur() -> void:
     _kademe_tazele()
     _ses_tazele()
 
-    var alt := Tema.sonuk("WASD · SOL TIK ateş · SAĞ TIK kor · BOŞLUK dalış · Q silah · F11 tam ekran · C künye")
-    alt.position = Vector2(48, 322)
+    # Tek satira sigmiyordu (93 karakter, 640 piksel) -- son iki ipucu
+    # ekran disinda kaliyordu. Iki satir + tam genislikte ortalama: sabit
+    # koordinat yok, yazi tipi degisse de kesilmez.
+    var alt := Tema.sonuk("WASD hareket · SOL TIK ateş · SAĞ TIK kor · BOŞLUK dalış
+Q silah · F11 tam ekran · C künye")
+    alt.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+    alt.offset_left = Tema.BOSLUK_M
+    alt.offset_right = -Tema.BOSLUK_M
+    alt.offset_top = -50
+    alt.offset_bottom = -Tema.BOSLUK_L
+    alt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+    alt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     alt.modulate = Color(1, 1, 1, 0.55)
     k.add_child(alt)
 
@@ -209,7 +219,7 @@ func _ses_degis(anahtar: String, delta_db: float, varsayilan: float) -> void:
 func _ses_tazele() -> void:
     if _ses_yazi == null:
         return
-    _ses_yazi.text = "  müzik %+.0f dB   efekt %+.0f dB" % [
+    _ses_yazi.text = "   %+.0f / %+.0f dB" % [
         float(Kayit.ayar("ses_muzik", -14.0)), float(Kayit.ayar("ses_efekt", -6.0))]
 
 func _process(delta: float) -> void:

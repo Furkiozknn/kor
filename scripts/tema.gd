@@ -21,6 +21,13 @@ const KOR        := Color(1.0, 0.66, 0.26)
 const SOGUK      := Color(0.55, 0.78, 0.95)
 const TEHLIKE    := Color(1.0, 0.36, 0.22)
 
+## Menu ve HUD yazilari CANLI oyunun ustunde duruyor: menude gezinen demo
+## oyuncu, oyunda mangal isiklari ve dusmanlar. Hicbir konumlandirma bunu
+## cozmez -- arka plan hareket ediyor. 1 piksellik kontur cozer ve pixel
+## keskinligini bozmaz. Tek yerde tanimli, her yazi otomatik aliyor.
+const KONTUR      := Color(0.02, 0.02, 0.04, 0.85)
+const KONTUR_KALIN := 1
+
 # --- Boşluk ölçeği. Hepsi 4'ün katı; pixel ızgarası bozulmasın. ----------
 const BOSLUK_S := 4
 const BOSLUK_M := 8
@@ -62,6 +69,10 @@ static func tema() -> Theme:
     t.set_color("font_color", "Label", YAZI)
     t.set_font("font", "Label", YAZI_TIPI)
     t.set_font_size("font_size", "Label", 8)
+
+    for tur in ["Label", "Button"]:
+        t.set_color("font_outline_color", tur, KONTUR)
+        t.set_constant("outline_size", tur, KONTUR_KALIN * 2)   # yariçap -> kalinlik
     return t
 
 ## Başlık/gövde/sönük — üç yazı seviyesi. Başka boyut kullanma.
@@ -82,6 +93,8 @@ static func _yazi(metin: String, boy: int, renk: Color) -> Label:
     l.add_theme_font_override("font", YAZI_TIPI)
     l.add_theme_font_size_override("font_size", boy)
     l.add_theme_color_override("font_color", renk)
+    l.add_theme_color_override("font_outline_color", KONTUR)
+    l.add_theme_constant_override("outline_size", KONTUR_KALIN * 2)
     l.text = metin
     return l
 
