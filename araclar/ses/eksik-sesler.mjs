@@ -9,7 +9,8 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const CIKTI = join(dirname(fileURLToPath(import.meta.url)), "cikti");
+// Uretilen sesler build/ altina yaziliyor: araclar/ KAYNAK, build/ URETILEN.
+const CIKTI = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "build", "ses");
 const SR = 44100;
 
 function mulberry32(a) {
