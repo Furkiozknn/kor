@@ -84,6 +84,7 @@ func _ready() -> void:
 	assert(k.ayar("ses_muzik") == -14.0, "eksik alan varsayilandan gelmeli")
 	assert(k.kademe() == 0, "eksik alan varsayilandan gelmeli")
 	print("6) surum gecisi OK")
+	print("TAMAM kayit: 6 adim")
 
 	print("KAYIT TESTI GECTI")
 	get_tree().quit()

@@ -17,7 +17,7 @@ Son güncelleme: 15 Eylül 2026. Bu dosya **projenin nerede olduğunu** ve
 | Ses | 16 olay + ısıyla yükselen iki katmanlı müzik |
 | Dil | Türkçe + İngilizce, kapsam **test ediliyor** |
 | Erişilebilirlik | sarsıntı 3 kademe, vuruş donması, oto ateş, 5,9 Hz yanıp sönme |
-| Test | `dogrula.sh` 9 adım, hepsi geçiyor |
+| Test | `dogrula.sh` 10 adım, hepsi geçiyor |
 | Derleme | Windows + Web, ikisi de güncel |
 
 ## Ölçülen sayılar
@@ -67,7 +67,7 @@ Gömme boyutu **1280×720** (tam 2×; `scale_mode="integer"` ile bantsız).
 ## Nasıl doğrulanır
 
 ```bash
-bash tests/dogrula.sh        # 9 adım, herhangi bir ERROR satırı = başarısız
+bash tests/dogrula.sh        # 10 adım, herhangi bir ERROR satırı = başarısız
 ```
 
 Derleme:

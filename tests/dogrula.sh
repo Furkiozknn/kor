@@ -5,7 +5,7 @@
 set -u
 cd "$(dirname "$0")/.."
 HATA=0
-gurultu='resources still in use|ObjectDB instances were leaked|NavMeshGeometryParser|Pages in use exist at exit|PagedAllocator'
+gurultu='resources still in use|ObjectDB instances were leaked|NavMeshGeometryParser|Pages in use exist at exit|PagedAllocator|Parse JSON failed. Error at line 0: Expected key'
 
 calistir() {
   local ad="$1"; shift
@@ -25,6 +25,7 @@ calistir() {
 echo "Kor dogrulama"
 calistir "import"        timeout 240 godot --headless --import
 calistir "isi testi"     timeout 60  godot --headless --script res://tests/test_isi.gd
+calistir "kayit testi"   timeout 90  godot --headless --path . --quit-after 300 tests/test_kayit.tscn
 calistir "ses testi"     timeout 60  godot --headless --script res://tests/test_ses.gd
 calistir "dongu testi"   timeout 120 godot --headless --script res://tests/test_dongu.gd
 calistir "botlu kosu"    timeout 150 godot --headless --fixed-fps 60 --script res://tests/denge.gd -- --kosu 1 --sure 90

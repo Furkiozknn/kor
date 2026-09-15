@@ -214,8 +214,8 @@ build/windows/kor.exe               # derlenmiş sürüm
 bash tests/dogrula.sh               # TAM DOGRULAMA -- her sey burada
 ```
 
-`dogrula.sh` sekiz adım çalıştırır — import, ısı, ses, döngü, botlu koşu,
-koşu akışı, arayüz taşma, dil kapsamı, menü — ve **herhangi
+`dogrula.sh` on adım çalıştırır — import, ısı, kayıt, ses, döngü, botlu
+koşu, koşu akışı, arayüz taşma, dil kapsamı, menü — ve **herhangi
 bir** `ERROR` / `Assertion` / `Parse` satırını başarısızlık sayar. Dar filtre
 kullanmaz: geçmişte `grep TAMAM` ile bakarken bir fizik akışı hatası gizli
 kalmıştı.
