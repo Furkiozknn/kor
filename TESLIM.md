@@ -23,7 +23,8 @@ Son güncelleme: 15 Eylül 2026. Bu dosya **projenin nerede olduğunu** ve
 ## Ölçülen sayılar
 
 ```
-hayatta kalma (ortanca, 10 koşu)   608,1 / 720 sn
+hayatta kalma (ortanca)            634,8 / 720 sn
+boş duran oyuncu                   22,8 sn  (önce 12,7)
 ortalama ısı                        %57
 öldürme (ortanca)                   ~800
 kare bütçesi aşımı                  %0
@@ -46,6 +47,35 @@ tarayıcı indirmesi (gzip)           ~11,4 MB  (wasm 9,9 + pck 1,4)
    şablon derlemesi gerektirir.
 4. Işık duvarlardan geçiyor (`karanlik.gdshader` saf radyal). Şu an fark
    edilmiyor çünkü yapılar 16 px; koridorlu arena yapılırsa sorun olur.
+
+## Güvenlik denetimi — 15 Eylül
+
+| kontrol | sonuç |
+|---|---|
+| Git geçmişinde sır (60 commit) | temiz |
+| Çalışma ağacında sır | yok (eşleşmeler `addons/godot_mcp`, gitignore'da) |
+| E-posta / kimlik sızıntısı | yok |
+| Ağ erişimi (HTTPRequest/WebSocket/OS.execute) | **hiç yok** |
+| Diske yazma | sadece `user://` (kayıt) |
+| Mutlak yol sızıntısı | kapatıldı (`_cikti()` yardımcısı) |
+| Paket içeriği (pck'deki res:// yolları) | sızan 0 |
+
+Oyun tamamen çevrimdışı çalışır, telemetri yoktur, tarayıcıda da yalnızca
+kendi kaynaklarını yükler.
+
+## Yayın paketi — hazır
+
+```
+build/yayin/kor-web.zip       11,07 MB   index.html kökte
+build/yayin/kor-windows.zip   37,44 MB
+```
+
+Zip'in **tam içeriği** çıkarılıp tarayıcıda açıldı: `crossOriginIsolated`
+true, SharedArrayBuffer var, konsol temiz, Enter ile koşu başlıyor, ölüm
+ekranı ve paylaşım metni çalışıyor.
+
+Sayfa metni iki dilde: `tanitim/itch-sayfa.md`
+Üçüncü taraf lisansları: `KUNYE.md`
 
 ## Yayın için gereken — ONAY BEKLİYOR
 
