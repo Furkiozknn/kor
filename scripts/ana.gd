@@ -392,6 +392,19 @@ func _process(delta: float) -> void:
     if patron_sayisi < Dalgalar.PATRON_ZAMANLARI.size() and gecen >= float(Dalgalar.PATRON_ZAMANLARI[patron_sayisi]):
         _patron_dog()
     _patron_cubuk_tazele()
+    # SESSIZ ACILIS. Olculdu: hic girdi vermeyen oyuncu 12,7 saniyede
+    # oluyordu. Ama acilis bir KESIF ani olarak tasarlandi -- karanlikta
+    # baslarsin, ates edersin, dunya acilir, bir mangal bulursun. Oyuncu
+    # kesfederken yeniyorsa o tasarim calismiyor.
+    #
+    # Cozum sure vermek degil, sureyi OYUNCUNUN EYLEMINE baglamak: ilk
+    # atisini yapana kadar (en fazla 12 sn) surü dogmuyor. Tematik olarak
+    # da yerinde -- kul soguk bir koru fark etmez; isindigin an seziyor
+    # (dusman.gd _koku zaten bunun uzerine kurulu).
+    #
+    # Deneyimli oyuncu hemen ates ettigi icin hicbir sey kaybetmiyor.
+    if not oyuncu.hic_ates and gecen < ACILIS_SESSIZLIGI:
+        _spawn_sayaci = maxf(_spawn_sayaci, 0.35)
     if _son_darbe:
         _spawn_sayaci = 1.0        # uzatmada yeni dusman yok
     _spawn_sayaci -= delta
@@ -723,6 +736,9 @@ func _kenar_noktasi() -> Vector2:
         if p.distance_to(oyuncu.global_position) > 90.0:
             return p
     return ALAN.position
+
+## Ilk atisa kadar (en fazla bu kadar saniye) suru dogmuyor.
+const ACILIS_SESSIZLIGI := 12.0
 
 const KILOMETRE_TASLARI := [100, 250, 500, 750, 1000]
 

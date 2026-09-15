@@ -23,6 +23,11 @@ func _initialize() -> void:
 
 func _process(_delta: float) -> bool:
     _kare += 1
+    # SESSIZ ACILIS: ilk atisa kadar suru dogmuyor (ana.gd ACILIS_SESSIZLIGI).
+    # Bu test OYNAYAN bir oyuncuyu temsil etmeli; yoksa dusman dogmuyor,
+    # kup dusmuyor ve miknatis kontrolu bos yere patliyor.
+    if _kare == 2 and is_instance_valid(_ana) and _ana.oyuncu != null:
+        _ana.oyuncu._ates_et(Vector2.RIGHT)
     if _kare == 2:
         # Temas hasarini zamana birakma: dusmanlar artik oyuncu SOGUKSA
         # %38 yavas geliyor (isi takasi) ve 8 saniyede yetisemiyorlar.

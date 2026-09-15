@@ -25,3 +25,6 @@ _gelen/
 
 # godot-mcp editor eklentisi -- yerel arac, npm paketinden yeniden kurulabilir
 addons/godot_mcp/
+
+# Test/arac ciktilari (ekran goruntusu, olcum raporu)
+ciktilar/

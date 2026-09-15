@@ -18,7 +18,7 @@ extends SceneTree
 ## ilerler ama CPU izin verdiği kadar hızlı döner. 10 koşu x 180 sn oyun
 ## süresi birkaç dakikada biter.
 
-const RAPOR := "D:/Claude Projeleri/raporlar/kor-denge-olcum.md"
+var RAPOR := _cikti("kor-denge-olcum.md")
 
 var kosu_sayisi := 10
 var kosu_suresi := 180.0
@@ -429,3 +429,14 @@ func _rapor_yaz() -> void:
         _ortanca(sureler), _ortanca(seviyeler), _ortanca(kilit_dk),
         _ortanca(isilar) * 100.0, olum, _sonuclar.size(), zafer])
     print("rapor: %s" % RAPOR)
+
+## Cikti klasoru. Onceden mutlak yol sabitlenmisti ("D:/..."): hem makine
+## duzenini sizdiriyordu (depo public olacak) hem de klonlayan kimsede
+## calismiyordu. Varsayilan proje icindeki ciktilar/, KOR_CIKTI ortam
+## degiskeniyle degistirilebilir.
+static func _cikti(ad: String) -> String:
+    var kok := OS.get_environment("KOR_CIKTI")
+    if kok.is_empty():
+        kok = ProjectSettings.globalize_path("res://ciktilar")
+    DirAccess.make_dir_recursive_absolute(kok)
+    return kok.rstrip("/\\") + "/" + ad

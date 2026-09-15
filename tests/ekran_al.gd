@@ -2,8 +2,8 @@ extends SceneTree
 ## Gerçek bir render alıp PNG'ye yazar -- görsel doğrulama için.
 ## godot --script res://tests/ekran_al.gd   (headless DEĞİL)
 
-const CIKTI := "D:/Claude Projeleri/gecici/kor-ekran.png"
-const CIKTI_KART := "D:/Claude Projeleri/gecici/kor-kart.png"
+var CIKTI := _cikti("kor-ekran.png")
+var CIKTI_KART := _cikti("kor-kart.png")
 
 ## `godot --script res://tests/ekran_al.gd -- --kart` ile kart ekranini cek
 var _kart_modu := "--kart" in OS.get_cmdline_user_args()
@@ -60,7 +60,7 @@ func _process(_delta: float) -> bool:
         if _kare < 130:
             return false
         RenderingServer.force_draw()
-        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-zafer.png")
+        root.get_texture().get_image().save_png(_cikti("kor-zafer.png"))
         print("zafer: kor-zafer.png  (kazandi=%s)" % str(_ana.kazandi))
         return true
 
@@ -104,7 +104,7 @@ func _process(_delta: float) -> bool:
             _perf_ornek[n2 / 2], _perf_ornek[int(n2 * 0.95)], _perf_ornek[n2 - 1],
             100.0 * asan / n2, Engine.get_frames_per_second()])
         RenderingServer.force_draw()
-        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-perf.png")
+        root.get_texture().get_image().save_png(_cikti("kor-perf.png"))
         return true
 
     if _patron_modu:
@@ -118,7 +118,7 @@ func _process(_delta: float) -> bool:
         if _kare < 210:
             return false
         RenderingServer.force_draw()
-        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-patron.png")
+        root.get_texture().get_image().save_png(_cikti("kor-patron.png"))
         print("patron: kor-patron.png")
         return true
 
@@ -127,7 +127,7 @@ func _process(_delta: float) -> bool:
         if _kare < 120:
             return false
         RenderingServer.force_draw()
-        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-menu.png")
+        root.get_texture().get_image().save_png(_cikti("kor-menu.png"))
         print("menu: kor-menu.png  locale=%s  ingilizce=%s" % [TranslationServer.get_locale(), _ingilizce])
         return true
 
@@ -188,7 +188,7 @@ func _process(_delta: float) -> bool:
             _ana.oyuncu.hasar_al(99.0)
         if _kare == 160:
             RenderingServer.force_draw()
-            root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-ozet.png")
+            root.get_texture().get_image().save_png(_cikti("kor-ozet.png"))
             print("ozet paneli: kor-ozet.png")
             return true
         return false
@@ -199,16 +199,16 @@ func _process(_delta: float) -> bool:
             o.isi.deger = 0.0
         if _kare == 170:
             RenderingServer.force_draw()
-            root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-soguk.png")
+            root.get_texture().get_image().save_png(_cikti("kor-soguk.png"))
         if _kare == 172:
             o.isi.deger = o.isi.tavan * 0.95
         if _kare == 210:
             RenderingServer.force_draw()
-            root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-sicak.png")
+            root.get_texture().get_image().save_png(_cikti("kor-sicak.png"))
             o.isi.kilitle()
         if _kare == 240:
             RenderingServer.force_draw()
-            root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-kilit.png")
+            root.get_texture().get_image().save_png(_cikti("kor-kilit.png"))
             print("gorus: soguk + sicak + kilit")
             return true
         return false
@@ -247,7 +247,7 @@ func _acilis() -> bool:
     # 1. SONUK -- oyuncu daha hicbir sey yapmadi
     if _kare == 40:
         RenderingServer.force_draw()
-        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-acilis-1-sonuk.png")
+        root.get_texture().get_image().save_png(_cikti("kor-acilis-1-sonuk.png"))
         print("acilis 1/3 sonuk  (yakilan=%d/%d, gorus=%.0fpx)" % [
             _ana.yakilan_mangal, _ana.toplam_mangal, _karanlik_yaricap()])
 
@@ -256,7 +256,7 @@ func _acilis() -> bool:
         o._ates_et(Vector2.RIGHT.rotated(randf() * TAU))
     if _kare == 115:
         RenderingServer.force_draw()
-        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-acilis-2-gorus.png")
+        root.get_texture().get_image().save_png(_cikti("kor-acilis-2-gorus.png"))
         print("acilis 2/3 gorus  (isi=%.0f%%, gorus=%.0fpx)" % [
             o.isi.oran() * 100.0, _karanlik_yaricap()])
 
@@ -273,7 +273,7 @@ func _acilis() -> bool:
             o.isi.deger = o.isi.tavan * 0.75
     if _kare == 150:
         RenderingServer.force_draw()
-        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-acilis-3-yanik.png")
+        root.get_texture().get_image().save_png(_cikti("kor-acilis-3-yanik.png"))
         print("acilis 3/3 yanik  (yakilan=%d/%d)" % [_ana.yakilan_mangal, _ana.toplam_mangal])
         return true
     return false
@@ -281,3 +281,14 @@ func _acilis() -> bool:
 func _karanlik_yaricap() -> float:
     var kl := get_nodes_in_group("karanlik")
     return kl[0]._oyuncu_yaricapi() if kl.size() > 0 else -1.0
+
+## Cikti klasoru. Onceden mutlak yol sabitlenmisti ("D:/..."): hem makine
+## duzenini sizdiriyordu (depo public olacak) hem de klonlayan kimsede
+## calismiyordu. Varsayilan proje icindeki ciktilar/, KOR_CIKTI ortam
+## degiskeniyle degistirilebilir.
+static func _cikti(ad: String) -> String:
+    var kok := OS.get_environment("KOR_CIKTI")
+    if kok.is_empty():
+        kok = ProjectSettings.globalize_path("res://ciktilar")
+    DirAccess.make_dir_recursive_absolute(kok)
+    return kok.rstrip("/\\") + "/" + ad
