@@ -102,9 +102,15 @@ Ayrıntı: `D:\Claude Projeleri\raporlar\2026-09-14-kor-teknik-bulgular.md`
 - [x] görsel: vinyet, mangal ışık havuzları, zemin lekeleri, mermi haleleri
 - [x] 8 yönlü oyuncu + yürüyüş animasyonu, altı düşmanın yürüyüş döngüsü
 - [x] `_gelen/` kutusu: zemin paleti, pixel font, ses
-- [ ] **eksik iki ses**: oyuncu hasar alınca ve oyun bitince — peer'dan
-      istendi. Şu an hasar sessiz (sarsıntı + donma + kırmızı parçacık var,
-      ama ses yok); oyun bitişinde `asiri_isinma` geçici olarak kullanılıyor.
+- [x] **eksik sesler** — beşi de üretilip bağlandı (`build/ses/eksik-sesler.mjs`):
+      oyuncu_hasar, oyun_bitti, patron_uyandi, soguk_dalga, kosu_bitti
+- [x] **katmanlı müzik** — `muzik_ocak` her zaman, `muzik_kor` ısıyla açılıyor;
+      döngü 10 sn → 40 sn
+- [x] **web ses yolu** — `default_playback_type.web=2`; Sample yolunda perde
+      sapması, ses kaydıracı ve döngü sessizce bozuluyordu
+- [x] **web derlemesi tarayıcıda doğrulandı** — crossOriginIsolated, konsol temiz
+- [ ] **web'de tam koşu denenmedi** — sadece menü açılışı görüldü; 12 dakikalık
+      koşu tarayıcıda baştan sona oynanmadı
 - [ ] font: büyük Türkçe harfler küçük yükseklikte — peer daha iyi bir
       CC0 pixel fontu arıyor, gelirse `_gelen/font2/` altında olacak
 - [ ] patron — çekirdek mekaniği sınayan bir tasarım
