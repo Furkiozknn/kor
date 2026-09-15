@@ -62,6 +62,7 @@ func _process(_delta: float) -> bool:
     assert(ses_sayisi >= 12, "ses dosyalari eksik: %d" % ses_sayisi)
     for ad in ses.AYAR.keys():
         assert(ses._sesler.has(ad), "AYAR'da olup dosyasi olmayan ses: " + str(ad))
+    ses._son_calma.clear()   # oyun da vurus caliyor; bekleme suresi sifirlansin
     assert(ses.cal("vurus"), "cal() ses calamadi")
     # Bekleme suresi: ayni sesi arka arkaya isteyince ikincisi dusmeli
     var dusen_once: int = ses.dusen_sayisi()
@@ -73,14 +74,50 @@ func _process(_delta: float) -> bool:
     var kar := get_nodes_in_group("karanlik")
     assert(kar.size() == 1, "karanlik katmani yok")
     var kl: Node = kar[0]
+    # Onceki bolum oyuncuyu yanan mangalin yaninda birakmis olabilir ve
+    # mangal isiyi tavana itip kilitlemis olabilir. Kilitliyken bosalt()
+    # bilerek calismiyor, o yuzden durum ACIKCA sifirlaniyor.
+    oyuncu.isi.kilitli = false
     oyuncu.isi.bosalt()
     var dar: float = kl._oyuncu_yaricapi()
     while oyuncu.isi.oran() < 0.9 and not oyuncu.isi.kilitli:
         oyuncu.isi.ates_et()
     var genis: float = kl._oyuncu_yaricapi()
     assert(genis > dar * 1.8, "isindikca gorus acilmali: %.0f -> %.0f" % [dar, genis])
+
+    # KILIT: gorus DARALMAZ, en genis halinde kalir. Ceza silahin susmasi,
+    # kirilganlik ve dusmanlarin isiyi sezmesi -- kor olmak degil. Gorus
+    # daralsaydi oyunun kendi kurali ("isi = gorus") tersine donerdi.
     oyuncu.isi.kilitle()
-    assert(kl._oyuncu_yaricapi() < dar, "kilitliyken gorus daralmali")
+    assert(kl._oyuncu_yaricapi() >= genis, "kilitliyken gorus daralmamali")
+    assert(not oyuncu.isi.ates_edebilir(), "kilitliyken ates edilememeli")
+    assert(not oyuncu.isi.bosalt(), "dalis kilidi kirmamali")
+
+    # TAVLAMA: kilitte hasarsiz dayanirsan 1 can. Kart acmadan calismamali.
+    # DIKKAT: harness can_degisti'de cani dolduruyor -- olcum icin kapali.
+    _can_koru = false
+    oyuncu.isi.kilitli = false
+    oyuncu.isi.bosalt()
+    oyuncu.maks_can = 6
+    oyuncu.can = 3
+    oyuncu.tavlanma = false
+    oyuncu._tavlama_izle(true)          # kilitten cikis taklidi
+    assert(oyuncu.can == 3, "kart alinmadan tavlama olmamali")
+    oyuncu.tavlanma = true
+    oyuncu.isi.kilitle()
+    oyuncu._tavlama_izle(false)         # kilide GIRIS
+    oyuncu.isi.kilitli = false
+    oyuncu._tavlama_izle(true)          # kilitten CIKIS, hasarsiz
+    assert(oyuncu.can == 4, "temiz kilit 1 can vermeli: %d" % oyuncu.can)
+    oyuncu.isi.kilitle()
+    oyuncu._tavlama_izle(false)
+    oyuncu._tavlanma_temiz = false      # kilitte darbe yendi
+    oyuncu.isi.kilitli = false
+    oyuncu._tavlama_izle(true)
+    assert(oyuncu.can == 4, "kilitte hasar alinca tavlama olmamali: %d" % oyuncu.can)
+    oyuncu.tavlanma = false
+    oyuncu.can = oyuncu.maks_can
+    _can_koru = true
     oyuncu.isi.kilitli = false
     oyuncu.isi.deger = 0.0
 
@@ -112,9 +149,30 @@ func _process(_delta: float) -> bool:
     if mangal != null:
         var eski_yer: Vector2 = oyuncu.global_position
         oyuncu.global_position = mangal.global_position + Vector2(10, 0)
+
+        # SONUK MANGAL: ne isitir ne aydinlatir. Fener disindaki mangallar
+        # boyle basliyor -- oyuncu onlari kendi isisiyla yakacak.
+        mangal.yanik = false
+        mangal.remove_from_group("isik_kaynagi")
+        oyuncu.isi.deger = 0.0
+        oyuncu._arena_isisi(0.5)
+        assert(is_zero_approx(oyuncu.isi.deger), "sonuk mangal isitmamali")
+
+        # SOGUKKEN yakilamaz -- yakmak risk olmali, kaza olmamali
+        oyuncu.isi.deger = oyuncu.isi.tavan * (oyuncu.YAKMA_ESIK - 0.15)
+        oyuncu._arena_isisi(0.1)
+        assert(not mangal.yanik, "esik altinda mangal yanmamali")
+
+        # SICAKKEN yaklasinca yanar ve kalici isik kaynagi olur
+        oyuncu.isi.deger = oyuncu.isi.tavan * 0.9
+        oyuncu._arena_isisi(0.1)
+        assert(mangal.yanik, "sicakken yaklasinca mangal yanmali")
+        assert(mangal.is_in_group("isik_kaynagi"), "yanan mangal isik vermeli")
+
+        # Yanik mangal artik isitiyor
         oyuncu.isi.deger = 20.0
         oyuncu._arena_isisi(0.5)
-        assert(oyuncu.isi.deger > 20.0, "mangalin yaninda isi artmali")
+        assert(oyuncu.isi.deger > 20.0, "yanik mangalin yaninda isi artmali")
         oyuncu.global_position = eski_yer
     if ors != null:
         var eski_yer2: Vector2 = oyuncu.global_position

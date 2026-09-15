@@ -19,6 +19,24 @@ const VURULMA_DOKUNULMAZLIK := 0.6
 const KOR_ESIK := 0.35       # bu isinin altinda kor atisi yapilamaz
 const MANGAL_MENZIL := 74.0  # bu mesafede mangal isitir
 const MANGAL_ISI := 11.0     # saniyede
+## Sonuk mangali yakmak icin gereken isi orani ve mesafe. Esik KOR_ESIK'ten
+## (0,35) YUKSEK bilerek: yakmak gercek bir risk olsun, kazara olmasin.
+const YAKMA_ESIK := 0.52
+const YAKMA_MENZIL := 30.0
+
+## TAVLAMA -- "TAVLANMIŞ ZIRH" karti acar.
+##
+## Tavlama gercek bir metal islemi: metali kizdirip KONTROLLU sogutursun,
+## boylece sertlesir. Kartin eski hali "maks can +1 VE aninda tam iyiles"ti
+## -- bedava, yigilabilir, ve gordugun her seferde almak optimaldi. Havuz
+## tek stratejiye cokuyordu.
+##
+## Yeni hali isi ekonomisinin bir degiskeni: kilide GIRMEYI ve orada
+## hasar almadan dayanmayi odullendiriyor. Boylece tavan sadece ceza
+## olmaktan cikip bir KARAR oluyor -- "simdi bilerek asiri isinayim mi?"
+var tavlanma := false
+var _tavlanma_izleme := false
+var _tavlanma_temiz := false
 const ORS_MENZIL := 40.0     # bu mesafede ors sogutmayi hizlandirir
 const ORS_CARPAN := 2.6
 # Kor yayilimi: sicakken cevreni yakarsin. Menzil gorus yaricapina bagli,
@@ -172,7 +190,10 @@ func _unhandled_key_input(olay: InputEvent) -> void:
             silah_degisti.emit(silah(), silah_indeksi)
 
 func _physics_process(delta: float) -> void:
+    var kilit_onceki := isi.kilitli
     isi.guncelle(delta)
+    if tavlanma:
+        _tavlama_izle(kilit_onceki)
     # Muzigin kor katmani isiyla acilir -- durum sesle de anlatilsin.
     SesYonetici.muzik_isi(isi.oran())
     _arena_isisi(delta)
@@ -231,10 +252,17 @@ func _arena_isisi(delta: float) -> void:
         return
     var yakin_mangal := false
     var yakin_ors := false
+    var oran := isi.oran()
     for y in get_tree().get_nodes_in_group("yapi"):
         var d := global_position.distance_to(y.global_position)
-        if y.turu() == "mangal" and d < MANGAL_MENZIL:
-            yakin_mangal = true
+        if y.turu() == "mangal":
+            # Sonuk mangal ne isitir ne aydinlatir -- ama SICAKKEN uzerine
+            # gidersen korunu ona birakirsin ve kalici olarak yanar.
+            if not y.yanik:
+                if d < YAKMA_MENZIL and oran >= YAKMA_ESIK:
+                    y.yak()
+            elif d < MANGAL_MENZIL:
+                yakin_mangal = true
         elif y.turu() == "orsa" and d < ORS_MENZIL:
             yakin_ors = true
     if yakin_mangal:
@@ -448,6 +476,21 @@ func _gorunum_guncelle(delta: float, nisan: Vector2) -> void:
     else:
         _gorsel.modulate = Color(1, 1, 1)
 
+## Kilide girdigin andan cozuldugu ana kadar hasar almadiysan 1 can.
+func _tavlama_izle(kilit_onceki: bool) -> void:
+    if isi.kilitli and not kilit_onceki:
+        _tavlanma_izleme = true
+        _tavlanma_temiz = true
+        return
+    if not isi.kilitli and kilit_onceki and _tavlanma_izleme:
+        _tavlanma_izleme = false
+        if _tavlanma_temiz and can < maks_can:
+            can += 1
+            can_degisti.emit(can, maks_can)
+            SesYonetici.cal("seviye")
+            Hiss.patlama(get_parent(), global_position,
+                Color(0.6, 0.85, 1.0), 16, 90.0, 1.6, 0.6)
+
 func hasar_al(miktar: float) -> void:
     if _dokunulmaz > 0.0 or dalisityor() or can <= 0:
         return
@@ -456,6 +499,7 @@ func hasar_al(miktar: float) -> void:
         return
     # Kizgin metal yumusaktir. %70 ustundeki hasar bonusu boylece gercek bir
     # KUMAR oluyor: daha cok vuruyorsun ama daha cok yiyorsun. Onceden bedavaydi.
+    _tavlanma_temiz = false      # tavlama bozuldu: kilitte darbe yedin
     can -= int(ceilf(miktar * (1.0 + KIRILGANLIK * isi.oran())))
     _dokunulmaz = VURULMA_DOKUNULMAZLIK
     can_degisti.emit(can, maks_can)

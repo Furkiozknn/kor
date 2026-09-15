@@ -6,20 +6,42 @@ extends Node
 
 var kamera: Camera2D
 
+## ERISILEBILIRLIK. Kor'da sarsinti neredeyse surekli: her atista (saniyede
+## 1-20), her darbede, her dalista. Ustune her oldurmede Engine.time_scale
+## 0,05'e dusuyor. 12 dakikalik kosuda ~700 oldurme var. Hareket
+## duyarliligi olan oyuncu icin (vestibuler rahatsizlik, migren) bu bir
+## bariyer -- ve artik tur standardi bir ayar.
+var sarsinti_carpani := 1.0        # 0 = tamamen kapali
+var donma_acik := true
+
 var _sarsinti := 0.0
 var _donma := 0.0
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
     _havuz_kur()
+    ayarlari_uygula()
+
+## Kayit'tan oku. Menuden degisince tekrar cagriliyor.
+func ayarlari_uygula() -> void:
+    var k := get_node_or_null("/root/Kayit")
+    if k == null:
+        return
+    sarsinti_carpani = float(k.ayar("sarsinti", 1.0))
+    donma_acik = bool(k.ayar("donma", true))
+    if not donma_acik and _donma > 0.0:
+        _donma = 0.0
+        Engine.time_scale = 1.0
 
 ## Kamerayı sars. guc: piksel cinsinden tepe genlik (1 hafif, 6 sert).
 func sars(guc: float) -> void:
-    _sarsinti = maxf(_sarsinti, guc)
+    if sarsinti_carpani <= 0.0:
+        return
+    _sarsinti = maxf(_sarsinti, guc * sarsinti_carpani)
 
 ## Vuruş donması -- darbenin ağırlığını hissettiren birkaç kare.
 func dondur(sure: float = 0.05) -> void:
-    if _donma > 0.0:
+    if not donma_acik or _donma > 0.0:
         return
     _donma = sure
     Engine.time_scale = 0.05

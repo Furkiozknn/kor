@@ -27,7 +27,15 @@ const ZEMIN_SADE := Vector2i(0, 0)
 ## Patron dogum anlari. Her patron sonrasi dalgalar sertlesir.
 
 
-const YAPI_TURLERI := ["fici", "sandik", "fici_yigin", "orsa", "mangal", "mangal"]
+## Arena bilesimi SABIT, rastgele degil. Onceden her yapi 6 turden rastgele
+## seciliyordu; sansa gore bir kosuda hic mangal olmayabiliyordu -- yani
+## arena cografyasi, yani isi ekonomisinin yari yarisi, yazi-tura idi.
+## Torba karistiriliyor: yerlesim rastgele, BILESIM garanti.
+const YAPI_BILESIMI := [
+    "mangal", "mangal", "mangal", "mangal", "mangal",
+    "orsa", "orsa",
+    "fici", "fici", "fici", "sandik", "sandik", "fici_yigin", "fici_yigin",
+]
 
 @onready var oyuncu: CharacterBody2D = $Oyuncu
 @onready var _karolar: TileMapLayer = $TileMapLayer
@@ -48,6 +56,8 @@ var spawn_carpani := 1.0
 var guc_carpani := 1.0
 var tavan_artis := 1.0
 var patron_sayisi := 0
+var yakilan_mangal := 0
+var toplam_mangal := 0
 var _patron: Node2D = null
 var _patron_cubuk: ColorRect
 var _patron_kok: Control
@@ -304,9 +314,16 @@ func _lekeler() -> void:
 
 ## Siperler: ates hattini keser, suruyu yonlendirir. Fici/sandik kirilabilir.
 func _yapilari_dog() -> void:
-    var dolu := {}
     var basla := oyuncu.position
-    for n in 14:
+    var torba := YAPI_BILESIMI.duplicate()
+    torba.shuffle()
+
+    # 1. GECIS -- yerlesim. Dugum yaratmadan once konumlar belli olmali:
+    # fener secimi _ready()'den ONCE bilinmek zorunda, cunku `yanik`
+    # bayragini _ready() okuyor (add_child sonrasi degistirmek is gormez).
+    var yerler: Array = []
+    var dolu := {}
+    for tur in torba:
         for deneme in 12:
             var h := Vector2i(randi_range(2, SUTUN - 3), randi_range(2, SATIR - 3))
             if dolu.has(h):
@@ -315,12 +332,35 @@ func _yapilari_dog() -> void:
             if p.distance_to(basla) < 56.0:   # oyuncunun dogdugu yeri tikama
                 continue
             dolu[h] = true
-            var y := YapiSahne.instantiate()
-            y.kur(YAPI_TURLERI[randi() % YAPI_TURLERI.size()])
-            y.position = p
-            y.kirildi.connect(func(poz: Vector2) -> void: _kup_dus(poz, 1))
-            add_child(y)
+            yerler.append({"tur": str(tur), "poz": p})
             break
+
+    # FENER: oyuncuya en yakin mangal YANIK baslar. Tamamen karanlik bir
+    # ekranda gidilecek bir yer olmali -- yoksa kesif degil, kaybolus olur.
+    var fener := -1
+    for n in yerler.size():
+        if yerler[n]["tur"] != "mangal":
+            continue
+        if fener < 0 or yerler[n]["poz"].distance_to(basla) < yerler[fener]["poz"].distance_to(basla):
+            fener = n
+
+    # 2. GECIS -- dugumleri kur.
+    toplam_mangal = 0
+    yakilan_mangal = 0
+    for n in yerler.size():
+        var bilgi: Dictionary = yerler[n]
+        var y := YapiSahne.instantiate()
+        y.kur(str(bilgi["tur"]))
+        if bilgi["tur"] == "mangal":
+            toplam_mangal += 1
+            y.yanik = (n == fener)
+            if n == fener:
+                yakilan_mangal = 1
+            else:
+                y.yakildi.connect(_mangal_yakildi)
+        y.position = bilgi["poz"]
+        y.kirildi.connect(func(poz: Vector2) -> void: _kup_dus(poz, 1))
+        add_child(y)
 
 # --- Dalgalar ---------------------------------------------------------------
 
@@ -347,6 +387,21 @@ func _patron_dog() -> void:
     SesYonetici.cal("patron_uyandi")
     _duyuru("KÜL ANASI UYANDI")
 
+## Mangal yakmak kalici bir kazanim: arena aydinlanir, yeni bir isi kaynagi
+## acilir. Odulu XP degil -- odul haritanin kendisi. Ustune kucuk bir XP
+## veriliyor ki ilk yakmada seviye atlama hissi gelsin.
+func _mangal_yakildi(poz: Vector2) -> void:
+    yakilan_mangal += 1
+    Hiss.sars(3.2)
+    Hiss.patlama(self, poz, Color(1.0, 0.62, 0.22), 34, 170.0, 2.6, 0.9)
+    SesYonetici.cal("seviye")
+    _kup_dus(poz, 3)
+    if yakilan_mangal == 2:
+        # Ilk yakma FENER'di (bedava); bu oyuncunun KENDI yaktigi ilk mangal.
+        _duyuru("DÖKÜMHANE UYANIYOR")
+    elif yakilan_mangal == toplam_mangal:
+        _duyuru("DÖKÜMHANE TAM YANDI")
+
 ## Patron olunce oyuncu odullendirilir ve dalgalar sertlesir.
 func _patron_yenildi() -> void:
     _patron = null
@@ -359,7 +414,13 @@ func _patron_yenildi() -> void:
 ## Ekranin ortasinda kisa duyuru.
 func _duyuru(metin: String) -> void:
     var l := Tema.baslik(metin)
-    l.position = Vector2(320 - metin.length() * 8, 120)
+    # Konum ELLE hesaplanmiyordu-> "320 - uzunluk * 8" yazi tipinin karakter
+    # genisligini varsayiyordu ve uzun duyurular ekran disina tasiyordu.
+    # Anchor + ortalama: metin ne olursa olsun ortalanir.
+    l.set_anchors_preset(Control.PRESET_TOP_WIDE)
+    l.offset_top = 112
+    l.offset_bottom = 136
+    l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     _hud.add_child(l)
     var t := l.create_tween()
     t.tween_interval(1.6)
@@ -438,9 +499,10 @@ func _kart_havuzu() -> Array:
             "uygula": func(o): o.dalis_patlamasi += 3.0},
         {"ad": "KIZGIN ÇELİK", "aciklama": "Isı %70 üstündeyken hasar +%50", "ikon": "celik",
             "uygula": func(o): o.asiri_isi_carpani += 0.5},
-        {"ad": "TAVLANMIŞ ZIRH", "aciklama": "Maks can +1, dolu iyileş", "ikon": "zirh", "uygula": func(o):
+        {"ad": "TAVLANMIŞ ZIRH", "aciklama": "Maks can +1. Kilitte hasarsız dayanırsan +1 can", "ikon": "zirh", "uygula": func(o):
             o.maks_can += 1
-            o.can = o.maks_can
+            o.can += 1
+            o.tavlanma = true
             o.can_degisti.emit(o.can, o.maks_can)},
         {"ad": "MIKNATIS", "aciklama": "XP toplama menzili +%60", "ikon": "miknatis",
             "uygula": func(o): o.miknatis *= 1.6},

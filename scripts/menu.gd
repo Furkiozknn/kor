@@ -28,6 +28,8 @@ var _oyuncu: AnimatedSprite2D
 var _kademe_yazi: Label
 var _ses_yazi: Label
 var _kunye: CanvasLayer
+var _sarsinti_dugme: Button
+var _donma_dugme: Button
 
 func _ready() -> void:
     _zemin_kur()
@@ -116,12 +118,7 @@ func _arayuz_kur() -> void:
     bosluk.custom_minimum_size = Vector2(0, Tema.BOSLUK_L)
     kutu.add_child(bosluk)
 
-    for satir in [
-        "Ateş etmek ısıtır. Isındıkça daha çok görürsün.",
-        "Tavana varırsan silah kilitlenir — ve dalış o kilidi kırmaz.",
-        "Dalış ısıyı boşaltır: güvenliği görüşle ödersin.",
-    ]:
-        kutu.add_child(Tema.govde(satir))
+    kutu.add_child(Tema.govde("Dökümhane söndü. Elinde kalan tek ateş sensin."))
 
     var bosluk2 := Control.new()
     bosluk2.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
@@ -170,6 +167,22 @@ func _arayuz_kur() -> void:
     ses.add_child(_ses_yazi)
     kutu.add_child(ses)
 
+    # ERISILEBILIRLIK. Kor'da sarsinti ve vurus donmasi surekli; hareket
+    # duyarliligi olan oyuncu icin bu bir bariyer. Ayri bir "erisilebilirlik"
+    # ekrani acmiyoruz -- iki dugme, ses satirinin hemen altinda.
+    var hrk := HBoxContainer.new()
+    hrk.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    hrk.add_child(Tema.sonuk("HAREKET"))
+    _sarsinti_dugme = Button.new()
+    _sarsinti_dugme.custom_minimum_size = Vector2(104, 20)
+    _sarsinti_dugme.pressed.connect(_sarsinti_degis)
+    hrk.add_child(_sarsinti_dugme)
+    _donma_dugme = Button.new()
+    _donma_dugme.custom_minimum_size = Vector2(104, 20)
+    _donma_dugme.pressed.connect(_donma_degis)
+    hrk.add_child(_donma_dugme)
+    kutu.add_child(hrk)
+
     var bosluk3 := Control.new()
     bosluk3.custom_minimum_size = Vector2(0, Tema.BOSLUK_M)
     kutu.add_child(bosluk3)
@@ -182,6 +195,7 @@ func _arayuz_kur() -> void:
     basla.grab_focus()
     _kademe_tazele()
     _ses_tazele()
+    _hareket_tazele()
 
     # Tek satira sigmiyordu (93 karakter, 640 piksel) -- son iki ipucu
     # ekran disinda kaliyordu. Iki satir + tam genislikte ortalama: sabit
@@ -197,6 +211,39 @@ Q silah · F11 tam ekran · C künye")
     alt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     alt.modulate = Color(1, 1, 1, 0.55)
     k.add_child(alt)
+
+## Sarsinti uc kademe: tam / yari / kapali. Yari kademe onemli -- cogu
+## oyuncu sarsintiyi sevmiyor ama tamamen kapatinca vurus hissi kayboluyor.
+const SARSINTI_KADEME := [1.0, 0.5, 0.0]
+const SARSINTI_AD := ["sarsıntı tam", "sarsıntı yarı", "sarsıntı yok"]
+
+func _sarsinti_degis() -> void:
+    var su := float(Kayit.ayar("sarsinti", 1.0))
+    var i := 0
+    for n in SARSINTI_KADEME.size():
+        if is_equal_approx(SARSINTI_KADEME[n], su):
+            i = n
+    Kayit.ayar_yaz("sarsinti", SARSINTI_KADEME[(i + 1) % SARSINTI_KADEME.size()])
+    Hiss.ayarlari_uygula()
+    SesYonetici.cal("kart_sec")
+    _hareket_tazele()
+
+func _donma_degis() -> void:
+    Kayit.ayar_yaz("donma", not bool(Kayit.ayar("donma", true)))
+    Hiss.ayarlari_uygula()
+    SesYonetici.cal("kart_sec")
+    _hareket_tazele()
+
+func _hareket_tazele() -> void:
+    if _sarsinti_dugme == null:
+        return
+    var su := float(Kayit.ayar("sarsinti", 1.0))
+    var i := 0
+    for n in SARSINTI_KADEME.size():
+        if is_equal_approx(SARSINTI_KADEME[n], su):
+            i = n
+    _sarsinti_dugme.text = SARSINTI_AD[i]
+    _donma_dugme.text = "donma açık" if bool(Kayit.ayar("donma", true)) else "donma kapalı"
 
 func _kademe_sec(k: int) -> void:
     Kayit.kademe_yaz(k)

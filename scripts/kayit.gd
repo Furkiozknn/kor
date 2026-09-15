@@ -32,6 +32,8 @@ const VARSAYILAN := {
 		"ses_efekt": -6.0,
 		"ses_muzik": -14.0,
 		"tam_ekran": false,
+		"sarsinti": 1.0,
+		"donma": true,
 	},
 }
 

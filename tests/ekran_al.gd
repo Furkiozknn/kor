@@ -17,6 +17,12 @@ var _patron_modu := "--patron" in OS.get_cmdline_user_args()
 ## + parcaciklar birlikte. Headless bunu olcemez cunku cizim atlanir.
 var _perf_modu := "--perf" in OS.get_cmdline_user_args()
 var _zafer_modu := "--zafer" in OS.get_cmdline_user_args()
+## ACILIS: kosunun ilk anlari. Oyuncunun oyun hakkindaki karari burada
+## veriliyor, o yuzden ayri ayri incelenebilmeli. Uc kare yazar:
+##   1-sonuk   hic ates edilmemis, dokumhane karanlik
+##   2-gorus   ates edildi, isi yukseldi, dunya acildi
+##   3-yanik   sicakken mangala gidildi ve yakildi
+var _acilis_modu := "--acilis" in OS.get_cmdline_user_args()
 var _perf_ornek: Array = []
 var _son_usec: int = 0
 
@@ -29,6 +35,8 @@ func _initialize() -> void:
     root.add_child(_ana)
 
 func _process(_delta: float) -> bool:
+    if _acilis_modu:
+        return _acilis()
     if _zafer_modu:
         _kare += 1
         if _kare == 60:
@@ -214,3 +222,48 @@ func _dugme_ara(kok: Node) -> Array:
             b.append(c)
         b.append_array(_dugme_ara(c))
     return b
+
+
+## Acilis dizisi. Elle oynayarak bakmak yerine tek komutla uc ani da cek:
+##   godot --script res://tests/ekran_al.gd -- --acilis
+func _acilis() -> bool:
+    _kare += 1
+    var o = _ana.oyuncu
+
+    # 1. SONUK -- oyuncu daha hicbir sey yapmadi
+    if _kare == 40:
+        RenderingServer.force_draw()
+        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-acilis-1-sonuk.png")
+        print("acilis 1/3 sonuk  (yakilan=%d/%d, gorus=%.0fpx)" % [
+            _ana.yakilan_mangal, _ana.toplam_mangal, _karanlik_yaricap()])
+
+    # 2. GORUS -- ates et, isin, dunya acilsin
+    if _kare > 45 and _kare < 110 and _kare % 4 == 0:
+        o._ates_et(Vector2.RIGHT.rotated(randf() * TAU))
+    if _kare == 115:
+        RenderingServer.force_draw()
+        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-acilis-2-gorus.png")
+        print("acilis 2/3 gorus  (isi=%.0f%%, gorus=%.0fpx)" % [
+            o.isi.oran() * 100.0, _karanlik_yaricap()])
+
+    # 3. YANIK -- sicakken sonuk bir mangala git
+    if _kare == 120:
+        var hedef: Node2D = null
+        for y in get_nodes_in_group("yapi"):
+            if y.turu() == "mangal" and not y.yanik:
+                hedef = y
+                break
+        if hedef != null:
+            o.global_position = hedef.global_position + Vector2(12, 0)
+            o.isi.kilitli = false
+            o.isi.deger = o.isi.tavan * 0.75
+    if _kare == 150:
+        RenderingServer.force_draw()
+        root.get_texture().get_image().save_png("D:/Claude Projeleri/gecici/kor-acilis-3-yanik.png")
+        print("acilis 3/3 yanik  (yakilan=%d/%d)" % [_ana.yakilan_mangal, _ana.toplam_mangal])
+        return true
+    return false
+
+func _karanlik_yaricap() -> float:
+    var kl := get_nodes_in_group("karanlik")
+    return kl[0]._oyuncu_yaricapi() if kl.size() > 0 else -1.0

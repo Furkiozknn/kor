@@ -2,6 +2,7 @@ extends StaticBody2D
 ## Arena siperi. Fıçı/sandık kırılır (ateş hattını açarsın), örs/mangal kalıcıdır.
 
 signal kirildi(pozisyon: Vector2)
+signal yakildi(pozisyon: Vector2)
 
 const TURLER := {
     "fici":       {"doku": preload("res://assets/sprites/yapi_fici.png"),       "can": 6.0,  "yaricap": 6.0},
@@ -11,6 +12,21 @@ const TURLER := {
     "mangal":     {"doku": preload("res://assets/sprites/yapi_mangal.png"),     "can": 0.0,  "yaricap": 6.5},
 }
 
+## SONUK DOKUMHANE. Mangallar sonuk baslar; oyuncu KENDI ISISIYLA yakar.
+##
+## Neden: Kor'un turdeki tek ozgun mekanigi "isi = gorus". Ama arena
+## mangallarla zaten aydinlik basliyordu, yani oyuncu bu mekanigi ilk
+## dakikada HIC kesfetmiyordu -- ve oyunu birakip birakmayacagina o dakikada
+## karar veriyor. Baslangic ekranindaki uc satir metin bunu ogretmez;
+## metin okunmaz, oynanir.
+##
+## Cozum ayri bir ogretim sistemi degil, sahnenin BASLANGIC DURUMU:
+## karanlikta baslarsin, ates edersin, isinirsin, gorursun, bir mangal
+## bulursun, sicakken yaklasirsin ve yakarsin. Kimse soylemeden ogrendin.
+##
+## Tasarim kazanci: yakmak icin SICAK olman gerekiyor -- yani riske girmen.
+## Boylece isi ekonomisine paralel bir sistem eklemiyoruz, onu derinlestiriyoruz.
+var yanik := true
 var can := 0.0
 var _tur := "fici"
 var _parlama := 0.0
@@ -32,8 +48,8 @@ func _ready() -> void:
     s.radius = t["yaricap"]
     _carpisma.shape = s
     if _tur == "mangal":
-        add_to_group("isik_kaynagi")
-        # Mangal arenaya sicak bir isik havuzu dokuyor -- duz zemini kirar
+        # Hale her zaman kuruluyor ama sonukken gizli -- yakma aninda
+        # yeniden dugum yaratmak icin kare beklemeyelim.
         _hale = Sprite2D.new()
         _hale.texture = Hiss.parlama_dokusu(
             Color(1.0, 0.55, 0.18, 0.32), Color(0.9, 0.25, 0.05, 0.0), 96)
@@ -41,6 +57,28 @@ func _ready() -> void:
         _hale.z_index = -1
         _hale.scale = Vector2.ONE * 1.1
         add_child(_hale)
+        if yanik:
+            add_to_group("isik_kaynagi")
+        else:
+            _sonuk_gorunum()
+
+## Sonuk mangal: kul rengi, halesiz. Silueti duruyor ki oyuncu YAKILACAK
+## BIR SEY oldugunu gorsun -- gorus alanina girdiginde hedef olsun.
+func _sonuk_gorunum() -> void:
+    _hale.visible = false
+    _gorsel.modulate = Color(0.42, 0.45, 0.52)
+
+## Oyuncu sicakken yaklasinca cagriliyor. Geri donusu yok: yanan yanik kalir.
+func yak() -> void:
+    if yanik or _tur != "mangal":
+        return
+    yanik = true
+    add_to_group("isik_kaynagi")
+    _hale.visible = true
+    _gorsel.modulate = Color(1, 1, 1)
+    _parlama = 0.25
+    _gorsel.modulate = Color(3.0, 2.2, 1.4)
+    yakildi.emit(global_position)
 
 func turu() -> String:
     return _tur
@@ -51,7 +89,7 @@ func isik_yaricapi() -> float:
     return 62.0 + sin(Time.get_ticks_msec() / 240.0 + position.x) * 6.0
 
 func _process(delta: float) -> void:
-    if _hale != null:
+    if _hale != null and yanik:
         var n := 1.05 + sin(Time.get_ticks_msec() / 220.0 + position.x) * 0.10
         _hale.scale = Vector2(n, n)
         _hale.modulate.a = 0.85 + sin(Time.get_ticks_msec() / 130.0 + position.y) * 0.15

@@ -15,7 +15,20 @@ const TAVAN := 24                 # shader'daki dizi boyu ile aynı olmalı
 
 @export var taban_yaricap := 40.0     # ısı sıfırken görüş
 @export var tavan_yaricap := 300.0    # ısı tavandayken görüş
-@export var kilit_yaricap := 26.0     # silah kilitliyken -- kör noktası
+## Kilitliyken gorus ACIK kalir -- hatta en genis halindedir.
+##
+## Onceden 26 piksele COKUYORDU ve bu oyunun kendi kuralini tersine
+## ceviriyordu: "isi = gorus" diye ogrettigimiz sistemde en yuksek isi
+## en dar gorusu veriyordu. Yeni oyuncu karanlikta ates ediyor, iki
+## saniyede kilitleniyor ve odul yerine ceza aliyordu -- ogrendigi ders
+## "ates etmek kor eder" oluyordu, yani tam tersi.
+##
+## Ceza kalkmadi, TUTARLI hale geldi: tavandayken her seyi goruyorsun ama
+## hicbir sey yapamiyorsun. Ustelik en parlak halindesin, dusmanlar isiyi
+## seziyor (dusman.gd _koku) ve %60 daha kirilgansin. Iki saniye boyunca
+## ustune gelen suruyu seyrediyorsun. Bu daha iyi bir ceza -- cunku
+## anlasiliyor.
+@export var kilit_parlama := 1.12    # kilitliyken gorus carpani
 
 var oyuncu: Node2D
 var gorus_carpani := 1.0              # kart: görüş menzili
@@ -66,8 +79,7 @@ func _process(delta: float) -> void:
 func _oyuncu_yaricapi() -> float:
     var i = oyuncu.isi
     if i.kilitli:
-        # Kilitliyken görüş de çöküyor: ceza iki katmanlı
-        return kilit_yaricap * gorus_carpani
+        return tavan_yaricap * kilit_parlama * gorus_carpani
     return lerpf(taban_yaricap, tavan_yaricap, i.oran()) * gorus_carpani
 
 ## Kısa süreli parlama (kor atışı gibi) -- görüşü bir anlığına açar.
