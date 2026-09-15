@@ -210,6 +210,7 @@ func silah_ver(i: int) -> void:
 func silah_gec(ileri: bool = true) -> void:
     if acik_silahlar.size() < 2:
         return
+    hic_silah_degisti = true
     var k: int = acik_silahlar.find(silah_indeksi)
     k = wrapi(k + (1 if ileri else -1), 0, acik_silahlar.size())
     silah_indeksi = acik_silahlar[k]
@@ -349,6 +350,7 @@ func _physics_process(delta: float) -> void:
 
     var yon := _hareket_istegi()
     if yon != Vector2.ZERO:
+        hic_hareket = true
         velocity = velocity.move_toward(yon * hiz, ivme * delta)
     else:
         velocity = velocity.move_toward(Vector2.ZERO, surtunme * delta)
@@ -440,6 +442,9 @@ func _kor_istegi() -> bool:
 
 ## Oyuncu bir kez bile daldiysa ogretmeye gerek yok.
 var hic_daldi := false
+var hic_hareket := false
+var hic_ates := false
+var hic_silah_degisti := false
 ## Ayar: sol tusu basili tutmadan surekli ates. Nisan yine oyuncuda.
 var otomatik_ates := false
 
@@ -468,6 +473,7 @@ func _dalis_bitti() -> void:
             d.hasar_al(dalis_patlamasi, fark.normalized() * 120.0)
 
 func _ates_et(nisan: Vector2) -> void:
+    hic_ates = true
     var s := Silahlar.damgali(silah_indeksi, silah_damgalari())
     _atis_sayaci = s["aralik"] / atis_hizi_carpani
     isi.ates_et(float(s["isi"]) * isi_carpani)

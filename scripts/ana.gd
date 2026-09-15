@@ -320,11 +320,7 @@ func _process(delta: float) -> void:
         _dokum_yazi.scale = Vector2.ONE * (1.0 + 0.06 * sin(gecen * 7.0))
     elif _dokum_yazi != null:
         _dokum_yazi.scale = Vector2.ONE
-    if _ipucu != null and gecen > 25.0:
-        _ipucu.modulate.a = maxf(_ipucu.modulate.a - delta * 0.5, 0.0)
-        if _ipucu.modulate.a <= 0.0:
-            _ipucu.queue_free()
-            _ipucu = null
+    _ipucu_tazele()
 
 ## FIRIN KADEMESI -- gonullu zorluk. Hades'in Pact'i gibi ama Kor'un kendi
 ## diliyle: zorlugu artirmanin yolu firini daha cok yakmak. Her degistirici
@@ -518,6 +514,28 @@ func _dokum_tazele(oran: float, hazir: bool) -> void:
     _dokum_yazi.text = tr("DÖKÜM [E]") if hazir else tr("DÖKÜM")
     _dokum_yazi.add_theme_color_override("font_color",
         Tema.KOR if hazir else Tema.YAZI_SONUK)
+
+## Sirayla ogretim: her an TEK satir, ve sadece oyuncunun henuz yapmadigi
+## sey. Hepsini yaptiysa satir kendini siliyor.
+func _ipucu_tazele() -> void:
+    if _ipucu == null:
+        return
+    var metin := ""
+    if not oyuncu.hic_hareket:
+        metin = "WASD  hareket et"
+    elif not oyuncu.hic_ates:
+        metin = "SOL TIK  ateş et — ateş ısıtır, ısı görüş demek"
+    elif oyuncu.isi.oran() > 0.40 and not oyuncu.hic_daldi:
+        metin = "BOŞLUK  dalış — ısını boşaltır"
+    elif oyuncu.dokum_hazir() and oyuncu.dokum_kullanim == 0:
+        metin = "E  döküm hazır — ne kadar sıcaksan o kadar yıkıcı"
+    elif oyuncu.acik_silahlar.size() > 1 and not oyuncu.hic_silah_degisti:
+        metin = "Q  silah değiştir"
+    if metin == "":
+        _ipucu.queue_free()
+        _ipucu = null
+        return
+    _ipucu.text = metin
 
 ## Ekranin ortasinda kisa duyuru.
 func _duyuru(metin: String) -> void:
@@ -947,8 +965,20 @@ func _hud_kur() -> void:
     _hud.add_child(_build_kutu)
 
     # Ipucu satiri ogretici gurultusu: ilk 25 saniyeden sonra soner.
-    _ipucu = Tema.sonuk("WASD  SOL TIK ateş  SAĞ TIK kor  BOŞLUK dalış  E döküm  Q silah  ESC duraklat")
-    _ipucu.position = Vector2(10, 332)
+    # SIRAYLA OGRETIM. Tek satirda hepsini yazmak 77 karakter = 616 px,
+    # yani ekranin %96'si -- ve oyun alaninin alt seridinde, tam oyuncunun
+    # hareket etmeyi ogrendigi yerde. Ustelik bes bilgiyi ayni anda
+    # okumuyor, sadece biri lazim.
+    #
+    # Ayni kalibi dalis ogretiminde zaten kurmustuk: "gerektiginde, bir
+    # kez, kendisi kesfettiyse hic". Alt satir bunu kullanmayan son yerdi.
+    _ipucu = Tema.sonuk("")
+    _ipucu.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+    _ipucu.offset_left = Tema.BOSLUK_M
+    _ipucu.offset_right = -Tema.BOSLUK_M
+    _ipucu.offset_top = -22
+    _ipucu.offset_bottom = -Tema.BOSLUK_M
+    _ipucu.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     _ipucu.modulate = Color(1, 1, 1, 0.5)
     _hud.add_child(_ipucu)
 

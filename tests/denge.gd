@@ -25,6 +25,12 @@ var kosu_suresi := 180.0
 var tohum := 20260914
 # Tarama parametreleri (-1 = dokunma)
 var ayar_soguma := -1.0
+## OLCUM HIJYENI. ana.gd firin kademesini user://kor.save'den okuyor ve
+## harness onu SABITLEMIYORDU -- yani her olcum, o an kayitta ne yaziyorsa
+## ONUN zorlugunda calisiyordu ve ciktida bunu soyleyen tek satir yoktu.
+## Iki oturum ayni kayit dosyasini paylastigi icin bu sessizce oluyordu.
+## Artik kademe acikca sabitleniyor ve baslik satirina yaziliyor.
+var ayar_kademe := 0
 var ayar_spawn := -1.0
 var ayar_gorus := -1.0
 var ayar_guc := -1.0
@@ -71,6 +77,8 @@ func _initialize() -> void:
             tohum = int(a[i + 1])
         elif a[i] == "--soguma" and i + 1 < a.size():
             ayar_soguma = float(a[i + 1])
+        elif a[i] == "--kademe" and i + 1 < a.size():
+            ayar_kademe = int(a[i + 1])
         elif a[i] == "--spawn" and i + 1 < a.size():
             ayar_spawn = float(a[i + 1])
         elif a[i] == "--gorus" and i + 1 < a.size():
@@ -87,11 +95,15 @@ func _initialize() -> void:
             ayar_can = int(a[i + 1])
         elif a[i] == "--etiket" and i + 1 < a.size():
             etiket = a[i + 1]
-    print("denge: %d kosu x %.0f sn, tohum %d" % [kosu_sayisi, kosu_suresi, tohum])
+    print("denge: %d kosu x %.0f sn, tohum %d, FIRIN KADEMESI %d" % [kosu_sayisi, kosu_suresi, tohum, ayar_kademe])
     _kosu_basla()
 
 func _kosu_basla() -> void:
     seed(tohum + _kosu * 7919)
+    # Zorlugu SABITLE: yoksa olcum kayitta ne yaziyorsa onun zorlugunda kosar.
+    var kyt := root.get_node_or_null("Kayit")
+    if kyt != null:
+        kyt.kademe_yaz(ayar_kademe)
     _ana = load("res://scenes/level.tscn").instantiate()
     root.add_child(_ana)
     # NOT: @onready degiskenler bu anda henuz cozulmemis oluyor
