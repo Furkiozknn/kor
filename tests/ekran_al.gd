@@ -16,6 +16,16 @@ var _patron_modu := "--patron" in OS.get_cmdline_user_args()
 ## Performans olcumu: gercek pencerede, karanlik shader'i + kalabalik sürü
 ## + parcaciklar birlikte. Headless bunu olcemez cunku cizim atlanir.
 var _perf_modu := "--perf" in OS.get_cmdline_user_args()
+## Kac dusmanla olculecek. ONEMLI: varsayilan 140 GERCEK OYUNDA OLUSMAYAN
+## sentetik bir en kotu durum -- zaman serisine gore yetkin bir kosuda
+## ekranda ~17 dusman oluyor (`_gelen/OLCUM-FINAL-CEVAP.md`). Tipik durumu
+## olcmek icin `--dusman 20` ver.
+var _perf_dusman := _sayi_arg("--dusman", 140)
+
+static func _sayi_arg(ad: String, varsayilan: int) -> int:
+    var a := OS.get_cmdline_user_args()
+    var i := a.find(ad)
+    return int(a[i + 1]) if i >= 0 and i + 1 < a.size() else varsayilan
 var _zafer_modu := "--zafer" in OS.get_cmdline_user_args()
 ## ACILIS: kosunun ilk anlari. Oyuncunun oyun hakkindaki karari burada
 ## veriliyor, o yuzden ayri ayri incelenebilmeli. Uc kare yazar:
@@ -73,7 +83,7 @@ func _process(_delta: float) -> bool:
             Engine.max_fps = 0
         if _kare == 40:
             _ana.gecen = 300.0
-            for n in 140:
+            for n in _perf_dusman:
                 _ana._dusman_dog()
             _ana._patron_dog()
             _ana.oyuncu.silah_ver(1)

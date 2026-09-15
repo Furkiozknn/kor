@@ -56,6 +56,10 @@ const KOR_BEKLEME := 0.5
 ## her zaman %0'in ustunde oldugu icin efektif can 6 degil 3'tu, ve bu
 ## "sicak oynamak olduruyor" seklinde yanlis olculuyordu.
 const KIZGIN_ESIK := 0.70
+## KIZGIN CELIK kartinin esigi AYRI: kirilganlik esigi %70'te kaliyor
+## (hasar almak orada iki katina cikmali) ama kartin odulu %50'ye indi --
+## olculdu, %70'te kart cogu zaman hicbir sey yapmiyordu (-50,3 sn).
+const KIZGIN_ESIK_KART := 0.50
 const KIZGIN_HASAR := 2.0  # kizgin bolgede alinan hasar carpani
 
 @export var hiz := 115.0
@@ -98,6 +102,10 @@ var ek_yayilma := 0.0
 var asiri_isi_carpani := 1.0   # isi > %70 iken gecerli
 ## Firin kademesi 1: sicak bolgenin HASAR odulu kapaniyor (kirilganlik kaliyor).
 var sicak_hasar_bonusu := true
+## KARANLIK GOZU karti: soguk bandda (isi < %30) hasar carpani.
+## Olculdu: isinin UCLARINDA tanimli kartlar kaybediyordu cunku oyuncu
+## orta bandda yasiyor; soguk tarafa gercek bir odul gerekiyordu.
+var soguk_hasar_bonusu := 1.0
 ## Firin kademesi 2: dokum artik kilidi kirmiyor -- guvenlik valfi yok.
 var dokum_kilit_kirar := true
 ## Firin kademesi 1: miknatis artik isiyla buyumuyor -- kupleri elle topla.
@@ -337,6 +345,7 @@ func _physics_process(delta: float) -> void:
     isi.guncelle(delta)
     if tavlanma:
         _tavlama_izle(kilit_onceki)
+        _tavlama_tavanda(delta)
     # Muzigin kor katmani isiyla acilir -- durum sesle de anlatilsin.
     SesYonetici.muzik_isi(isi.oran())
     _arena_isisi(delta)
@@ -504,8 +513,10 @@ func _ates_et(nisan: Vector2) -> void:
     _atis_sayaci = s["aralik"] / atis_hizi_carpani
     isi.ates_et(float(s["isi"]) * isi_carpani)
     var hasar: float = s["hasar"] * mermi_hasari
-    if sicak_hasar_bonusu and isi.oran() > 0.7:
+    if sicak_hasar_bonusu and isi.oran() > KIZGIN_ESIK_KART:
         hasar *= asiri_isi_carpani
+    elif isi.oran() < 0.30:
+        hasar *= soguk_hasar_bonusu
 
     var adet: int = int(s["adet"]) + ek_mermi
     var yay: float = float(s["yayilma"]) + ek_yayilma
@@ -640,6 +651,38 @@ func _gorunum_guncelle(delta: float, nisan: Vector2) -> void:
         _gorsel.modulate = Color(1, 1, 1)
 
 ## Kilide girdigin andan cozuldugu ana kadar hasar almadiysan 1 can.
+## ZAFER TURUNDA TAVLAMA. Kilit kapaninca (isi.kilit_acik = false)
+## tavlama iyilesmesi de kapaniyordu -- cunku kilide GIRMEYE bagliydi.
+## Yani oyuncu, yipranmanin en yuksek oldugu son ucte birde iyilesemez
+## hale geliyordu. Olculdu: oyuncu finale 1 CANLA variyor.
+##
+## Kilit yokken tavlama TAVANDA DURMAYA baglaniyor: isi %95 ustunde,
+## hasar almadan TAVLAMA_SURESI kadar dayanirsan 1 can. Tasarim ayni
+## kaliyor -- odul hala "tavana cik ve orada dayan" -- sadece kilit
+## olmadigi durumda da olculebiliyor.
+const TAVLAMA_TAVAN_ESIK := 0.95
+const TAVLAMA_SURESI := 2.0
+var _tavlama_tavan_sayac := 0.0
+
+func _tavlama_tavanda(delta: float) -> void:
+    if isi.kilit_acik or can <= 0:
+        _tavlama_tavan_sayac = 0.0
+        return
+    if isi.oran() < TAVLAMA_TAVAN_ESIK:
+        _tavlama_tavan_sayac = 0.0
+        return
+    _tavlama_tavan_sayac += delta
+    if _tavlama_tavan_sayac < TAVLAMA_SURESI:
+        return
+    _tavlama_tavan_sayac = 0.0
+    if can >= maks_can:
+        return
+    can += 1
+    can_degisti.emit(can, maks_can)
+    SesYonetici.cal("seviye")
+    Hiss.patlama(get_parent(), global_position,
+        Color(0.6, 0.85, 1.0), 16, 90.0, 1.6, 0.6)
+
 func _tavlama_izle(kilit_onceki: bool) -> void:
     if isi.kilitli and not kilit_onceki:
         _tavlanma_izleme = true
@@ -663,6 +706,7 @@ func hasar_al(miktar: float) -> void:
     # Kizgin metal yumusaktir. %70 ustundeki hasar bonusu boylece gercek bir
     # KUMAR oluyor: daha cok vuruyorsun ama daha cok yiyorsun. Onceden bedavaydi.
     _tavlanma_temiz = false      # tavlama bozuldu: kilitte darbe yedin
+    _tavlama_tavan_sayac = 0.0   # tavanda dayanma sayaci da sifirlanir
     can -= int(ceilf(miktar * (KIZGIN_HASAR if isi.oran() > KIZGIN_ESIK else 1.0)))
     _dokunulmaz = VURULMA_DOKUNULMAZLIK
     can_degisti.emit(can, maks_can)

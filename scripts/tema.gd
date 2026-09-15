@@ -21,6 +21,14 @@ const KOR        := Color(1.0, 0.66, 0.26)
 const SOGUK      := Color(0.55, 0.78, 0.95)
 const TEHLIKE    := Color(1.0, 0.36, 0.22)
 
+## KART AILELERI. Kor'da iki gecerli yol var (sicak oyna / soguk oyna) ama
+## kart ekraninda ikisi ayirt edilemiyordu -- oyuncu bir yol SECTIGINI
+## bilmeden kart aliyordu. Rozet renk TASIYOR ama bilgiyi renge YUKLEMIYOR:
+## yanindaki isaret (sicak icin dolu, soguk icin bos) renk korlugunde de
+## okunuyor.
+const AILE_SICAK := Color(1.0, 0.478, 0.122)   # #FF7A1F
+const AILE_SOGUK := Color(0.122, 0.722, 0.784) # #1FB8C8
+
 ## Menu ve HUD yazilari CANLI oyunun ustunde duruyor: menude gezinen demo
 ## oyuncu, oyunda mangal isiklari ve dusmanlar. Hicbir konumlandirma bunu
 ## cozmez -- arka plan hareket ediyor. 1 piksellik kontur cozer ve pixel

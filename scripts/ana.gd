@@ -821,9 +821,11 @@ func _xp_topla(kazanc: int) -> void:
 
 func _kart_havuzu() -> Array:
     var liste := [
-        {"ad": "GENİŞ KAZAN", "aciklama": "Isı tavanı +25", "ikon": "kazan",
-            "uygula": func(o): o.isi.tavan += 25.0},
-        {"ad": "SOĞUK HAT", "aciklama": "Soğuma hızı +%35", "ikon": "soguk",
+        {"ad": "GENİŞ KAZAN", "aile": "sicak", "aciklama": "Isı tavanı +25, soğuma -%15", "ikon": "kazan",
+            "uygula": func(o):
+                o.isi.tavan += 25.0
+                o.isi.soguma_hizi *= 0.85},   # kartin kendisi seni tavana yaklastirsin
+        {"ad": "SOĞUK HAT", "aile": "soguk", "aciklama": "Soğuma hızı +%35", "ikon": "soguk",
             "uygula": func(o): o.isi.soguma_hizi *= 1.35},
         {"ad": "HIZLI TETİK", "aciklama": "Atış hızı +%20, ısı +%12", "ikon": "tetik", "uygula": func(o):
             o.atis_hizi_carpani *= 1.2
@@ -835,32 +837,34 @@ func _kart_havuzu() -> Array:
             o.ek_mermi += 1
             o.ek_yayilma += 0.06
             o.isi_carpani *= 1.25},
-        {"ad": "KOR PATLAMASI", "aciklama": "Dalış bitince çevreye hasar", "ikon": "kor",
+        {"ad": "KOR PATLAMASI", "aile": "sicak", "aciklama": "Dalış bitince çevreye hasar", "ikon": "kor",
             "uygula": func(o): o.dalis_patlamasi += 3.0},
-        {"ad": "KIZGIN ÇELİK", "aciklama": "Isı %70 üstündeyken hasar +%50", "ikon": "celik",
+        {"ad": "KIZGIN ÇELİK", "aile": "sicak", "aciklama": "Isı %50 üstündeyken hasar +%50", "ikon": "celik",
             "uygula": func(o): o.asiri_isi_carpani += 0.5},
-        {"ad": "TAVLANMIŞ ZIRH", "aciklama": "Maks can +1. Kilitte hasarsız dayanırsan +1 can", "ikon": "zirh", "uygula": func(o):
+        {"ad": "TAVLANMIŞ ZIRH", "aile": "sicak", "aciklama": "Maks can +1. Kilitte hasarsız dayanırsan +1 can", "ikon": "zirh", "uygula": func(o):
             o.maks_can += 1
             o.can += 1
             o.tavlanma = true
             o.can_degisti.emit(o.can, o.maks_can)},
         {"ad": "MIKNATIS", "aciklama": "Çekim menzili +%60 (ısıyla ayrıca büyür)", "ikon": "miknatis",
             "uygula": func(o): o.miknatis_carpani *= 1.6},
-        {"ad": "ÖRS DARBESİ", "aciklama": "Kor atışı hasarı +%60", "ikon": "ors",
+        {"ad": "ÖRS DARBESİ", "aile": "sicak", "aciklama": "Kor atışı hasarı +%60", "ikon": "ors",
             "uygula": func(o): o.kor_carpani += 0.6},
-        {"ad": "YARIM BOŞALTMA", "aciklama": "Kor atışı ısının yarısını bırakır", "ikon": "soguk",
+        {"ad": "YARIM BOŞALTMA", "aile": "soguk", "aciklama": "Kor atışı ısının yarısını bırakır", "ikon": "soguk",
             "uygula": func(o): o.kor_maliyet = maxf(o.kor_maliyet * 0.5, 0.15)},
-        {"ad": "KOR YAYILIMI", "aciklama": "Çevreni yakma hasarı +%70", "ikon": "kor",
+        {"ad": "KOR YAYILIMI", "aile": "sicak", "aciklama": "Çevreni yakma hasarı +%70", "ikon": "kor",
             "uygula": func(o): o.yayilim_dps *= 1.7},
-        {"ad": "GENİŞ HALKA", "aciklama": "Yayılım menzili +%25", "ikon": "kazan",
+        {"ad": "GENİŞ HALKA", "aile": "sicak", "aciklama": "Yayılım menzili +%25", "ikon": "kazan",
             "uygula": func(o): o.yayilim_menzil = minf(o.yayilim_menzil * 1.25, 1.0)},
         {"ad": "YAĞLI ÇİZME", "aciklama": "Hareket hızı +%12", "ikon": "cizme",
             "uygula": func(o): o.hiz *= 1.12},
-        {"ad": "GENİŞ GÖZ", "aciklama": "Görüş menzili +%25", "ikon": "miknatis",
+        {"ad": "GENİŞ GÖZ", "aile": "sicak", "aciklama": "Görüş menzili +%25", "ikon": "miknatis",
             "uygula": func(_o): _gorus_degistir(1.25, 0.0)},
-        {"ad": "KARANLIK GÖZÜ", "aciklama": "Soğukken bile görürsün (taban +14 px)", "ikon": "soguk",
-            "uygula": func(_o): _gorus_degistir(1.0, 14.0)},
-        {"ad": "KÖR ÖFKE", "aciklama": "Görüş -%18 ama hasar +%35", "ikon": "celik", "uygula": func(o):
+        {"ad": "KARANLIK GÖZÜ", "aile": "soguk", "aciklama": "Taban görüş +14 px, soğukken hasar +%25", "ikon": "soguk",
+            "uygula": func(o):
+                _gorus_degistir(1.0, 14.0)
+                o.soguk_hasar_bonusu *= 1.25},   # soguk oynamak strateji olsun
+        {"ad": "KÖR ÖFKE", "aile": "sicak", "aciklama": "Görüş -%18 ama hasar +%35", "ikon": "celik", "uygula": func(o):
             _gorus_degistir(0.82, 0.0)
             o.mermi_hasari *= 1.35},
     ]
@@ -934,12 +938,10 @@ func _kartlari_ac() -> void:
     sarmal.theme = Tema.tema()
     # Sabit konum + icerige gore buyuyen genislik = tasma. Anchor'a bagli
     # panel ekrandan cikamaz, uzun metin tasmak yerine satir atlar.
-    sarmal.set_anchors_preset(Control.PRESET_FULL_RECT)
+    sarmal.set_anchors_preset(Control.PRESET_TOP_WIDE)
     sarmal.offset_left = 56
     sarmal.offset_right = -56
     sarmal.offset_top = 74
-    sarmal.offset_bottom = -26
-    sarmal.size_flags_vertical = Control.SIZE_SHRINK_CENTER
     sarmal.add_theme_stylebox_override("panel",
         Tema.kutu(Tema.GOVDE, Tema.KENAR_KOR, 1, Tema.BOSLUK_L))
     _kart_katman.add_child(sarmal)
@@ -1024,7 +1026,17 @@ func _kart_dugmesi(k: Dictionary) -> Button:
     var metin := VBoxContainer.new()
     metin.add_theme_constant_override("separation", 2)
     metin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-    metin.add_child(Tema.vurgu(str(k["ad"])))
+    # Aile rozeti kart adinin ONUNDE: oyuncu bir YOL sectigini gormeli.
+    var aile := str(k.get("aile", ""))
+    var baslik_satir := HBoxContainer.new()
+    baslik_satir.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    if aile != "":
+        var rozet := Tema._yazi("◆" if aile == "sicak" else "◇", 8,
+            Tema.AILE_SICAK if aile == "sicak" else Tema.AILE_SOGUK)
+        rozet.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+        baslik_satir.add_child(rozet)
+    baslik_satir.add_child(Tema.vurgu(str(k["ad"])))
+    metin.add_child(baslik_satir)
     var ac := Tema.sonuk(str(k["aciklama"]))
     ac.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     ac.custom_minimum_size = Vector2(400, 0)

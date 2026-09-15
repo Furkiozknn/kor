@@ -193,7 +193,8 @@ func _process(delta: float) -> bool:
         _rapor_yaz()
         return true
 
-    if _ana.bitti or _ana.gecen >= kosu_suresi:
+    var uzatmada: bool = _ana.get("_son_darbe") == true
+    if _ana.bitti or (_ana.gecen >= kosu_suresi and not uzatmada):
         _kosu_bitir()
         if _kosu >= kosu_sayisi:
             _rapor_yaz()
