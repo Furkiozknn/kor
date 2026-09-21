@@ -3,7 +3,13 @@
 /android/
 
 # Disari aktarilan yapilar
-build/
+# NOT: "build/" degil "build/*". Git yok saydigi DIZINE hic inmiyor,
+# o yuzden dizinin kendisi yok sayilirken alttaki istisna calismaz.
+build/*
+# Godot'nun ciktilari yeniden ICE AKTARMASINI engelleyen isaret dosyasi
+# depoda kalmali. Olmazsa .godot/ sisiyor ve gecmiste pck de sismisti;
+# taze klonda kimse elle olusturmayi hatirlamaz.
+!build/.gdignore
 builds/
 *.exe
 *.pck

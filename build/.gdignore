@@ -1,0 +1,9 @@
+# Godot bu klasoru ICE AKTARMASIN.
+#
+# build/ disari aktarma ciktisi: exe, pck, zip ve yaninda gelen PNG/WAV
+# dosyalari. .gdignore olmadan Godot bunlari yeniden ice aktariyor --
+# .godot/ sisiyor, editor taramasi uzuyor ve gecmiste pck de sismisti.
+#
+# Dosya bos olsa da ise yarar; icerik yalnizca aciklama icin.
+# build/ .gitignore icinde oldugu icin bu dosyanin depoda kalmasi
+# .gitignore icindeki "!build/.gdignore" istisnasina bagli -- onu silme.
