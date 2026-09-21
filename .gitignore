@@ -34,3 +34,7 @@ addons/godot_mcp/
 
 # Test/arac ciktilari (ekran goruntusu, olcum raporu)
 ciktilar/
+
+# tests/web-dogrula.mjs playwright istiyor; "npm i --no-save playwright"
+# buraya node_modules biraksin diye degil, depoya girmesin diye.
+node_modules/
