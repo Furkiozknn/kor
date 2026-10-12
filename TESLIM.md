@@ -121,6 +121,6 @@ node _gelen/arac/web-sunucu.mjs build/web 8123   # COOP+COEP başlıklarıyla su
 godot --headless --fixed-fps 60 --script res://tests/denge.gd -- --kosu 10 --sure 720 --kademe 0
 godot --script res://tests/ekran_al.gd -- --acilis     # ilk 20 saniyenin üç anı
 godot --script res://tests/ekran_al.gd -- --menu --en  # herhangi bir ekran İngilizce
-node build/dil/dizeleri-cikar.mjs                      # çevrilmemiş dize raporu
+node araclar/dil/dizeleri-cikar.mjs                    # çevrilmemiş dize raporu
 godot --headless --script res://tests/kayit_sifirla.gd # bot kirliliğini temizle
 ```
