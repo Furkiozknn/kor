@@ -154,7 +154,9 @@ func muzik_cal(yol := "res://assets/ses/muzik_dokumhane.ogg", ses_db := 999.0) -
         akis.loop = true
     elif akis is AudioStreamWAV:
         akis.loop_mode = AudioStreamWAV.LOOP_FORWARD
-        akis.loop_end = akis.data.size() / 4
+        # data.size() bayt sayar, ornek degil; ice aktarma QOA sikistirirsa
+        # (compress/mode=2) dongu parcanin bir kismina duser. Ornek sayisi:
+        akis.loop_end = int(round(akis.get_length() * akis.mix_rate))
     if _muzik == null:
         _muzik = AudioStreamPlayer.new()
         add_child(_muzik)
