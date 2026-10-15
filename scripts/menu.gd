@@ -35,6 +35,9 @@ var _sarsinti_dugme: Button
 var _donma_dugme: Button
 var _oto_dugme: Button
 var _dil_dugme: Button
+var _taban_dugme: Button
+var _sakin_dugme: Button
+const Erisim := preload("res://scripts/erisim.gd")
 
 ## Dil: kayitli ayar, ama komut satiri --en ile zorlanabiliyor.
 ## Gerekce: tr() ile bicimlenen dizeler SET ANINDA pisiyor ve sonradan
@@ -235,6 +238,21 @@ func _hareket_tazele() -> void:
             i = n
     _sarsinti_dugme.text = SARSINTI_AD[i]
     _donma_dugme.text = "donma açık" if bool(Kayit.ayar("donma", true)) else "donma kapalı"
+    if _taban_dugme != null:
+        _taban_dugme.text = Erisim.gorus_tabani_ad(int(Kayit.ayar("gorus_tabani", 0)))
+    if _sakin_dugme != null:
+        _sakin_dugme.text = "sakin ışık açık" if bool(Kayit.ayar("sakin_isik", false)) else "sakin ışık kapalı"
+
+## Sight floor: normal -> +32 -> +64 px cold sight, then back.
+func _taban_degis() -> void:
+    Kayit.ayar_yaz("gorus_tabani", Erisim.gorus_tabani_sonraki(int(Kayit.ayar("gorus_tabani", 0))))
+    SesYonetici.cal("kart_sec")
+    _hareket_tazele()
+
+func _sakin_degis() -> void:
+    Kayit.ayar_yaz("sakin_isik", not bool(Kayit.ayar("sakin_isik", false)))
+    SesYonetici.cal("kart_sec")
+    _hareket_tazele()
 
 func _kademe_sec(k: int) -> void:
     Kayit.kademe_yaz(k)
@@ -501,6 +519,21 @@ func _ayar_degis() -> void:
     _oto_dugme.pressed.connect(_oto_degis)
     hrk.add_child(_oto_dugme)
     kutu.add_child(hrk)
+
+    # ERISIM: two accessibility options for a game that speaks through light
+    # (scripts/erisim.gd): a wider cold-sight floor and steady warnings.
+    var ers := HBoxContainer.new()
+    ers.add_theme_constant_override("separation", Tema.BOSLUK_S)
+    ers.add_child(Tema.sonuk("ERİŞİM"))
+    _taban_dugme = Button.new()
+    _taban_dugme.custom_minimum_size = Vector2(144, 20)
+    _taban_dugme.pressed.connect(_taban_degis)
+    ers.add_child(_taban_dugme)
+    _sakin_dugme = Button.new()
+    _sakin_dugme.custom_minimum_size = Vector2(128, 20)
+    _sakin_dugme.pressed.connect(_sakin_degis)
+    ers.add_child(_sakin_dugme)
+    kutu.add_child(ers)
 
     var dil_satir := HBoxContainer.new()
     dil_satir.add_theme_constant_override("separation", Tema.BOSLUK_S)
