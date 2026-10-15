@@ -82,10 +82,20 @@ Silah seçmek "kaç saniyede kilitlenmeyi göze alıyorum" sorusunun cevabı.
 
 | Silah | Karakteri | Kilide kalan |
 |---|---|---|
-| **Kor Tabancası** | dengeli | ~1.6 sn |
-| **Saçma** | 6 saçma, kısa menzil — sürünün içine girmeni ister | ~1.9 sn |
-| **Işın** | en yüksek hasar, parmağını kaldırmayı öğretir | ~1.2 sn |
-| **Çekiç** | yavaş, delici, sırayı süpürür | ~2.5 sn |
+| **Kor Tabancası** | dengeli | ~5.8 sn |
+| **Saçma** | 6 saçma, kısa menzil — sürünün içine girmeni ister | ~14.5 sn |
+| **Işın** | en yüksek hasar, parmağını kaldırmayı öğretir | ~5.5 sn |
+| **Çekiç** | yavaş, delici, sırayı süpürür | basılı tutunca kilitlenmez |
+
+"Kilide kalan" = soğukken tetiği **basılı tutarsan** kaç saniyede kilitlenirsin.
+Sayılar tahmin değil: `Silahlar.kilit_suresi()` oyunun kendi ısı kurallarını
+(soğuma gecikmesi, atışlar arası soğuma, 60 Hz fizik adımı) çalıştırıyor; kart
+metni de aynı yerden okuyor. Eski tablo (~1,2-2,5 sn) iki ayar turu önceki
+değerlerdi, kartın eski formülü (tavan ÷ ısı/sn) ise atışlar arası soğumayı
+saymıyordu: Saçma'yı ~6,9 sn, Çekiç'i ~9 sn gösteriyordu. Gerçekte Çekiç'in
+iki vuruşu arasında soğuma vuruşun ısısını geçiyor (tepe %9); onu kilitleyen
+şey ancak mangalın ısısı ya da ısıyı artıran kartlar (AĞIR MERMİ gibi).
+`tests/test_denge_kurallari.gd` bu tabloyu kurallarla karşılaştırıyor.
 
 ### Düşmanlar
 
@@ -214,7 +224,7 @@ build/windows/kor.exe               # derlenmiş sürüm
 bash tests/dogrula.sh               # TAM DOGRULAMA -- her sey burada
 ```
 
-`dogrula.sh` on adım çalıştırır — import, ısı, kayıt, ses, döngü, botlu
+`dogrula.sh` on bir adım çalıştırır — import, ısı, denge kuralları, kayıt, ses, döngü, botlu
 koşu, koşu akışı, arayüz taşma, dil kapsamı, menü — ve **herhangi
 bir** `ERROR` / `Assertion` / `Parse` satırını başarısızlık sayar. Dar filtre
 kullanmaz: geçmişte `grep TAMAM` ile bakarken bir fizik akışı hatası gizli
@@ -224,6 +234,7 @@ Tek tek:
 
 ```
 godot --headless --script res://tests/test_isi.gd       # ısı/kilit/dalış kuralları
+godot --headless --script res://tests/test_denge_kurallari.gd  # telemetrisiz denge kuralları
 godot --headless --script res://tests/test_dongu.gd     # uçtan uca oyun döngüsü
 godot --script res://tests/ekran_al.gd                  # ekran görüntüsü
 godot --script res://tests/ekran_al.gd -- --kart        #   kart ekranı
