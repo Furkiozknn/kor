@@ -5,6 +5,7 @@ const DusmanSahne := preload("res://scenes/dusman.tscn")
 const KupSahne := preload("res://scenes/kup.tscn")
 const YapiSahne := preload("res://scenes/yapi.tscn")
 const Silahlar := preload("res://scripts/silahlar.gd")
+const Erisim := preload("res://scripts/erisim.gd")
 const Gorevler := preload("res://scripts/gorevler.gd")
 const PatronSahne := preload("res://scenes/patron.tscn")
 const Dalgalar := preload("res://scripts/dalgalar.gd")
@@ -143,6 +144,7 @@ func _ready() -> void:
         g.ana = self
         add_child(g)
     oyuncu.otomatik_ates = bool(Kayit.ayar("otomatik_ates", false))
+    _erisim_uygula()
     _acilan_secenekleri_uygula()
     oyuncu.oldu.connect(_oyun_bitti)
     oyuncu.can_degisti.connect(_can_tazele)
@@ -460,7 +462,7 @@ func _process(delta: float) -> void:
         _isi_cubuk.color = Color(1.0, 0.75, 0.2)
     elif i.oran() > 0.85:
         # Kilit oncesi uyari -- oyuncu tavana yaklastigini hissetmeli
-        _isi_cubuk.color = Color(1, 1, 1) if int(Time.get_ticks_msec() / 70) % 2 == 0 else Color(1.0, 0.25, 0.05)
+        _isi_cubuk.color = Erisim.isi_uyari_rengi(Time.get_ticks_msec(), oyuncu.sakin_isik)
     else:
         _isi_cubuk.color = Color(0.35, 0.7, 1.0).lerp(Color(1.0, 0.3, 0.1), i.oran())
     if i.kilitli:
@@ -899,7 +901,8 @@ func _kart_havuzu() -> Array:
         liste.append({
             "ad": tr("SİLAH: ") + tr(str(sl["ad"])),
             "aciklama": "%s
-%s" % [tr(str(sl["not"])), Silahlar.isi_profili(i, oyuncu.isi.tavan)],
+%s" % [tr(str(sl["not"])), Silahlar.isi_profili(i, oyuncu.isi.tavan,
+                oyuncu.isi.soguma_hizi, oyuncu.isi_carpani, oyuncu.atis_hizi_carpani)],
             "ikon": str(sl["ikon"]), "silah": i,
             "uygula": func(o): o.silah_ver(i),
         })
@@ -931,6 +934,14 @@ func _kart_havuzu() -> Array:
         if not yakilan_kartlar.has(str(k["ad"])):
             kalan.append(k)
     return kalan
+
+## Accessibility settings (scripts/erisim.gd). The sight floor widens only the
+## cold end and is applied after the furnace step, so DAR GÖZ (-20%) still bites.
+func _erisim_uygula() -> void:
+    oyuncu.sakin_isik = bool(Kayit.ayar("sakin_isik", false))
+    var ek := Erisim.gorus_tabani_ek(int(Kayit.ayar("gorus_tabani", 0)))
+    if ek > 0.0:
+        _gorus_degistir(1.0, ek)
 
 ## Gorus artik bir kaynak: kartlar onu takas edebiliyor.
 func _gorus_degistir(carpan: float, taban_ek: float) -> void:

@@ -82,10 +82,20 @@ Silah seçmek "kaç saniyede kilitlenmeyi göze alıyorum" sorusunun cevabı.
 
 | Silah | Karakteri | Kilide kalan |
 |---|---|---|
-| **Kor Tabancası** | dengeli | ~1.6 sn |
-| **Saçma** | 6 saçma, kısa menzil — sürünün içine girmeni ister | ~1.9 sn |
-| **Işın** | en yüksek hasar, parmağını kaldırmayı öğretir | ~1.2 sn |
-| **Çekiç** | yavaş, delici, sırayı süpürür | ~2.5 sn |
+| **Kor Tabancası** | dengeli | ~5.8 sn |
+| **Saçma** | 6 saçma, kısa menzil — sürünün içine girmeni ister | ~14.5 sn |
+| **Işın** | en yüksek hasar, parmağını kaldırmayı öğretir | ~5.5 sn |
+| **Çekiç** | yavaş, delici, sırayı süpürür | basılı tutunca kilitlenmez |
+
+"Kilide kalan" = soğukken tetiği **basılı tutarsan** kaç saniyede kilitlenirsin.
+Sayılar tahmin değil: `Silahlar.kilit_suresi()` oyunun kendi ısı kurallarını
+(soğuma gecikmesi, atışlar arası soğuma, 60 Hz fizik adımı) çalıştırıyor; kart
+metni de aynı yerden okuyor. Eski tablo (~1,2-2,5 sn) iki ayar turu önceki
+değerlerdi, kartın eski formülü (tavan ÷ ısı/sn) ise atışlar arası soğumayı
+saymıyordu: Saçma'yı ~6,9 sn, Çekiç'i ~9 sn gösteriyordu. Gerçekte Çekiç'in
+iki vuruşu arasında soğuma vuruşun ısısını geçiyor (tepe %9); onu kilitleyen
+şey ancak mangalın ısısı ya da ısıyı artıran kartlar (AĞIR MERMİ gibi).
+`tests/test_denge_kurallari.gd` bu tabloyu kurallarla karşılaştırıyor.
 
 ### Düşmanlar
 
@@ -199,8 +209,22 @@ Ayarlardan kapatılabilenler (menüde `HAREKET` satırı):
 | vuruş donması açık/kapalı | her öldürmede `Engine.time_scale` 0,05'e düşüyordu |
 | oto ateş açık/kapalı | 12 dakika sol tuş basılı tutmak fiziksel yük — nişan yine oyuncuda |
 
-Dokunulmazlık yanıp sönmesi **5,9 Hz**: fotosensitif nöbet eşiğinin
-(3-60 Hz) yoğun bandının dışında.
+Dokunulmazlık yanıp sönmesi **5,9 Hz**, ısı çubuğunun kilit öncesi uyarısı
+**7,1 Hz**. İkisi de WCAG 2.3.1'in genel sınırı olan saniyede 3 flaşın
+üstünde (alanları küçük olduğu için alan istisnasına muhtemelen giriyorlar,
+ama ışığa duyarlı oyuncu bunu bilemez). Bu yüzden ayarlarda ayrı bir
+**ERİŞİM** satırı var:
+
+| ayar | ne yapar | neyi değiştirmez |
+|---|---|---|
+| **sakin ışık** açık/kapalı | iki yanıp sönmeyi aynı anlamı taşıyan **sabit** renge çevirir | ısı çubuğunun dolumu ve eşik çizgisi, dokunulmazlığın ayrı tonu kalır |
+| **görüş tabanı** normal / +32 / +64 | yalnız **soğuk** görüşü genişletir: 40 → 72 → 104 px | sıcak uç yine 300 px, kilitliyken yine en geniş, dalış yine karartır; fırın 3'ün DAR GÖZ'ü üstüne uygulanır |
+
+Görüş tabanı az gören oyuncu için: 640×360 ekranda 40 px'lik soğuk görüş
+oyunun en zor anı ve kuralın kendisi. Taban yükselince ısı-görüş takası
+sürüyor, yalnız okunabilir bir yarıçaptan başlıyor (en geniş tabanda bile
+ısı 190 px'lik görüş satın alıyor). İkisi de varsayılan **kapalı**; kurallar
+`scripts/erisim.gd`, testleri `tests/test_erisim.gd`.
 
 Oyun **Türkçe ve İngilizce**. Çeviri anahtarları Türkçe metinlerin
 kendisi, yani çeviri dosyası olmasa bile oyun Türkçe çalışmaya devam eder.
@@ -214,7 +238,7 @@ build/windows/kor.exe               # derlenmiş sürüm
 bash tests/dogrula.sh               # TAM DOGRULAMA -- her sey burada
 ```
 
-`dogrula.sh` on adım çalıştırır — import, ısı, kayıt, ses, döngü, botlu
+`dogrula.sh` on iki adım çalıştırır — import, ısı, denge kuralları, erişim, kayıt, ses, döngü, botlu
 koşu, koşu akışı, arayüz taşma, dil kapsamı, menü — ve **herhangi
 bir** `ERROR` / `Assertion` / `Parse` satırını başarısızlık sayar. Dar filtre
 kullanmaz: geçmişte `grep TAMAM` ile bakarken bir fizik akışı hatası gizli
@@ -224,6 +248,8 @@ Tek tek:
 
 ```
 godot --headless --script res://tests/test_isi.gd       # ısı/kilit/dalış kuralları
+godot --headless --script res://tests/test_denge_kurallari.gd  # telemetrisiz denge kuralları
+godot --headless --script res://tests/test_erisim.gd         # görüş tabanı + sakin ışık
 godot --headless --script res://tests/test_dongu.gd     # uçtan uca oyun döngüsü
 godot --script res://tests/ekran_al.gd                  # ekran görüntüsü
 godot --script res://tests/ekran_al.gd -- --kart        #   kart ekranı

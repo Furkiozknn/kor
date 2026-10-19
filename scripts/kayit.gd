@@ -41,6 +41,8 @@ const VARSAYILAN := {
 		"sarsinti": 1.0,
 		"donma": true,
 		"otomatik_ates": false,
+		"gorus_tabani": 0,      # accessibility: cold-sight floor step (scripts/erisim.gd)
+		"sakin_isik": false,    # accessibility: steady colours instead of blinking warnings
 		"dil": "tr",
 	},
 }

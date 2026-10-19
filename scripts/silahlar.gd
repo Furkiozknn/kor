@@ -56,12 +56,94 @@ const LISTE := [
 ## Turun tekrar eden elestirisi "bilincli karar verecek kadar bilgi yok".
 ## Kor'da silah secmek dogrudan "kac saniyede kilitlenmeyi goze aliyorum"
 ## sorusu -- bu sayiyi gizlemek oyuncuyu korlemek demek.
-static func isi_profili(i: int, tavan: float = 100.0) -> String:
+##
+## The lock time used to be tavan / (heat per second), which ignores cooling
+## between shots. That is close for fast weapons (the cooling delay never runs
+## out between shots) but wrong for slow ones: with the base cooling the
+## hammer cools more between swings than a swing heats, so holding fire never
+## locks it, while the card promised "~9 s". The number now comes from
+## kilit_suresi(), the same heat rules the game runs, with the player's
+## current ceiling, cooling and fire-rate modifiers.
+static func isi_profili(i: int, tavan: float = 100.0, soguma: float = 19.0,
+        isi_carpani: float = 1.0, atis_hizi: float = 1.0) -> String:
     var s := al(i)
-    var sn_isi: float = float(s["isi"]) / float(s["aralik"])
+    var sn_isi: float = float(s["isi"]) * isi_carpani / etkin_aralik(float(s["aralik"]) / atis_hizi)
+    var t := kilit_suresi(i, [], tavan, soguma, isi_carpani, atis_hizi)
     # tr() ORNEK metodu, bu fonksiyon static -- TranslationServer static-guvenli.
     # (tr() denendi: "Cannot call non-static function" ile derlenmedi.)
-    return TranslationServer.translate("%.0f ısı/sn · ~%.1f sn'de kilit") % [sn_isi, tavan / sn_isi]
+    if t < 0.0:
+        return TranslationServer.translate("%.0f ısı/sn · basılı tutunca kilitlenmez") % sn_isi
+    return TranslationServer.translate("%.0f ısı/sn · ~%.1f sn'de kilit") % [sn_isi, t]
+
+const Isi := preload("res://scripts/isi.gd")
+const FIZIK_ADIMI := 1.0 / 60.0
+const KILIT_YOK := -1.0
+
+## The real time between shots. The shot timer is counted down once per
+## physics tick, so an interval is rounded UP to whole ticks: the beam's 0.05 s
+## is 4 ticks (0.067 s) once float rounding leaves a sliver above zero, so it
+## heats 18/s, not the nominal 24/s.
+static func etkin_aralik(aralik: float) -> float:
+    var sayac := aralik
+    var n := 0
+    while true:
+        sayac = maxf(sayac - FIZIK_ADIMI, 0.0)
+        n += 1
+        if sayac <= 0.0:
+            break
+    return n * FIZIK_ADIMI
+
+## Seconds of HOLDING fire from cold until weapon `i` locks, simulated with the
+## real heat rules (Isi: cooling delay, cooling between shots) at the physics
+## tick, in the order oyuncu._physics_process uses: cool, count down the shot
+## timer, fire. KILIT_YOK if it does not lock within `ust_sinir` seconds, i.e.
+## the cooling between shots keeps up with the heat per shot.
+##
+## No telemetry, no bot: a deterministic number the card, the README table and
+## tests/test_denge_kurallari.gd all read from the same place.
+static func kilit_suresi(i: int, damgalar: Array = [], tavan: float = 100.0,
+        soguma: float = 19.0, isi_carpani: float = 1.0, atis_hizi: float = 1.0,
+        ust_sinir: float = 30.0) -> float:
+    var s := damgali(i, damgalar)
+    var isi = Isi.new()
+    isi.tavan = tavan
+    isi.soguma_hizi = soguma
+    var aralik: float = float(s["aralik"]) / atis_hizi
+    var miktar: float = float(s["isi"]) * isi_carpani
+    var sayac := 0.0
+    var t := 0.0
+    while t < ust_sinir:
+        isi.guncelle(FIZIK_ADIMI)
+        sayac = maxf(sayac - FIZIK_ADIMI, 0.0)
+        if sayac <= 0.0 and isi.ates_edebilir():
+            isi.ates_et(miktar)
+            sayac = aralik
+            if isi.kilitli:
+                return t
+        t += FIZIK_ADIMI
+    return KILIT_YOK
+
+## Highest heat ratio (0..1) reached while holding fire for `sure` seconds.
+## For a weapon that never locks this is where it settles: how close to the
+## ceiling holding the trigger brings you.
+static func basili_tepe(i: int, damgalar: Array = [], tavan: float = 100.0,
+        soguma: float = 19.0, sure: float = 30.0) -> float:
+    var s := damgali(i, damgalar)
+    var isi = Isi.new()
+    isi.tavan = tavan
+    isi.soguma_hizi = soguma
+    var sayac := 0.0
+    var t := 0.0
+    var tepe := 0.0
+    while t < sure:
+        isi.guncelle(FIZIK_ADIMI)
+        sayac = maxf(sayac - FIZIK_ADIMI, 0.0)
+        if sayac <= 0.0 and isi.ates_edebilir():
+            isi.ates_et(float(s["isi"]))
+            sayac = float(s["aralik"])
+        tepe = maxf(tepe, isi.oran())
+        t += FIZIK_ADIMI
+    return tepe
 
 static func al(i: int) -> Dictionary:
     return LISTE[clampi(i, 0, LISTE.size() - 1)]

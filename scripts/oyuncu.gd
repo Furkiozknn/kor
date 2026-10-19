@@ -4,6 +4,7 @@ extends CharacterBody2D
 
 const Isi := preload("res://scripts/isi.gd")
 const Silahlar := preload("res://scripts/silahlar.gd")
+const Erisim := preload("res://scripts/erisim.gd")
 const MermiSahne := preload("res://scenes/mermi.tscn")
 const Yonlu := preload("res://scripts/yonlu.gd")
 const TEK_DOKU := preload("res://assets/sprites/oyuncu.png")
@@ -500,6 +501,8 @@ var hic_ates := false
 var hic_silah_degisti := false
 ## Ayar: sol tusu basili tutmadan surekli ates. Nisan yine oyuncuda.
 var otomatik_ates := false
+## Accessibility: steady invulnerability tint instead of the 5.9 Hz blink (scripts/erisim.gd).
+var sakin_isik := false
 ## Son gecerli nisan yonu. Gamepad'de cubuk birakilinca sifira dusuyor;
 ## oyuncunun namlusu o anda saga zıplamasin diye son yon korunuyor.
 var _son_nisan := Vector2.RIGHT
@@ -666,8 +669,9 @@ func _gorunum_guncelle(delta: float, nisan: Vector2) -> void:
         _gorsel.modulate = Color(1, 1, 1).lerp(Color(2.2, 2.0, 1.4), _silah_gecis / 0.25)
     # 60 ms = 8,3 Hz -- fotosensitif nobet esiginin (3-60 Hz) tam icinde
     # ve gozu yoruyor. 85 ms = 5,9 Hz: hala net okunuyor, cok daha sakin.
-    elif _dokunulmaz > 0.0 and int(Time.get_ticks_msec() / 85) % 2 == 0:
-        _gorsel.modulate = Color(2.4, 1.2, 1.2)
+    # Calm lights (accessibility): a steady tint instead of the blink.
+    elif _dokunulmaz > 0.0:
+        _gorsel.modulate = Erisim.dokunulmaz_rengi(Time.get_ticks_msec(), sakin_isik)
     else:
         _gorsel.modulate = Color(1, 1, 1)
 

@@ -25,6 +25,8 @@ calistir() {
 echo "Kor dogrulama"
 calistir "import"        timeout 240 godot --headless --import
 calistir "isi testi"     timeout 60  godot --headless --script res://tests/test_isi.gd
+calistir "denge kurallari" timeout 60 godot --headless --script res://tests/test_denge_kurallari.gd
+calistir "erisim"        timeout 60  godot --headless --script res://tests/test_erisim.gd
 calistir "kayit testi"   timeout 90  godot --headless --path . --quit-after 300 tests/test_kayit.tscn
 calistir "ses testi"     timeout 60  godot --headless --script res://tests/test_ses.gd
 calistir "dongu testi"   timeout 120 godot --headless --script res://tests/test_dongu.gd

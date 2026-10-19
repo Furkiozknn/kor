@@ -50,10 +50,9 @@ tarayıcı indirmesi (gzip)           ~11,4 MB  (wasm 9,9 + pck 1,4)
 
 ## Depo
 
-`https://github.com/Furkiozknn/kor` — **private**, 60 commit, master.
+`https://github.com/Furkiozknn/kor` — **public**, MIT lisanslı ([LICENSE](LICENSE)), master.
 
-Public yapmak tek tık ama geri alınamaz (fork ve arşivler kalır).
-Güvenlik denetimi yapıldığı için teknik engel yok; karar senin.
+Depo, aşağıdaki güvenlik denetiminden sonra herkese açıldı.
 
 ## Güvenlik denetimi — 15 Eylül
 
