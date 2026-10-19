@@ -102,7 +102,7 @@ Ayrıntı: `D:\Claude Projeleri\raporlar\2026-09-14-kor-teknik-bulgular.md`
 - [x] görsel: vinyet, mangal ışık havuzları, zemin lekeleri, mermi haleleri
 - [x] 8 yönlü oyuncu + yürüyüş animasyonu, altı düşmanın yürüyüş döngüsü
 - [x] `_gelen/` kutusu: zemin paleti, pixel font, ses
-- [x] **eksik sesler** — beşi de üretilip bağlandı (`build/ses/eksik-sesler.mjs`):
+- [x] **eksik sesler** — beşi de üretilip bağlandı (`araclar/ses/eksik-sesler.mjs`):
       oyuncu_hasar, oyun_bitti, patron_uyandi, soguk_dalga, kosu_bitti
 - [x] **katmanlı müzik** — `muzik_ocak` her zaman, `muzik_kor` ısıyla açılıyor;
       döngü 10 sn → 40 sn

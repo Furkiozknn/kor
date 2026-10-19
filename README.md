@@ -232,7 +232,7 @@ kendisi, yani çeviri dosyası olmasa bile oyun Türkçe çalışmaya devam eder
 ## Çalıştırma ve doğrulama
 
 ```
-godot --path .                      # editörde aç
+godot --path .                      # oyunu aç (editör: godot -e --path .)
 build/windows/kor.exe               # derlenmiş sürüm
 
 bash tests/dogrula.sh               # TAM DOGRULAMA -- her sey burada
@@ -316,8 +316,8 @@ Karanlık mekaniği `PointLight2D` kullanmıyor: tek tam ekran quad + shader,
 | `scripts/gorevler.gd` | görev sistemi — içerik ustalıkla açılır |
 | `scripts/ses_yonetici.gd` | ses havuzu, katmanlı müzik, ayrı efekt bus'ı |
 | `scripts/gelistirici.gd` | F1-F9 geliştirici katmanı (sadece debug) |
-| `build/dil/` | çeviri araçları: dize çıkarıcı + tablo birleştirici |
-| `build/ses/` | eksik ses olaylarının deterministik üreticisi |
+| `araclar/dil/` | çeviri araçları: dize çıkarıcı + tablo birleştirici |
+| `araclar/ses/` | eksik ses olaylarının deterministik üreticisi |
 
 ## Varlıklar
 
