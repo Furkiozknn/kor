@@ -29,6 +29,10 @@ ekran olur.
 
 ## Proje lisansı
 
-Kor'un kendi kodu ve bu proje için üretilen varlıkları için bir lisans
-henüz seçilmedi. Lisans dosyası olmayan bir depoda varsayılan
-**tüm hakları saklıdır**'dır.
+Kor'un kendi kodu ve bu proje için üretilen varlıklar (yukarıdaki tabloda
+"proje lisansı" yazanlar) [MIT lisansı](LICENSE) ile dağıtılır,
+telif © 2026 Furkiozknn.
+
+Bu lisans yalnızca projenin kendi işini kapsar. Üçüncü taraf işler kendi
+lisanslarında kalır: Godot Engine (MIT), PublicPixel ve Kenney Tiny Dungeon
+(CC0 1.0), PixelLab ile üretilen sprite'lar (PixelLab Kullanım Şartları).
