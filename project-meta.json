@@ -1,0 +1,64 @@
+{
+  "schema_version": "1.0.0",
+  "id": "kor",
+  "owner": "Furkiozknn",
+  "repository": "https://github.com/Furkiozknn/kor",
+  "homepage": null,
+  "releases": "https://github.com/Furkiozknn/kor/releases",
+  "status": "active",
+  "category": "game",
+  "platform": [
+    "windows",
+    "web"
+  ],
+  "primary_language": "GDScript",
+  "technologies": [
+    "Godot 4.7",
+    "GDScript"
+  ],
+  "version": null,
+  "license": "MIT",
+  "topics": [
+    "2d-game",
+    "game",
+    "gdscript",
+    "godot",
+    "godot4",
+    "indie-game",
+    "pixel-art",
+    "roguelite",
+    "survivors-like",
+    "turkish"
+  ],
+  "summary": "Top-down roguelite in Godot 4 set in a dark foundry where heat is vision, not ammo: shooting warms you and widens your sight, dashing vents heat and leaves you blind · Karanlık bir dökümhanede geçen Godot 4 roguelite: ısı mermi değil görüş; ateş ettikçe görüşün açılır, dalış ısıyı boşaltır ve seni kör bırakır",
+  "key_features": [
+    "Heat is vision, not ammo: the arena is dark and your sight radius comes from your heat alone, from 40 px cold to 336 px locked",
+    "Firing heats the gun; at the ceiling it locks for two seconds and a dash cannot break the lock",
+    "Dashing dumps heat and leaves you nearly blind, so safety is paid for with sight",
+    "Third-party art and audio credited in KUNYE.md and on an in-game credits screen"
+  ],
+  "media": {
+    "hero": null,
+    "screenshots": [],
+    "gifs": [],
+    "videos": []
+  },
+  "ci": {
+    "workflows": [],
+    "badge": null
+  },
+  "docs": {
+    "readme": "README.md",
+    "changelog": null,
+    "version_history": null,
+    "roadmap": null,
+    "security": null,
+    "contributing": null,
+    "license_file": "LICENSE"
+  },
+  "provenance": {
+    "generated_at": "2026-10-19",
+    "generator": "hand-written",
+    "rule": "mechanical fields read from the repository and the GitHub API; editorial fields hand-written from the README; no field is generated from a guess"
+  }
+}
