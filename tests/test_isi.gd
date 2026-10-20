@@ -80,5 +80,25 @@ func _initialize() -> void:
     o.hizli_sogu(0.5, 2.6)
     assert(is_equal_approx(o.deger, kilit_degeri), "kilitliyken ors islememeli")
 
+    # Silaha ozel gecikme: ates_et(miktar, gecikme) varsayilan yerine onu kullanir.
+    # 60 Hz adimlarla ilerletilir, oyunda oldugu gibi.
+    var adim := 1.0 / 60.0
+    var g = Isi.new()
+    var v = Isi.new()
+    g.ates_et(10.0, 0.6)
+    v.ates_et(10.0)
+    for x in 24:                         # 0.4 sn
+        g.guncelle(adim)
+        v.guncelle(adim)
+    assert(v.deger < 10.0, "varsayilan gecikme (0.30) bitince sogumali")
+    assert(is_equal_approx(g.deger, 10.0), "0.6 sn gecikme icinde sogumamali")
+    for x in 18:                         # +0.3 sn = 0.7 sn
+        g.guncelle(adim)
+    assert(g.deger < 10.0, "silaha ozel gecikme bitince sogumali")
+    var s = Isi.new()
+    s.ates_et(10.0, 0.0)
+    s.guncelle(adim)
+    assert(s.deger < 10.0, "gecikme 0 verilirse hemen sogumali")
+
     print("test_isi: TAMAM")
     quit(0)

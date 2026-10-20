@@ -70,8 +70,20 @@ func _silah_kurallari() -> void:
         "the beam locks first: 'highest damage, fastest lock' (%.2f <= %.2f s)" % [t[ISIN], t[TABANCA]])
     dogru(t[SACMA] < 0.0 or t[SACMA] > t[TABANCA],
         "the shotgun is slower to lock than the pistol (%.2f s)" % t[SACMA])
-    dogru(t[CEKIC] < 0.0 or t[CEKIC] > t[SACMA],
+    # Heat is the rule for every weapon: holding fire locks all four. The
+    # hammer used to settle at 9% heat and never lock (a bug, not a design
+    # choice); its longer cooling delay ("isi_gecikmesi") fixes that.
+    for i in Silahlar.LISTE.size():
+        dogru(t[i] > 0.0,
+            "%s locks when fire is held (%.2f s)" % [Silahlar.LISTE[i]["ad"], t[i]])
+    dogru(t[CEKIC] > t[SACMA] and t[CEKIC] > t[TABANCA] and t[CEKIC] > t[ISIN],
         "the hammer is the most patient weapon (%.2f s)" % t[CEKIC])
+    dogru(t[CEKIC] <= 20.0,
+        "the hammer still locks within one long hold, not 'never' (%.2f s <= 20 s)" % t[CEKIC])
+    dogru(Silahlar.isi_gecikmesi(Silahlar.LISTE[CEKIC]) > Isi.new().soguma_gecikmesi,
+        "the hammer keeps the barrel hot longer than the default cooling delay")
+    dogru(Silahlar.isi_gecikmesi(Silahlar.LISTE[TABANCA]) < 0.0,
+        "weapons without their own delay use the heat system's default")
 
     # Heat per second in real ticks keeps the documented order.
     var sn := []

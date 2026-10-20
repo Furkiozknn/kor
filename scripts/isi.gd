@@ -21,11 +21,14 @@ func ates_edebilir() -> bool:
     return not kilitli
 
 ## miktar > 0 verilirse o kadar isinir (silaha gore), yoksa atis_basina.
-func ates_et(miktar: float = 0.0) -> void:
+## gecikme >= 0 verilirse bu atistan sonraki soguma gecikmesi o olur (silaha
+## gore, ornegin agir cekic namluyu daha uzun sicak tutar), yoksa
+## soguma_gecikmesi.
+func ates_et(miktar: float = 0.0, gecikme: float = -1.0) -> void:
     if kilitli:
         return
     deger += miktar if miktar > 0.0 else atis_basina
-    _gecikme_kalan = soguma_gecikmesi
+    _gecikme_kalan = gecikme if gecikme >= 0.0 else soguma_gecikmesi
     if deger >= tavan:
         deger = tavan
         if kilit_acik:
