@@ -1,0 +1,107 @@
+name: CI
+
+# kor'un hic is akisi yoktu: tests/dogrula.sh yalnizca elle kosuyordu.
+#
+# Yeni test komutu UYDURULMUYOR: README.md'de "TAM DOGRULAMA -- her sey
+# burada" diye yazan `bash tests/dogrula.sh` aynen kosuluyor. Betik herhangi
+# bir ERROR / SCRIPT ERROR / Assertion / Parse satirini hata sayiyor ve
+# "SONUC: TEMIZ" degilse 1 ile cikiyor.
+#
+# Kalip derin-kazi ve kanca CI'larindan: sabit Godot surumu, indirilen
+# zipin SHA512 kontrolu, ayri godot-refcheck isi.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # project.godot: config/features = "4.7". Surum SABIT tutuluyor --
+  # "latest" kullanmak, motor guncellenince testlerin bizden habersiz
+  # kirmizi yanmasi demek olurdu.
+  GODOT_SURUM: 4.7.2-stable
+  # The downloaded zip is checked against this digest before it runs. Value
+  # from the Godot_v4.7.2-stable_linux.x86_64.zip line of SHA512-SUMS.txt in
+  # the godotengine/godot 4.7.2-stable release. Update it with GODOT_SURUM.
+  GODOT_SHA512: 9aa00f7a605200940bce3027a567b782f49bd8e940dd06ae9e987bd65aee1b1467edd56ed84fcdcbdd44354bf613bdbb4e5d2913e925850368e150c59ed54c65
+
+jobs:
+  dogrulama:
+    name: Tam dogrulama (tests/dogrula.sh)
+    runs-on: ubuntu-24.04
+    # Bir adim hic donmezse 6 saatlik varsayilan yerine 20 dakikada kirmizi.
+    # dogrula.sh her adima zaten kendi `timeout`unu koyuyor.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # araclar/dil/dizeleri-cikar.mjs import.meta.dirname kullaniyor
+      # (Node 20.11+). Isleticideki varsayilan surume guvenmek yerine sabit.
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Godot ${{ env.GODOT_SURUM }} indir
+        run: |
+          set -euo pipefail
+          ad="Godot_v${GODOT_SURUM}_linux.x86_64"
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_SURUM}/${ad}.zip"
+          echo "${GODOT_SHA512}  godot.zip" | sha512sum -c -
+          unzip -q godot.zip
+          rm godot.zip
+          chmod +x "$ad"
+          sudo mv "$ad" /usr/local/bin/godot
+          godot --version
+
+      # "arayuz tasma" ve "menu" adimlari --headless olmadan, gercek
+      # cizimle kosuyor (ekran goruntusu aliyor). Isleticide ekran yok:
+      # sanal X sunucusu (xvfb) ve yazilim OpenGL'i (Mesa llvmpipe) ile
+      # Compatibility cizicisi calisiyor.
+      - name: Sanal ekran ve yazilim OpenGL kur
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q xvfb libgl1-mesa-dri libglx-mesa0
+
+      - name: Tam dogrulama
+        run: xvfb-run -a -s "-screen 0 1280x720x24" bash tests/dogrula.sh
+
+  referanslar:
+    name: Kaynak referanslari saglam mi
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Kirik bir kaynak referansi motoru her zaman durdurmuyor: eksik bir
+      # .tscn ya da silinmis bir .png, sahne o kod yolu calisana kadar
+      # sessiz kalabiliyor -- yani testler yesilken de var olabiliyor.
+      # Bu kontrol motoru indirmeden, ayni hesaptaki godot-refcheck ile
+      # yapiliyor.
+      - name: godot-refcheck
+        uses: Furkiozknn/godot-refcheck@d999cd882bb3d023d73ac3882d23e6ba9ab24603  # v0.2.0 + the clean-project fix
+        with:
+          path: .
+          fail-on: error
+          sarif: refcheck.sarif
+
+      - name: SARIF raporunu kod taramaya yukle
+        if: always() && hashFiles('refcheck.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: refcheck.sarif
+          category: godot-refcheck
