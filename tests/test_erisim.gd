@@ -3,7 +3,8 @@ extends SceneTree
 ##
 ## Accessibility options for light-based information (scripts/erisim.gd):
 ## the cold-sight floor and calm (non-blinking) warnings. Pure rules first,
-## then the settings row in the real menu scene.
+## then the settings row in the real menu scene, then the daily-record rule:
+## a run with a changed sight floor never becomes the daily best.
 
 const Erisim := preload("res://scripts/erisim.gd")
 const Isi := preload("res://scripts/isi.gd")
@@ -16,6 +17,8 @@ var _menu: Node
 var _kare := 0
 var _eski_taban: Variant
 var _eski_sakin: Variant
+var _eski_veri := {}
+var _ana: Node2D
 
 func dogru(kosul: bool, ad: String) -> void:
     _sayac += 1
@@ -36,6 +39,7 @@ func _process(_delta: float) -> bool:
         # The Kayit autoload loads the save in its _ready, after _initialize.
         var kayit := root.get_node_or_null("Kayit")
         dogru(kayit != null, "Kayit autoload is available")
+        _eski_veri = kayit._veri.duplicate(true)
         _eski_taban = kayit.ayar("gorus_tabani", 0)
         _eski_sakin = kayit.ayar("sakin_isik", false)
         kayit.ayar_yaz("gorus_tabani", 0)
@@ -44,8 +48,24 @@ func _process(_delta: float) -> bool:
         _menu._ayar_degis()
     if _kare < 12:
         return false
-    _menu_satiri()
+    if _kare == 12:
+        _menu_satiri()
+        _menu.queue_free()
+        _gunluk_rekor_kurali()
+        # A real daily run: the menu marks it through Engine meta.
+        root.get_node("Kayit").ayar_yaz("gorus_tabani", 0)
+        Engine.set_meta("kor_gunun_dokumu", true)
+        _ana = load("res://scenes/level.tscn").instantiate()
+        root.add_child(_ana)
+        return false
+    if _kare == 14:
+        _gunluk_kosu_ortada_degisti()
+    if _kare < 16:
+        return false
+    _gunluk_kosu_sonucu()
+    _ana.queue_free()
     var kayit := root.get_node("Kayit")
+    kayit._veri = _eski_veri
     kayit.ayar_yaz("gorus_tabani", _eski_taban)
     kayit.ayar_yaz("sakin_isik", _eski_sakin)
     kayit.kaydet()
@@ -140,3 +160,43 @@ func _menu_satiri() -> void:
     dogru(int(kayit.ayar("gorus_tabani", 0)) == 0, "floor button wraps back to normal")
     sakin.pressed.emit()
     dogru(bool(kayit.ayar("sakin_isik", false)) and sakin.text == "sakin ışık açık", "calm-lights button turns on")
+
+## Kayit rules on the real autoload; _process restores the whole save after.
+func _gunluk_rekor_kurali() -> void:
+    var kayit := root.get_node("Kayit")
+    kayit._veri["gun_kodu"] = kayit.gun_kodu_bugun()
+    kayit._veri["gun_en_iyi"] = 100
+    kayit._veri["gun_deneme"] = 3
+    kayit.ayar_yaz("gorus_tabani", 0)
+    dogru(kayit.rekora_uygun_ayar(), "default sight floor: the run can count for the daily record")
+    for kademe in [1, 2]:
+        kayit.ayar_yaz("gorus_tabani", kademe)
+        dogru(not kayit.rekora_uygun_ayar(), "sight floor step %d: the run cannot count" % kademe)
+    var r: Dictionary = kayit.gun_bitti(250, false)
+    dogru(not bool(r["rekor"]) and bool(r["sayilmadi"]) and int(r["en_iyi"]) == 100,
+        "an ineligible run that beats the best does not become the daily record")
+    dogru(int(r["deneme"]) == 4, "an ineligible run still counts as today's attempt")
+    r = kayit.gun_bitti(250)
+    dogru(bool(r["rekor"]) and not bool(r["sayilmadi"]) and int(r["en_iyi"]) == 250,
+        "an eligible run with the same score does become the daily record")
+    kayit._veri["gun_en_iyi"] = 0
+
+func _gunluk_kosu_ortada_degisti() -> void:
+    var kayit := root.get_node("Kayit")
+    dogru(_ana.gunun_dokumu and not _ana.rekor_disi, "daily run started with the default floor: still eligible")
+    kayit.ayar_yaz("gorus_tabani", 2)
+    dogru(_ana.rekor_disi, "changing the floor mid-run marks the run as not counting")
+    kayit.ayar_yaz("gorus_tabani", 0)
+    dogru(_ana.rekor_disi, "switching back to normal does not make the run count again")
+
+func _gunluk_kosu_sonucu() -> void:
+    var kayit := root.get_node("Kayit")
+    _ana.oldurulen = 500
+    _ana._oyun_bitti()
+    dogru(not bool(_ana.gun_sonuc.get("rekor", true)) and int(kayit.gun_en_iyi()) == 0,
+        "the daily best is untouched by a run that had the floor changed")
+    var ozet := "
+".join(_ana._ozet_satirlari(true))
+    dogru(ozet.contains("görüş tabanı açıktı · bu koşu günün rekoruna sayılmadı"),
+        "result screen says the run did not count for the daily record")
+    dogru(not ozet.contains("GÜNÜN REKORU"), "result screen does not claim a daily record")

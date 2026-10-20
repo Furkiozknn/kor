@@ -174,6 +174,10 @@ Her gün tek tohum, UTC tarihten üretiliyor: dünyanın her yerinde aynı gün
 aynı dökümhane. Sunucu gerekmiyor çünkü kıyas zemini **tohum**. Gün
 değişince günlük en iyi ve deneme sayacı sıfırlanır.
 
+Koşu sırasında herhangi bir anda **görüş tabanı** normalden farklıysa koşu
+deneme sayılır ama **günün rekoruna sayılmaz**; sonuç ekranı bunu söyler.
+Geniş soğuk görüş koşuyu kolaylaştırır, kıyas zemini aynı kalmalı.
+
 ## Meta ilerleme: fırın kademesi
 
 Koşu sonunda **cüruf** kazanırsın (öldürme × kademe çarpanı). Kalıcı gelişim
