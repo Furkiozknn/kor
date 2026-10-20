@@ -72,6 +72,14 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y -q xvfb libgl1-mesa-dri libglx-mesa0
 
+      # --headless olmayan adimlar ses surucusunu de aciyor. Isleticide ses
+      # karti yok ve ALSA "default" aygiti acilamayinca Godot
+      # 'Condition "status < 0" ... ERR_CANT_OPEN' yaziyor; dogrula.sh her
+      # ERROR satirini hata saydigi icin adim kirmizi yaniyordu. Bos (null)
+      # bir ALSA aygiti sesi sessizce yutuyor.
+      - name: Sessiz ses aygiti
+        run: printf 'pcm.!default { type null }\nctl.!default { type hw card 0 }\n' > ~/.asoundrc
+
       - name: Tam dogrulama
         run: xvfb-run -a -s "-screen 0 1280x720x24" bash tests/dogrula.sh
 
