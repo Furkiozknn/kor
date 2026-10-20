@@ -85,16 +85,18 @@ Silah seçmek "kaç saniyede kilitlenmeyi göze alıyorum" sorusunun cevabı.
 | **Kor Tabancası** | dengeli | ~5.8 sn |
 | **Saçma** | 6 saçma, kısa menzil — sürünün içine girmeni ister | ~14.5 sn |
 | **Işın** | en yüksek hasar, parmağını kaldırmayı öğretir | ~5.5 sn |
-| **Çekiç** | yavaş, delici, sırayı süpürür | basılı tutunca kilitlenmez |
+| **Çekiç** | yavaş, delici, sırayı süpürür | ~17.0 sn |
 
 "Kilide kalan" = soğukken tetiği **basılı tutarsan** kaç saniyede kilitlenirsin.
 Sayılar tahmin değil: `Silahlar.kilit_suresi()` oyunun kendi ısı kurallarını
 (soğuma gecikmesi, atışlar arası soğuma, 60 Hz fizik adımı) çalıştırıyor; kart
 metni de aynı yerden okuyor. Eski tablo (~1,2-2,5 sn) iki ayar turu önceki
 değerlerdi, kartın eski formülü (tavan ÷ ısı/sn) ise atışlar arası soğumayı
-saymıyordu: Saçma'yı ~6,9 sn, Çekiç'i ~9 sn gösteriyordu. Gerçekte Çekiç'in
-iki vuruşu arasında soğuma vuruşun ısısını geçiyor (tepe %9); onu kilitleyen
-şey ancak mangalın ısısı ya da ısıyı artıran kartlar (AĞIR MERMİ gibi).
+saymıyordu: Saçma'yı ~6,9 sn, Çekiç'i ~9 sn gösteriyordu. Bir süre Çekiç hiç
+kilitlenmiyordu: iki vuruşu arasındaki soğuma vuruşun ısısını geçiyordu (tepe
+%9). Bu bir hataydı; artık ağır vuruş namluyu daha uzun sıcak tutuyor (soğuma
+0,30 yerine 0,60 sn sonra başlıyor, `isi_gecikmesi`), böylece Çekiç de
+kilitleniyor ve en sabırlı silah oluyor.
 `tests/test_denge_kurallari.gd` bu tabloyu kurallarla karşılaştırıyor.
 
 ### Düşmanlar

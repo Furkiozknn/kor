@@ -9,6 +9,9 @@ extends RefCounted
 ##   isin    1.2 / 0.05 = 24.0/sn -> ~4.2 sn  (en tehlikeli, en yuksek DPS)
 ##   cekic   9.4 / 0.85 = 11.1/sn -> ~9.0 sn  (en sabirli)
 ##
+## Those are the old tavan / (heat per second) estimates. The real numbers
+## come from kilit_suresi() below and live in the README table.
+##
 ## DEGERLER IKI KEZ INDIRILDI. Ilk tur 1,6 -> 3,0 saniyeydi.
 ##
 ## Ikinci tur GERCEK OYUNCU VERISIYLE geldi ve olcum aracinin goremedigi
@@ -45,6 +48,11 @@ const LISTE := [
     {
         "ad": "ÇEKİÇ", "ikon": "ors",
         "aralik": 0.85, "isi": 9.4, "hasar": 5.0, "adet": 1,
+        # A heavy swing keeps the barrel hot longer: cooling starts 0.60 s
+        # after a swing instead of the usual 0.30 s. Without this the base
+        # cooling between two swings (19/s for 0.55 s) beat a swing's 9.4
+        # heat and holding fire never locked the hammer (peak 9%).
+        "isi_gecikmesi": 0.60,
         "yayilma": 0.0, "hiz": 195.0, "omur": 1.5, "boy": 2.1,
         "delici": true, "geri_tepme": 120.0, "sarsinti": 3.4,
         "not": "Delip geçer. Sabır isteyen, sırayı süpüren silah.",
@@ -60,8 +68,9 @@ const LISTE := [
 ## The lock time used to be tavan / (heat per second), which ignores cooling
 ## between shots. That is close for fast weapons (the cooling delay never runs
 ## out between shots) but wrong for slow ones: with the base cooling the
-## hammer cools more between swings than a swing heats, so holding fire never
-## locks it, while the card promised "~9 s". The number now comes from
+## hammer cooled more between swings than a swing heated, so holding fire never
+## locked it, while the card promised "~9 s" (fixed with the hammer's longer
+## "isi_gecikmesi"). The number now comes from
 ## kilit_suresi(), the same heat rules the game runs, with the player's
 ## current ceiling, cooling and fire-rate modifiers.
 static func isi_profili(i: int, tavan: float = 100.0, soguma: float = 19.0,
@@ -78,6 +87,11 @@ static func isi_profili(i: int, tavan: float = 100.0, soguma: float = 19.0,
 const Isi := preload("res://scripts/isi.gd")
 const FIZIK_ADIMI := 1.0 / 60.0
 const KILIT_YOK := -1.0
+
+## The weapon's own cooling delay after a shot, or -1 for the heat system's
+## default (Isi.soguma_gecikmesi). Passed straight to Isi.ates_et().
+static func isi_gecikmesi(s: Dictionary) -> float:
+    return float(s.get("isi_gecikmesi", -1.0))
 
 ## The real time between shots. The shot timer is counted down once per
 ## physics tick, so an interval is rounded UP to whole ticks: the beam's 0.05 s
@@ -116,7 +130,7 @@ static func kilit_suresi(i: int, damgalar: Array = [], tavan: float = 100.0,
         isi.guncelle(FIZIK_ADIMI)
         sayac = maxf(sayac - FIZIK_ADIMI, 0.0)
         if sayac <= 0.0 and isi.ates_edebilir():
-            isi.ates_et(miktar)
+            isi.ates_et(miktar, isi_gecikmesi(s))
             sayac = aralik
             if isi.kilitli:
                 return t
@@ -139,7 +153,7 @@ static func basili_tepe(i: int, damgalar: Array = [], tavan: float = 100.0,
         isi.guncelle(FIZIK_ADIMI)
         sayac = maxf(sayac - FIZIK_ADIMI, 0.0)
         if sayac <= 0.0 and isi.ates_edebilir():
-            isi.ates_et(float(s["isi"]))
+            isi.ates_et(float(s["isi"]), isi_gecikmesi(s))
             sayac = float(s["aralik"])
         tepe = maxf(tepe, isi.oran())
         t += FIZIK_ADIMI

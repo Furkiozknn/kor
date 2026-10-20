@@ -535,7 +535,7 @@ func _ates_et(nisan: Vector2) -> void:
     hic_ates = true
     var s := Silahlar.damgali(silah_indeksi, silah_damgalari())
     _atis_sayaci = s["aralik"] / atis_hizi_carpani
-    isi.ates_et(float(s["isi"]) * isi_carpani)
+    isi.ates_et(float(s["isi"]) * isi_carpani, Silahlar.isi_gecikmesi(s))
     var hasar: float = s["hasar"] * mermi_hasari
     if sicak_hasar_bonusu and isi.oran() > KIZGIN_ESIK_KART:
         hasar *= asiri_isi_carpani
