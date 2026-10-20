@@ -47,6 +47,10 @@ const VARSAYILAN := {
 	},
 }
 
+## A running level listens to this: changing the sight floor mid-run must
+## still take the run out of the daily record.
+signal ayar_degisti(anahtar: String, deger: Variant)
+
 var _veri := {}
 var _kirli := false
 
@@ -138,15 +142,24 @@ func gun_deneme() -> int:
 	_gun_tazele()
 	return int(_veri.get("gun_deneme", 0))
 
-## Gunluk kosu bitti. Doner: {"en_iyi": int, "deneme": int, "rekor": bool}
-func gun_bitti(curuf: int) -> Dictionary:
+## Daily record rule: a run counts toward the daily best only if the sight
+## floor stayed at its default the whole run. A wider cold sight makes the
+## run easier, so "today's you" would no longer be the same race.
+func rekora_uygun_ayar() -> bool:
+	return int(ayar("gorus_tabani", 0)) == int(VARSAYILAN["ayarlar"]["gorus_tabani"])
+
+## Gunluk kosu bitti. Doner: {"en_iyi": int, "deneme": int, "rekor": bool,
+## "sayilmadi": bool}. sayilir=false: the attempt is still counted, but the
+## score never becomes the daily best (see rekora_uygun_ayar()).
+func gun_bitti(curuf: int, sayilir := true) -> Dictionary:
 	_gun_tazele()
 	_veri["gun_deneme"] = int(_veri.get("gun_deneme", 0)) + 1
-	var rekor := curuf > int(_veri.get("gun_en_iyi", 0))
+	var rekor := sayilir and curuf > int(_veri.get("gun_en_iyi", 0))
 	if rekor:
 		_veri["gun_en_iyi"] = curuf
 	kaydet()
-	return {"en_iyi": int(_veri["gun_en_iyi"]), "deneme": int(_veri["gun_deneme"]), "rekor": rekor}
+	return {"en_iyi": int(_veri["gun_en_iyi"]), "deneme": int(_veri["gun_deneme"]), "rekor": rekor,
+		"sayilmadi": not sayilir}
 
 func curuf_ekle(miktar: int) -> int:
 	_veri["curuf"] = curuf() + miktar
@@ -224,3 +237,4 @@ func ayar(anahtar: String, varsayilan: Variant = null) -> Variant:
 func ayar_yaz(anahtar: String, deger: Variant) -> void:
 	_veri["ayarlar"][anahtar] = deger
 	_kirli = true
+	ayar_degisti.emit(anahtar, deger)

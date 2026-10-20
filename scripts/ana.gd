@@ -55,6 +55,9 @@ var firin_kademesi := 0
 ## ve KAYDA yazmadigi icin yarim kalan bir bayrak sonraki kosuyu kirletmiyor.
 var gunun_dokumu := false
 var gun_sonuc := {}
+## Daily record: true once the sight floor differs from its default at any
+## point in this run. Such a run never becomes the daily best.
+var rekor_disi := false
 
 ## PAYLASIM METNI icin isi izi. 12 ornek, kosunun sekli icin yeterli:
 ## Wordle'in izgarasi gibi sonucu vermeden hikayeyi anlatiyor.
@@ -365,6 +368,8 @@ func _ozet_satirlari(olum: bool) -> Array:
         s.append(tr("GÜNÜN DÖKÜMÜ %s   ·   bugünkü en iyin %d   ·   bugün %d. koşun%s") % [
             Kayit.gun_kodu_bugun(), int(gun_sonuc.get("en_iyi", Kayit.gun_en_iyi())),
             int(gun_sonuc.get("deneme", Kayit.gun_deneme())), _r])
+        if rekor_disi:
+            s.append(tr("görüş tabanı açıktı · bu koşu günün rekoruna sayılmadı"))
     if olum:
         s.append("")
         s.append(tr("dakikada %.1f oldurme    seviye basina %.0f sn") % [
@@ -938,10 +943,22 @@ func _kart_havuzu() -> Array:
 ## Accessibility settings (scripts/erisim.gd). The sight floor widens only the
 ## cold end and is applied after the furnace step, so DAR GÖZ (-20%) still bites.
 func _erisim_uygula() -> void:
+    _rekor_ayari_izle()
+    if not Kayit.ayar_degisti.is_connected(_ayar_degisti):
+        Kayit.ayar_degisti.connect(_ayar_degisti)
     oyuncu.sakin_isik = bool(Kayit.ayar("sakin_isik", false))
     var ek := Erisim.gorus_tabani_ek(int(Kayit.ayar("gorus_tabani", 0)))
     if ek > 0.0:
         _gorus_degistir(1.0, ek)
+
+## Sticky: switching the floor back to normal does not make the run count again.
+func _rekor_ayari_izle() -> void:
+    if not Kayit.rekora_uygun_ayar():
+        rekor_disi = true
+
+func _ayar_degisti(anahtar: String, _deger: Variant) -> void:
+    if anahtar == "gorus_tabani" and not bitti:
+        _rekor_ayari_izle()
 
 ## Gorus artik bir kaynak: kartlar onu takas edebiliyor.
 func _gorus_degistir(carpan: float, taban_ek: float) -> void:
@@ -1288,7 +1305,8 @@ func _kosu_kazanildi() -> void:
     bitti = true
     kazanilan_curuf = Kayit.kosu_bitti(gecen, oldurulen)
     if gunun_dokumu:
-        gun_sonuc = Kayit.gun_bitti(kazanilan_curuf)
+        _rekor_ayari_izle()
+        gun_sonuc = Kayit.gun_bitti(kazanilan_curuf, not rekor_disi)
     acilan_gorevler = gorevler.kosu_bitti()
     SesYonetici.muzik_dur()
     SesYonetici.cal("kosu_bitti")
@@ -1301,7 +1319,8 @@ func _oyun_bitti() -> void:
     bitti = true
     kazanilan_curuf = Kayit.kosu_bitti(gecen, oldurulen)
     if gunun_dokumu:
-        gun_sonuc = Kayit.gun_bitti(kazanilan_curuf)
+        _rekor_ayari_izle()
+        gun_sonuc = Kayit.gun_bitti(kazanilan_curuf, not rekor_disi)
     acilan_gorevler = gorevler.kosu_bitti()
     # Acik modal kalmasin: olum her seyin ustunde
     for katman in [_kart_katman, _duraklat_katman]:
